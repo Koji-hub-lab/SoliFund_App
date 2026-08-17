@@ -1,0 +1,338 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum RoleNom {
+  ROLE_USER
+  ROLE_ADMIN
+}
+
+enum StatutUtilisateur {
+  ACTIF
+  SUSPENDU
+  BANNI
+  INACTIF
+}
+
+enum TypeJeton {
+  VERIF_EMAIL
+  RESET_MDP
+}
+
+enum StatutCagnotte {
+  ACTIVE
+  TERMINEE
+  SUSPENDUE
+  ANNULEE
+}
+
+enum MethodePaiement {
+  MTN_MOBILE_MONEY
+  ORANGE_MONEY
+}
+
+enum StatutPaiement {
+  EN_ATTENTE
+  VALIDE
+  ECHOUE
+  REMBOURSE
+}
+
+enum StatutRetrait {
+  EN_ATTENTE
+  APPROUVE
+  REJETE
+  TRAITE
+}
+
+enum TypeTransaction {
+  DON
+  RETRAIT
+  REMBOURSEMENT
+}
+
+enum StatutTransaction {
+  EN_ATTENTE
+  SUCCES
+  ECHEC
+}
+
+enum TypeNotification {
+  DON
+  RETRAIT
+  COMMENTAIRE
+  SYSTEME
+  VERIFICATION
+}
+
+enum StatutLecture {
+  NON_LUE
+  LUE
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+
+model Role {
+  id_role   Int        @id @default(autoincrement())
+  nom       RoleNom    @unique
+  posseders Posseder[]
+
+  @@map("slf_role")
+}
+
+model Utilisateur {
+  id_utilisateur      Int               @id @default(autoincrement())
+  nom                 String            @db.VarChar(100)
+  prenom              String            @db.VarChar(100)
+  email               String            @unique @db.VarChar(255)
+  mot_de_passe        String            @db.VarChar(255)
+  telephone           String?           @unique @db.VarChar(20)
+  photo_profil        String?           @db.VarChar(255)
+  date_inscription    DateTime          @default(now())
+  est_verifie         Boolean           @default(false)
+  statut              StatutUtilisateur @default(ACTIF)
+  date_fin_suspension DateTime?
+
+  posseders     Posseder[]
+  jetons        Jeton[]
+  cagnottes     Cagnotte[]
+  paiements     Paiement[]
+  dons          Don[]
+  commentaires  Commentaire[]
+  retraits      Retrait[]
+  notifications Recevoir[]
+
+  @@index([email])
+  @@index([statut])
+  @@map("slf_utilisateur")
+}
+
+model Posseder {
+  id_utilisateur Int
+  id_role        Int
+  utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Cascade)
+  role           Role        @relation(fields: [id_role], references: [id_role], onDelete: Cascade)
+
+  @@id([id_utilisateur, id_role])
+  @@map("slf_posseder")
+}
+
+model Jeton {
+  id_jeton        Int         @id @default(autoincrement())
+  id_utilisateur  Int
+  utilisateur     Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Cascade)
+  code            String      @unique @db.VarChar(255)
+  type            TypeJeton
+  date_creation   DateTime    @default(now())
+  date_expiration DateTime
+  est_utilise     Boolean     @default(false)
+
+  @@map("slf_jeton")
+}
+
+model Categorie {
+  id_categorie Int        @id @default(autoincrement())
+  nom          String     @unique @db.VarChar(100)
+  description  String?
+  icone        String?    @db.VarChar(255)
+  couleur      String?    @db.VarChar(50)
+  cagnottes    Cagnotte[]
+
+  @@map("slf_categorie")
+}
+
+model Cagnotte {
+  id_cagnotte        Int            @id @default(autoincrement())
+  titre              String         @db.VarChar(255)
+  slug               String         @unique @db.VarChar(255)
+  description        String?
+  objectif           Decimal        @db.Decimal(15, 2)
+  montant_collecte   Decimal        @default(0.00) @db.Decimal(15, 2)
+  date_debut         DateTime       @db.Date
+  date_fin           DateTime       @db.Date
+  statut             StatutCagnotte @default(ACTIVE)
+  est_publique       Boolean        @default(true)
+  date_creation      DateTime       @default(now())
+  date_modification  DateTime?      @updatedAt
+  devise             String         @default("XAF") @db.VarChar(10)
+  image              String?        @db.VarChar(255)
+
+  id_utilisateur Int
+  utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
+
+  id_categorie Int?
+  categorie    Categorie? @relation(fields: [id_categorie], references: [id_categorie], onDelete: SetNull)
+
+  dons          Don[]
+  commentaires  Commentaire[]
+  retraits      Retrait[]
+  notifications Notification[]
+  actualites    Actualite[]
+
+  @@index([id_utilisateur])
+  @@index([statut])
+  @@index([id_categorie])
+  @@index([date_fin])
+  @@map("slf_cagnotte")
+}
+
+model Paiement {
+  id_paiement       Int             @id @default(autoincrement())
+  montant           Decimal         @db.Decimal(15, 2)
+  devise            String          @default("XAF") @db.VarChar(10)
+  methode_paiement  MethodePaiement
+  transaction_id    String?         @unique @db.VarChar(255)
+  reference_externe String?         @db.VarChar(255)
+  statut            StatutPaiement  @default(EN_ATTENTE)
+  date_creation     DateTime        @default(now())
+  date_maj          DateTime?       @updatedAt
+  numero_payeur     String?         @db.VarChar(20)
+
+  id_utilisateur Int
+  utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
+
+  don          Don?
+  transactions Transaction[]
+
+  @@index([statut])
+  @@index([id_utilisateur])
+  @@map("slf_paiement")
+}
+
+model Don {
+  id_don        Int            @id @default(autoincrement())
+  message       String?
+  est_anonyme   Boolean        @default(false)
+  date_creation DateTime       @default(now())
+  statut        StatutPaiement @default(EN_ATTENTE)
+
+  id_cagnotte Int
+  cagnotte    Cagnotte @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Restrict)
+
+  id_utilisateur Int?
+  utilisateur    Utilisateur? @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: SetNull)
+
+  id_paiement Int      @unique
+  paiement    Paiement @relation(fields: [id_paiement], references: [id_paiement], onDelete: Restrict)
+
+  @@index([id_cagnotte])
+  @@index([id_utilisateur])
+  @@map("slf_don")
+}
+
+model Commentaire {
+  id_commentaire Int      @id @default(autoincrement())
+  date_creation  DateTime @default(now())
+  description    String
+
+  id_utilisateur Int
+  utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Cascade)
+
+  id_cagnotte Int
+  cagnotte    Cagnotte @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Cascade)
+
+  @@index([id_cagnotte])
+  @@index([id_utilisateur])
+  @@map("slf_commentaire")
+}
+
+model Retrait {
+  id_retrait           Int             @id @default(autoincrement())
+  montant              Decimal         @db.Decimal(15, 2)
+  methode_retrait      MethodePaiement
+  numero_beneficiaire  String          @db.VarChar(20)
+  reference_retrait    String?         @unique @db.VarChar(255)
+  motif_rejet          String?
+  statut               StatutRetrait   @default(EN_ATTENTE)
+  date_creation        DateTime        @default(now())
+  date_traitement      DateTime?
+  date_validation      DateTime?
+
+  id_utilisateur Int
+  utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
+
+  id_cagnotte Int
+  cagnotte    Cagnotte @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Restrict)
+
+  transactions Transaction[]
+
+  @@index([id_utilisateur])
+  @@index([id_cagnotte])
+  @@map("slf_retrait")
+}
+
+model Transaction {
+  id_transaction Int               @id @default(autoincrement())
+  type           TypeTransaction
+  montant        Decimal           @db.Decimal(15, 2)
+  devise         String            @default("XAF") @db.VarChar(10)
+  reference      String?           @unique @db.VarChar(255)
+  statut         StatutTransaction @default(EN_ATTENTE)
+  date_creation  DateTime          @default(now())
+
+  id_paiement Int?
+  paiement    Paiement? @relation(fields: [id_paiement], references: [id_paiement], onDelete: Restrict)
+
+  id_retrait Int?
+  retrait    Retrait? @relation(fields: [id_retrait], references: [id_retrait], onDelete: Restrict)
+
+  @@index([id_paiement])
+  @@index([id_retrait])
+  @@map("slf_transaction")
+}
+
+model Notification {
+  id_notification Int               @id @default(autoincrement())
+  titre           String            @db.VarChar(255)
+  message         String
+  type            TypeNotification
+  date_envoi      DateTime          @default(now())
+
+  id_cagnotte Int?
+  cagnotte    Cagnotte? @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Cascade)
+
+  destinataires Recevoir[]
+
+  @@index([type])
+  @@index([id_cagnotte])
+  @@map("slf_notification")
+}
+
+model Recevoir {
+  statut        StatutLecture @default(NON_LUE)
+  date_lecture  DateTime?
+
+  id_utilisateur Int
+  utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Cascade)
+
+  id_notification Int
+  notification    Notification @relation(fields: [id_notification], references: [id_notification], onDelete: Cascade)
+
+  @@id([id_utilisateur, id_notification])
+  @@index([id_utilisateur])
+  @@index([statut])
+  @@map("slf_recevoir")
+}
+
+model Actualite {
+  id_actualite      Int      @id @default(autoincrement())
+  titre             String   @db.VarChar(255)
+  contenu           String
+  date_publication  DateTime @default(now())
+
+  id_cagnotte Int
+  cagnotte    Cagnotte @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Cascade)
+
+  @@index([id_cagnotte])
+  @@map("slf_actualite")
+}
