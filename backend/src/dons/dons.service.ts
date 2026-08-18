@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateDonDto } from './dto/create-don.dto';
 
 @Injectable()
 export class DonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async creer(idUtilisateur: number, dto: CreateDonDto) {
     const cagnotte = await this.prisma.cagnotte.findUnique({
@@ -42,12 +46,10 @@ export class DonsService {
     });
   }
 
-  // Simule la confirmation du paiement par le fournisseur mobile money.
-  // À remplacer plus tard par le vrai endpoint webhook MTN/Orange.
   async validerPaiement(idDon: number) {
     const don = await this.prisma.don.findUnique({
       where: { id_don: idDon },
-      include: { paiement: true },
+      include: { paiement: true, cagnotte: true },
     });
     if (!don) {
       throw new NotFoundException('Don introuvable.');
@@ -56,13 +58,13 @@ export class DonsService {
       throw new BadRequestException('Ce don est déjà validé.');
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const donValide = await this.prisma.$transaction(async (tx) => {
       await tx.paiement.update({
         where: { id_paiement: don.id_paiement },
         data: { statut: 'VALIDE' },
       });
 
-      const donValide = await tx.don.update({
+      const donMisAJour = await tx.don.update({
         where: { id_don: idDon },
         data: { statut: 'VALIDE' },
       });
@@ -82,8 +84,18 @@ export class DonsService {
         },
       });
 
-      return donValide;
+      return donMisAJour;
     });
+
+    await this.notificationsService.envoyer(
+      don.cagnotte.id_utilisateur,
+      'Nouveau don reçu',
+      `Tu as reçu un don de ${don.paiement.montant} ${don.paiement.devise} sur "${don.cagnotte.titre}".`,
+      'DON',
+      don.cagnotte.id_cagnotte,
+    );
+
+    return donValide;
   }
 
   async listerParCagnotte(idCagnotte: number) {

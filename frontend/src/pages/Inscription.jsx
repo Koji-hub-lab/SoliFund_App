@@ -23,16 +23,18 @@ export default function Inscription() {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: '40px auto' }}>
-      <h2>Inscription</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="nom" placeholder="Nom" onChange={handleChange} required /><br />
-        <input name="prenom" placeholder="Prénom" onChange={handleChange} required /><br />
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required /><br />
-        <input name="mot_de_passe" type="password" placeholder="Mot de passe (8 caractères min)" onChange={handleChange} required /><br />
-        <button type="submit">S'inscrire</button>
-      </form>
-      {erreur && <p style={{ color: 'red' }}>{erreur}</p>}
+    <div className="conteneur" style={{ maxWidth: 400 }}>
+      <div className="carte">
+        <h2>Inscription</h2>
+        <form onSubmit={handleSubmit}>
+          <input name="nom" placeholder="Nom" onChange={handleChange} required />
+          <input name="prenom" placeholder="Prénom" onChange={handleChange} required />
+          <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
+          <input name="mot_de_passe" type="password" placeholder="Mot de passe (8 caractères min)" onChange={handleChange} required />
+          <button type="submit">S'inscrire</button>
+        </form>
+        {erreur && <p className="erreur">{erreur}</p>}
+      </div>
     </div>
   );
 }

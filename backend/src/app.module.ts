@@ -10,6 +10,8 @@ import { DonsModule } from './dons/dons.module';
 import { RetraitsModule } from './retraits/retraits.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CommentairesModule } from './commentaires/commentaires.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ActualitesModule } from './actualites/actualites.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { CommentairesModule } from './commentaires/commentaires.module';
     RetraitsModule,
     CategoriesModule,
     CommentairesModule,
+    NotificationsModule,
+    ActualitesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
