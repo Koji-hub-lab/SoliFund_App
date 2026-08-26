@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateActualiteDto } from './dto/create-actualite.dto';
 
@@ -14,7 +18,9 @@ export class ActualitesService {
       throw new NotFoundException('Cagnotte introuvable.');
     }
     if (cagnotte.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException("Tu n'es pas le propriétaire de cette cagnotte.");
+      throw new ForbiddenException(
+        "Tu n'es pas le propriétaire de cette cagnotte.",
+      );
     }
 
     return this.prisma.actualite.create({

@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
 import { UtilisateursService } from '../utilisateurs/utilisateurs.service';
 import { LoginDto } from './dto/login.dto';
 
@@ -9,6 +10,7 @@ export class AuthService {
   constructor(
     private readonly utilisateursService: UtilisateursService,
     private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -22,7 +24,13 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants invalides.');
     }
 
-    const payload = { sub: utilisateur.id_utilisateur, email: utilisateur.email };
+    const possessions = await this.prisma.posseder.findMany({
+      where: { id_utilisateur: utilisateur.id_utilisateur },
+      include: { role: true },
+    });
+    const roles = possessions.map((p) => p.role.nom);
+
+    const payload = { sub: utilisateur.id_utilisateur, email: utilisateur.email, roles };
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -31,6 +39,7 @@ export class AuthService {
         nom: utilisateur.nom,
         prenom: utilisateur.prenom,
         email: utilisateur.email,
+        roles,
       },
     };
   }

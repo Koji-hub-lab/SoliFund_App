@@ -1,4 +1,12 @@
-import { Controller, Get, Param, ParseIntPipe, Patch, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 
@@ -9,7 +17,9 @@ export class NotificationsController {
 
   @Get()
   lister(@Request() req: any) {
-    return this.notificationsService.listerPourUtilisateur(req.user.id_utilisateur);
+    return this.notificationsService.listerPourUtilisateur(
+      req.user.id_utilisateur,
+    );
   }
 
   @Patch(':id/lue')

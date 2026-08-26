@@ -4,6 +4,6 @@ import { RetraitsService } from './retraits.service';
 
 @Module({
   controllers: [RetraitsController],
-  providers: [RetraitsService]
+  providers: [RetraitsService],
 })
 export class RetraitsModule {}

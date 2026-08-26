@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentaireDto } from './dto/create-commentaire.dto';
 
@@ -23,4 +23,16 @@ export class CommentairesService {
       orderBy: { date_creation: 'desc' },
     });
   }
+
+  async supprimer(idCommentaire: number, idUtilisateur: number) {
+  const commentaire = await this.prisma.commentaire.findUnique({ where: { id_commentaire: idCommentaire } });
+  if (!commentaire) {
+    throw new NotFoundException('Commentaire introuvable.');
+  }
+  if (commentaire.id_utilisateur !== idUtilisateur) {
+    throw new ForbiddenException("Tu ne peux pas supprimer ce commentaire.");
+  }
+  await this.prisma.commentaire.delete({ where: { id_commentaire: idCommentaire } });
+  return { message: 'Commentaire supprimé.' };
+}
 }

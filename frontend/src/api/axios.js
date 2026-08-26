@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+export const API_URL = 'http://localhost:3000';
+
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: API_URL,
 });
 
 api.interceptors.request.use((config) => {
@@ -11,5 +13,18 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (!error.response) {
+      error.messageAffichable = 'Impossible de joindre le serveur. Vérifie ta connexion.';
+    } else {
+      const msg = error.response.data?.message;
+      error.messageAffichable = Array.isArray(msg) ? msg.join(', ') : msg || 'Une erreur est survenue.';
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default api;

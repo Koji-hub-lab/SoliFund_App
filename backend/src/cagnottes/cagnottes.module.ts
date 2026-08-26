@@ -4,6 +4,6 @@ import { CagnottesService } from './cagnottes.service';
 
 @Module({
   controllers: [CagnottesController],
-  providers: [CagnottesService]
+  providers: [CagnottesService],
 })
 export class CagnottesModule {}

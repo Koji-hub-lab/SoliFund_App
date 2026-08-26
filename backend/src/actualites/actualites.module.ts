@@ -4,6 +4,6 @@ import { ActualitesService } from './actualites.service';
 
 @Module({
   controllers: [ActualitesController],
-  providers: [ActualitesService]
+  providers: [ActualitesService],
 })
 export class ActualitesModule {}

@@ -2,6 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUtilisateurDto } from './dto/create-utilisateur.dto';
+import { UpdateUtilisateurDto } from './dto/update-utilisateur.dto';
 
 @Injectable()
 export class UtilisateursService {
@@ -15,8 +16,6 @@ export class UtilisateursService {
       throw new ConflictException('Cet email est déjà utilisé.');
     }
 
-
-
     const mot_de_passe_hash = await bcrypt.hash(dto.mot_de_passe, 10);
 
     const utilisateur = await this.prisma.utilisateur.create({
@@ -28,9 +27,7 @@ export class UtilisateursService {
         telephone: dto.telephone,
         posseders: {
           create: {
-            role: {
-              connect: { nom: 'ROLE_USER' },
-            },
+            role: { connect: { nom: 'ROLE_USER' } },
           },
         },
       },
@@ -48,6 +45,31 @@ export class UtilisateursService {
   }
 
   async trouverParEmail(email: string) {
-  return this.prisma.utilisateur.findUnique({ where: { email } });
+    return this.prisma.utilisateur.findUnique({ where: { email } });
+  }
+
+  async modifierProfil(idUtilisateur: number, dto: UpdateUtilisateurDto) {
+    const donnees: any = {
+      nom: dto.nom,
+      prenom: dto.prenom,
+      telephone: dto.telephone,
+    };
+
+    if (dto.mot_de_passe) {
+      donnees.mot_de_passe = await bcrypt.hash(dto.mot_de_passe, 10);
     }
+
+    return this.prisma.utilisateur.update({
+      where: { id_utilisateur: idUtilisateur },
+      data: donnees,
+      select: {
+        id_utilisateur: true,
+        nom: true,
+        prenom: true,
+        email: true,
+        telephone: true,
+        photo_profil: true,
+      },
+    });
+  }
 }

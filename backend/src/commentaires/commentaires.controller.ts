@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CommentairesService } from './commentaires.service';
 import { CreateCommentaireDto } from './dto/create-commentaire.dto';
@@ -16,5 +16,11 @@ export class CommentairesController {
   @Get('cagnotte/:id')
   listerParCagnotte(@Param('id', ParseIntPipe) id: number) {
     return this.commentairesService.listerParCagnotte(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  supprimer(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.commentairesService.supprimer(id, req.user.id_utilisateur);
   }
 }

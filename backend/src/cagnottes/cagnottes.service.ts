@@ -1,16 +1,23 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCagnotteDto } from './dto/create-cagnotte.dto';
 import { UpdateCagnotteDto } from './dto/update-cagnotte.dto';
 
 function genererSlug(titre: string): string {
-  return titre
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    + '-' + Date.now().toString(36);
+  return (
+    titre
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') +
+    '-' +
+    Date.now().toString(36)
+  );
 }
 
 @Injectable()
@@ -41,7 +48,9 @@ export class CagnottesService {
   }
 
   async trouverParId(id: number) {
-    const cagnotte = await this.prisma.cagnotte.findUnique({ where: { id_cagnotte: id } });
+    const cagnotte = await this.prisma.cagnotte.findUnique({
+      where: { id_cagnotte: id },
+    });
     if (!cagnotte) {
       throw new NotFoundException('Cagnotte introuvable.');
     }
@@ -51,7 +60,9 @@ export class CagnottesService {
   async modifier(id: number, idUtilisateur: number, dto: UpdateCagnotteDto) {
     const cagnotte = await this.trouverParId(id);
     if (cagnotte.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException("Tu n'es pas le propriétaire de cette cagnotte.");
+      throw new ForbiddenException(
+        "Tu n'es pas le propriétaire de cette cagnotte.",
+      );
     }
 
     return this.prisma.cagnotte.update({
@@ -70,9 +81,28 @@ export class CagnottesService {
   async supprimer(id: number, idUtilisateur: number) {
     const cagnotte = await this.trouverParId(id);
     if (cagnotte.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException("Tu n'es pas le propriétaire de cette cagnotte.");
+      throw new ForbiddenException(
+        "Tu n'es pas le propriétaire de cette cagnotte.",
+      );
     }
     await this.prisma.cagnotte.delete({ where: { id_cagnotte: id } });
     return { message: 'Cagnotte supprimée.' };
+  }
+
+  async mettreAJourImage(
+    id: number,
+    idUtilisateur: number,
+    cheminImage: string,
+  ) {
+    const cagnotte = await this.trouverParId(id);
+    if (cagnotte.id_utilisateur !== idUtilisateur) {
+      throw new ForbiddenException(
+        "Tu n'es pas le propriétaire de cette cagnotte.",
+      );
+    }
+    return this.prisma.cagnotte.update({
+      where: { id_cagnotte: id },
+      data: { image: cheminImage },
+    });
   }
 }

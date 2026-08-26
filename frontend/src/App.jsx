@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import api from './api/axios';
+import RouteProtegee from './components/RouteProtegee';
 import Login from './pages/Login';
 import Inscription from './pages/Inscription';
 import ListeCagnottes from './pages/ListeCagnottes';
@@ -10,6 +11,8 @@ import CreerCagnotte from './pages/CreerCagnotte';
 import MesCagnottes from './pages/MesCagnottes';
 import Notifications from './pages/Notifications';
 import Compte from './pages/Compte';
+import NonTrouve from './pages/NonTrouve';
+import ModifierCagnotte from './pages/ModifierCagnotte';
 
 function Nav() {
   const { utilisateur, deconnecter } = useAuth();
@@ -59,6 +62,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/inscription" element={<Inscription />} />
           <Route path="/cagnottes/:id" element={<DetailCagnotte />} />
+          <Route path="/cagnottes/:id/modifier" element={<RouteProtegee><ModifierCagnotte /></RouteProtegee>} />
           <Route path="/creer-cagnotte" element={<CreerCagnotte />} />
           <Route path="/mes-cagnottes" element={<MesCagnottes />} />
           <Route path="/notifications" element={<Notifications />} />

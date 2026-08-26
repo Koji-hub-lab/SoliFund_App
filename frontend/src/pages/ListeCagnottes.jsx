@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api/axios';
+import api, { API_URL } from '../api/axios';
+import Spinner from '../components/Spinner';
+import MessageErreur from '../components/MessageErreur';
 
 function joursRestants(dateFin) {
   const diff = new Date(dateFin) - new Date();
@@ -15,11 +17,22 @@ export default function ListeCagnottes() {
   const [categories, setCategories] = useState([]);
   const [recherche, setRecherche] = useState('');
   const [categorieChoisie, setCategorieChoisie] = useState('');
+  const [chargement, setChargement] = useState(true);
+  const [erreur, setErreur] = useState('');
 
-  useEffect(() => {
-    api.get('/cagnottes').then((res) => setCagnottes(res.data));
-    api.get('/categories').then((res) => setCategories(res.data));
-  }, []);
+  function charger() {
+    setChargement(true);
+    setErreur('');
+    Promise.all([api.get('/cagnottes'), api.get('/categories')])
+      .then(([resCagnottes, resCategories]) => {
+        setCagnottes(resCagnottes.data);
+        setCategories(resCategories.data);
+      })
+      .catch((err) => setErreur(err.messageAffichable))
+      .finally(() => setChargement(false));
+  }
+
+  useEffect(charger, []);
 
   function nomCategorie(idCategorie) {
     return categories.find((cat) => cat.id_categorie === idCategorie)?.nom;
@@ -30,6 +43,9 @@ export default function ListeCagnottes() {
     const correspondCategorie = !categorieChoisie || c.id_categorie === Number(categorieChoisie);
     return correspondRecherche && correspondCategorie;
   });
+
+  if (chargement) return <div className="conteneur"><Spinner /></div>;
+  if (erreur) return <div className="conteneur"><MessageErreur texte={erreur} onReessayer={charger} /></div>;
 
   return (
     <div className="conteneur">
@@ -59,11 +75,14 @@ export default function ListeCagnottes() {
         const pourcentage = Math.min(100, Math.round((c.montant_collecte / c.objectif) * 100));
         return (
           <div key={c.id_cagnotte} className="carte">
+            {c.image && (
+              <img src={`${API_URL}${c.image}`} alt={c.titre} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} />
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <h3><Link to={`/cagnottes/${c.id_cagnotte}`}>{c.titre}</Link></h3>
               {c.id_categorie && <span className="badge">{nomCategorie(c.id_categorie)}</span>}
             </div>
-            <p>{c.montant_collecte} / {c.objectif} {c.devise}</p>
+            <p>{Number(c.montant_collecte).toLocaleString('fr-FR')} / {Number(c.objectif).toLocaleString('fr-FR')} {c.devise}</p>
             <div className="barre-progression">
               <div className="barre-progression-remplissage" style={{ width: `${pourcentage}%` }}></div>
             </div>

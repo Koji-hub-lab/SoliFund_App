@@ -1,3 +1,21 @@
+@import "tailwindcss/theme.css";
+@import "tailwindcss/utilities.css";
+
+@theme inline {
+  --color-background: #ffffff;
+  --color-foreground: #0f2a2a;
+  --color-card: #ffffff;
+  --color-primary: #0ea5a0;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f7f9fa;
+  --color-secondary-foreground: #0f2a2a;
+  --color-muted: #f7f9fa;
+  --color-muted-foreground: #5f7070;
+  --color-accent: #f5b942;
+  --color-accent-foreground: #4a3410;
+  --color-destructive: #e5484d;
+  --color-border: #e6ecec;
+}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 * { box-sizing: border-box; }
