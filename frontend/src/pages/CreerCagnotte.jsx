@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ImagePlus } from 'lucide-react';
+import DashboardLayout from '../components/dashboard/DashboardLayout';
+import { Button } from '../components/ui/Button';
 import api from '../api/axios';
 
 function validerForm(form) {
@@ -19,8 +22,11 @@ export default function CreerCagnotte() {
     titre: '', description: '', objectif: '', date_debut: '', date_fin: '', id_categorie: '',
   });
   const [categories, setCategories] = useState([]);
+  const [fichierImage, setFichierImage] = useState(null);
+  const [apercu, setApercu] = useState(null);
   const [erreursChamps, setErreursChamps] = useState({});
   const [erreurServeur, setErreurServeur] = useState('');
+  const [envoiEnCours, setEnvoiEnCours] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +37,13 @@ export default function CreerCagnotte() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  function handleImage(e) {
+    const fichier = e.target.files[0];
+    if (!fichier) return;
+    setFichierImage(fichier);
+    setApercu(URL.createObjectURL(fichier));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setErreurServeur('');
@@ -38,50 +51,103 @@ export default function CreerCagnotte() {
     setErreursChamps(erreurs);
     if (Object.keys(erreurs).length > 0) return;
 
+    setEnvoiEnCours(true);
     try {
       const res = await api.post('/cagnottes', {
         ...form,
         objectif: Number(form.objectif),
         id_categorie: form.id_categorie ? Number(form.id_categorie) : undefined,
       });
+
+      if (fichierImage) {
+        const formData = new FormData();
+        formData.append('image', fichierImage);
+        await api.post(`/cagnottes/${res.data.id_cagnotte}/image`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+
       navigate(`/cagnottes/${res.data.id_cagnotte}`);
     } catch (err) {
       setErreurServeur(err.messageAffichable);
+      setEnvoiEnCours(false);
     }
   }
 
   return (
-    <div className="conteneur" style={{ maxWidth: 500 }}>
-      <div className="carte">
-        <h2>Créer une cagnotte</h2>
-        <form onSubmit={handleSubmit} noValidate>
-          <input name="titre" placeholder="Titre" value={form.titre} onChange={handleChange} />
-          {erreursChamps.titre && <p className="erreur">{erreursChamps.titre}</p>}
+    <DashboardLayout>
+      <div className="mx-auto max-w-2xl">
+        <h1 className="text-2xl font-bold text-foreground">Créer une cagnotte</h1>
+        <p className="mt-1 text-muted-foreground">Renseigne les informations de ton projet pour lancer ta collecte.</p>
 
-          <textarea name="description" placeholder="Description" value={form.description} onChange={handleChange} rows={4} />
+        <form onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-5 rounded-xl border border-border bg-card p-6">
+          {/* Image */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-foreground">Photo de couverture</label>
+            <label
+              htmlFor="image-cagnotte"
+              className="flex aspect-[16/7] cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-border bg-secondary text-muted-foreground hover:border-primary/40 hover:text-primary"
+            >
+              {apercu ? (
+                <img src={apercu} alt="Aperçu" className="h-full w-full object-cover" />
+              ) : (
+                <>
+                  <ImagePlus className="size-8" />
+                  <span className="text-sm font-medium">Ajouter une photo (facultatif)</span>
+                </>
+              )}
+            </label>
+            <input id="image-cagnotte" type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImage} className="hidden" />
+          </div>
 
-          <input name="objectif" type="number" placeholder="Objectif (XAF)" value={form.objectif} onChange={handleChange} />
-          {erreursChamps.objectif && <p className="erreur">{erreursChamps.objectif}</p>}
+          <div>
+            <label htmlFor="titre" className="mb-2 block text-sm font-medium text-foreground">Titre de la cagnotte</label>
+            <input id="titre" name="titre" value={form.titre} onChange={handleChange} placeholder="Ex : Aide pour l'opération de Marie" className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            {erreursChamps.titre && <p className="mt-1 text-xs text-destructive">{erreursChamps.titre}</p>}
+          </div>
 
-          <select name="id_categorie" value={form.id_categorie} onChange={handleChange}>
-            <option value="">Choisir une catégorie (facultatif)</option>
-            {categories.map((cat) => (
-              <option key={cat.id_categorie} value={cat.id_categorie}>{cat.nom}</option>
-            ))}
-          </select>
+          <div>
+            <label htmlFor="description" className="mb-2 block text-sm font-medium text-foreground">Description</label>
+            <textarea id="description" name="description" value={form.description} onChange={handleChange} rows={4} placeholder="Explique le contexte de ta cagnotte..." className="w-full rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+          </div>
 
-          <label>Date de début</label>
-          <input name="date_debut" type="date" value={form.date_debut} onChange={handleChange} />
-          {erreursChamps.date_debut && <p className="erreur">{erreursChamps.date_debut}</p>}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="objectif" className="mb-2 block text-sm font-medium text-foreground">Objectif (XAF)</label>
+              <input id="objectif" name="objectif" type="number" value={form.objectif} onChange={handleChange} placeholder="500000" className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              {erreursChamps.objectif && <p className="mt-1 text-xs text-destructive">{erreursChamps.objectif}</p>}
+            </div>
+            <div>
+              <label htmlFor="id_categorie" className="mb-2 block text-sm font-medium text-foreground">Catégorie</label>
+              <select id="id_categorie" name="id_categorie" value={form.id_categorie} onChange={handleChange} className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                <option value="">Aucune catégorie</option>
+                {categories.map((cat) => (
+                  <option key={cat.id_categorie} value={cat.id_categorie}>{cat.nom}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-          <label>Date de fin</label>
-          <input name="date_fin" type="date" value={form.date_fin} onChange={handleChange} />
-          {erreursChamps.date_fin && <p className="erreur">{erreursChamps.date_fin}</p>}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="date_debut" className="mb-2 block text-sm font-medium text-foreground">Date de début</label>
+              <input id="date_debut" name="date_debut" type="date" value={form.date_debut} onChange={handleChange} className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              {erreursChamps.date_debut && <p className="mt-1 text-xs text-destructive">{erreursChamps.date_debut}</p>}
+            </div>
+            <div>
+              <label htmlFor="date_fin" className="mb-2 block text-sm font-medium text-foreground">Date de fin</label>
+              <input id="date_fin" name="date_fin" type="date" value={form.date_fin} onChange={handleChange} className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              {erreursChamps.date_fin && <p className="mt-1 text-xs text-destructive">{erreursChamps.date_fin}</p>}
+            </div>
+          </div>
 
-          <button type="submit">Créer la cagnotte</button>
+          {erreurServeur && <p className="text-sm text-destructive">{erreurServeur}</p>}
+
+          <Button type="submit" size="lg" disabled={envoiEnCours} className="mt-2">
+            {envoiEnCours ? 'Création en cours...' : 'Créer ma cagnotte'}
+          </Button>
         </form>
-        {erreurServeur && <p className="erreur">{erreurServeur}</p>}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
