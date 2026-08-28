@@ -38,7 +38,7 @@ export default function Dashboard() {
       <div className="flex flex-col gap-8">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Bonjour, {utilisateur.prenom} 👋</h1>
+            <h1 className="text-2xl font-bold text-foreground">Bonjour, {utilisateur.prenom} </h1>
             <p className="mt-1 text-muted-foreground">Voici un aperçu de ton activité sur Solifund.</p>
           </div>
           <Button to="/creer-cagnotte">
