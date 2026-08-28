@@ -218,9 +218,10 @@ export default function AuthPage({ defaultTab = 'login' }) {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <label htmlFor="login-password" className="text-sm font-medium text-foreground">Mot de passe</label>
-                    <Link to="/mot-de-passe-oublie" className="text-sm font-medium text-primary hover:underline">Mot de passe oublié ?</Link>
+                    
                   </div>
                   <ChampMotDePasse id="login-password" autoComplete="current-password" value={mdpLogin} onChange={(e) => setMdpLogin(e.target.value)} />
+                    <Link to="/mot-de-passe-oublie" className="text-sm font-medium text-primary hover:underline">Mot de passe oublié ?</Link>
                 </div>
                 {erreurLogin && <p className="text-sm text-destructive">{erreurLogin}</p>}
                 <Button type="submit" className="h-11">Se connecter</Button>

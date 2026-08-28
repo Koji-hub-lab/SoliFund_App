@@ -1,11 +1,7 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRetraitDto } from './dto/create-retrait.dto';
+import { RejectRetraitDto } from './dto/reject-retrait.dto';
 
 @Injectable()
 export class RetraitsService {
@@ -19,25 +15,18 @@ export class RetraitsService {
       throw new NotFoundException('Cagnotte introuvable.');
     }
     if (cagnotte.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException(
-        "Tu n'es pas le propriétaire de cette cagnotte.",
-      );
+      throw new ForbiddenException("Tu n'es pas le propriétaire de cette cagnotte.");
     }
 
     const dejaRetire = await this.prisma.retrait.aggregate({
-      where: {
-        id_cagnotte: dto.id_cagnotte,
-        statut: { in: ['APPROUVE', 'TRAITE'] },
-      },
+      where: { id_cagnotte: dto.id_cagnotte, statut: { in: ['APPROUVE', 'TRAITE'] } },
       _sum: { montant: true },
     });
     const totalDejaRetire = Number(dejaRetire._sum.montant ?? 0);
     const disponible = Number(cagnotte.montant_collecte) - totalDejaRetire;
 
     if (dto.montant > disponible) {
-      throw new BadRequestException(
-        `Montant disponible insuffisant (${disponible} ${cagnotte.devise}).`,
-      );
+      throw new BadRequestException(`Montant disponible insuffisant (${disponible} ${cagnotte.devise}).`);
     }
 
     return this.prisma.retrait.create({
@@ -51,11 +40,8 @@ export class RetraitsService {
     });
   }
 
-  // Réservé à un admin dans une vraie version (à protéger avec un guard de rôle plus tard).
   async traiter(idRetrait: number) {
-    const retrait = await this.prisma.retrait.findUnique({
-      where: { id_retrait: idRetrait },
-    });
+    const retrait = await this.prisma.retrait.findUnique({ where: { id_retrait: idRetrait } });
     if (!retrait) {
       throw new NotFoundException('Retrait introuvable.');
     }
@@ -74,12 +60,29 @@ export class RetraitsService {
         },
       });
 
-      const retraitTraite = await tx.retrait.update({
+      return tx.retrait.update({
         where: { id_retrait: idRetrait },
         data: { statut: 'TRAITE', date_traitement: new Date() },
       });
+    });
+  }
 
-      return { ...retraitTraite, id_transaction: transaction.id_transaction };
+  async rejeter(idRetrait: number, dto: RejectRetraitDto) {
+    const retrait = await this.prisma.retrait.findUnique({ where: { id_retrait: idRetrait } });
+    if (!retrait) {
+      throw new NotFoundException('Retrait introuvable.');
+    }
+    if (retrait.statut !== 'EN_ATTENTE') {
+      throw new BadRequestException('Ce retrait a déjà été traité.');
+    }
+
+    return this.prisma.retrait.update({
+      where: { id_retrait: idRetrait },
+      data: {
+        statut: 'REJETE',
+        motif_rejet: dto.motif_rejet,
+        date_traitement: new Date(),
+      },
     });
   }
 
@@ -87,6 +90,16 @@ export class RetraitsService {
     return this.prisma.retrait.findMany({
       where: { id_cagnotte: idCagnotte },
       orderBy: { date_creation: 'desc' },
+    });
+  }
+
+  async listerToutes() {
+    return this.prisma.retrait.findMany({
+      include: {
+        cagnotte: { select: { titre: true, devise: true } },
+        utilisateur: { select: { nom: true, prenom: true, email: true } },
+      },
+      orderBy: [{ statut: 'asc' }, { date_creation: 'desc' }],
     });
   }
 }

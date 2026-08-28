@@ -1,38 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Wallet, PlusCircle, Bell, UserCircle, LogOut, Menu, X, HeartHandshake, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Wallet, ArrowLeft, LogOut, Menu, X, HeartHandshake, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../api/axios';
 
 const liensNav = [
-  { label: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Mes cagnottes', href: '/mes-cagnottes', icon: Wallet },
-  { label: 'Créer une cagnotte', href: '/creer-cagnotte', icon: PlusCircle },
-  { label: 'Notifications', href: '/notifications', icon: Bell },
-  { label: 'Mon profil', href: '/compte', icon: UserCircle },
+  { label: 'Retraits', href: '/admin/retraits', icon: Wallet },
+  { label: 'Utilisateurs', href: '/admin/utilisateurs', icon: Users },
 ];
 
-export default function DashboardLayout({ children }) {
-  const { utilisateur, deconnecter } = useAuth();
+export default function AdminLayout({ children }) {
+  const { deconnecter } = useAuth();
   const location = useLocation();
   const [ouvert, setOuvert] = useState(false);
-  const [nbNonLues, setNbNonLues] = useState(0);
-
-  useEffect(() => {
-    api.get('/notifications').then((res) => {
-      setNbNonLues(res.data.filter((r) => r.statut === 'NON_LUE').length);
-    });
-  }, []);
 
   const ContenuSidebar = () => (
     <>
-      <Link to="/" className="flex items-center gap-2 px-6 py-5">
+      <Link to="/admin/retraits" className="flex items-center gap-2 px-6 py-5">
         <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <HeartHandshake className="size-5" />
         </span>
-        <span className="text-lg font-bold tracking-tight text-foreground">
-          Soli<span className="text-primary">fund</span>
-        </span>
+        <div>
+          <p className="text-sm font-bold tracking-tight text-foreground">Solifund</p>
+          <p className="text-xs font-medium text-primary">Administration</p>
+        </div>
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1 px-3">
@@ -50,29 +40,15 @@ export default function DashboardLayout({ children }) {
             >
               <Icon className="size-4.5" />
               {lien.label}
-              {lien.href === '/notifications' && nbNonLues > 0 && (
-                <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
-                  {nbNonLues}
-                </span>
-              )}
             </Link>
           );
         })}
-        {utilisateur?.roles?.includes('ROLE_ADMIN') && (
-  <Link
-    to="/admin/retraits"
-    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
-  >
-    <ShieldCheck className="size-4.5" />
-    Administration
-  </Link>
-)}
       </nav>
 
       <div className="border-t border-border px-3 py-4">
-        <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
+        <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
           <ArrowLeft className="size-4.5" />
-          Retour au site
+          Retour au dashboard
         </Link>
         <button onClick={deconnecter} className="flex w-full items-center gap-3 rounded-lg bg-transparent px-3 py-2.5 text-left text-sm font-medium text-destructive hover:bg-destructive/10">
           <LogOut className="size-4.5" />
@@ -84,12 +60,10 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-secondary">
-      {/* Sidebar desktop */}
       <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-border bg-background lg:flex">
         <ContenuSidebar />
       </aside>
 
-      {/* Sidebar mobile (overlay) */}
       {ouvert && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOuvert(false)} />
@@ -100,11 +74,8 @@ export default function DashboardLayout({ children }) {
       )}
 
       <div className="flex flex-1 flex-col">
-        {/* Top bar mobile */}
         <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3 lg:hidden">
-          <span className="font-bold text-foreground">
-            Bonjour, {utilisateur?.prenom}
-          </span>
+          <span className="font-bold text-foreground">Administration</span>
           <button onClick={() => setOuvert(true)} className="rounded-lg border border-border p-2">
             <Menu className="size-5" />
           </button>

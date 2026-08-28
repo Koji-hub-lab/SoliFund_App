@@ -15,7 +15,8 @@ import Compte from './pages/Compte';
 import NonTrouve from './pages/NonTrouve';
 import Dashboard from './pages/Dashboard';
 import MotDePasseOublie from './pages/MotDePasseOublie';
-import ReinitialiserMotDePasse from './pages/ReinitialiserMotDePasse';
+import AdminRoute from './components/AdminRoute';
+import AdminRetraits from './pages/admin/AdminRetraits';
 
 function Nav() {
   const { utilisateur, deconnecter } = useAuth();
@@ -53,7 +54,7 @@ function Nav() {
 
 function ContenuApp() {
   const location = useLocation();
-  const pagesSansNavGlobale = ['/', '/login', '/inscription', '/dashboard', '/mes-cagnottes', '/creer-cagnotte', '/notifications', '/compte', '/mot-de-passe-oublie', '/reinitialiser-mot-de-passe'];
+  const pagesSansNavGlobale = ['/', '/login', '/inscription', '/dashboard', '/mes-cagnottes', '/creer-cagnotte', '/notifications', '/compte', '/mot-de-passe-oublie', '/cagnottes-toutes', '/admin/retraits'];
 const estDetailCagnotte = /^\/cagnottes\/\d+$/.test(location.pathname);
 const estModifierCagnotte = /^\/cagnottes\/\d+\/modifier$/.test(location.pathname);
 const surAccueil = pagesSansNavGlobale.includes(location.pathname) || estDetailCagnotte || estModifierCagnotte;
@@ -72,7 +73,7 @@ const surAccueil = pagesSansNavGlobale.includes(location.pathname) || estDetailC
         <Route path="/notifications" element={<RouteProtegee><Notifications /></RouteProtegee>} />
         <Route path="/compte" element={<RouteProtegee><Compte /></RouteProtegee>} />
         <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
-<Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePasse />} />
+        <Route path="/admin/retraits" element={<AdminRoute><AdminRetraits /></AdminRoute>} />
         <Route path="*" element={<NonTrouve />} />
         <Route path="/dashboard" element={<RouteProtegee><Dashboard /></RouteProtegee>} />
       </Routes>

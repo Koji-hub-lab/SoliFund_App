@@ -4,6 +4,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RetraitsService } from './retraits.service';
 import { CreateRetraitDto } from './dto/create-retrait.dto';
+import { RejectRetraitDto } from './dto/reject-retrait.dto';
 
 @Controller('retraits')
 @UseGuards(JwtAuthGuard)
@@ -20,6 +21,20 @@ export class RetraitsController {
   @Post(':id/traiter')
   traiter(@Param('id', ParseIntPipe) id: number) {
     return this.retraitsService.traiter(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ROLE_ADMIN')
+  @Post(':id/rejeter')
+  rejeter(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectRetraitDto) {
+    return this.retraitsService.rejeter(id, dto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ROLE_ADMIN')
+  @Get()
+  listerToutes() {
+    return this.retraitsService.listerToutes();
   }
 
   @Get('cagnotte/:id')

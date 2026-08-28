@@ -1,14 +1,17 @@
-import { Injectable, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
-import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { UtilisateursService } from '../utilisateurs/utilisateurs.service';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { VerifyCodeDto } from './dto/verify-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { BrevoService } from './brevo.service';
+
+function genererCodeSixChiffres(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 @Injectable()
 export class AuthService {
@@ -16,7 +19,6 @@ export class AuthService {
     private readonly utilisateursService: UtilisateursService,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
     private readonly brevoService: BrevoService,
   ) {}
 
@@ -53,36 +55,67 @@ export class AuthService {
 
   async demanderReinitialisation(dto: ForgotPasswordDto) {
     const utilisateur = await this.utilisateursService.trouverParEmail(dto.email);
-    // On répond pareil que l'utilisateur existe ou non, pour ne pas révéler quels emails sont inscrits
     if (!utilisateur) {
-      return { message: 'Si ce compte existe, un email de réinitialisation a été envoyé.' };
+      // Réponse identique que le compte existe ou non, pour ne pas révéler les emails inscrits
+      return { message: 'Si ce compte existe, un code a été envoyé par email.' };
     }
 
-    const code = crypto.randomBytes(32).toString('hex');
-    const dateExpiration = new Date(Date.now() + 60 * 60 * 1000); // 1h
+    let code = genererCodeSixChiffres();
+    for (let tentative = 0; tentative < 5; tentative++) {
+      const existant = await this.prisma.jeton.findUnique({ where: { code } });
+      if (!existant) break;
+      code = genererCodeSixChiffres();
+    }
 
     await this.prisma.jeton.create({
       data: {
         id_utilisateur: utilisateur.id_utilisateur,
         code,
         type: 'RESET_MDP',
-        date_expiration: dateExpiration,
+        date_expiration: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
       },
     });
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
-    const lien = `${frontendUrl}/reinitialiser-mot-de-passe?code=${code}`;
+    await this.brevoService.envoyerCodeReinitialisation(utilisateur.email, utilisateur.prenom, code);
 
-    await this.brevoService.envoyerEmailReinitialisation(utilisateur.email, utilisateur.prenom, lien);
-
-    return { message: 'Si ce compte existe, un email de réinitialisation a été envoyé.' };
+    return { message: 'Si ce compte existe, un code a été envoyé par email.' };
   }
 
-  async reinitialiserMotDePasse(dto: ResetPasswordDto) {
-    const jeton = await this.prisma.jeton.findUnique({ where: { code: dto.code } });
+  async verifierCode(dto: VerifyCodeDto) {
+    const utilisateur = await this.utilisateursService.trouverParEmail(dto.email);
+    if (!utilisateur) {
+      throw new BadRequestException('Code invalide ou expiré.');
+    }
 
-    if (!jeton || jeton.type !== 'RESET_MDP' || jeton.est_utilise || jeton.date_expiration < new Date()) {
-      throw new BadRequestException('Ce lien de réinitialisation est invalide ou a expiré.');
+    const jeton = await this.prisma.jeton.findUnique({ where: { code: dto.code } });
+    if (
+      !jeton ||
+      jeton.id_utilisateur !== utilisateur.id_utilisateur ||
+      jeton.type !== 'RESET_MDP' ||
+      jeton.est_utilise ||
+      jeton.date_expiration < new Date()
+    ) {
+      throw new BadRequestException('Code invalide ou expiré.');
+    }
+
+    return { message: 'Code valide.' };
+  }
+
+  async reinitialiserMotDePasse(dto: ResetPasswordDto & { email: string }) {
+    const utilisateur = await this.utilisateursService.trouverParEmail(dto.email);
+    if (!utilisateur) {
+      throw new BadRequestException('Code invalide ou expiré.');
+    }
+
+    const jeton = await this.prisma.jeton.findUnique({ where: { code: dto.code } });
+    if (
+      !jeton ||
+      jeton.id_utilisateur !== utilisateur.id_utilisateur ||
+      jeton.type !== 'RESET_MDP' ||
+      jeton.est_utilise ||
+      jeton.date_expiration < new Date()
+    ) {
+      throw new BadRequestException('Code invalide ou expiré.');
     }
 
     const mot_de_passe_hash = await bcrypt.hash(dto.mot_de_passe, 10);
