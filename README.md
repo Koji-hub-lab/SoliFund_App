@@ -1,0 +1,1 @@
+Toujours répondre en français, expliquer chaque action importante avant de la faire

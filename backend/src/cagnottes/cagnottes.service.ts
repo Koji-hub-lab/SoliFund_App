@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ImagesService } from '../uploads/images.service';
 import { CreateCagnotteDto } from './dto/create-cagnotte.dto';
 import { UpdateCagnotteDto } from './dto/update-cagnotte.dto';
 
@@ -22,7 +23,10 @@ function genererSlug(titre: string): string {
 
 @Injectable()
 export class CagnottesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly imagesService: ImagesService,
+  ) {}
 
   async creer(idUtilisateur: number, dto: CreateCagnotteDto) {
     return this.prisma.cagnotte.create({
@@ -92,7 +96,7 @@ export class CagnottesService {
   async mettreAJourImage(
     id: number,
     idUtilisateur: number,
-    cheminImage: string,
+    fichier: Express.Multer.File | undefined,
   ) {
     const cagnotte = await this.trouverParId(id);
     if (cagnotte.id_utilisateur !== idUtilisateur) {
@@ -100,9 +104,21 @@ export class CagnottesService {
         "Tu n'es pas le propriétaire de cette cagnotte.",
       );
     }
-    return this.prisma.cagnotte.update({
-      where: { id_cagnotte: id },
-      data: { image: cheminImage },
-    });
+
+    const nouvelleImage = await this.imagesService.enregistrer(fichier, 'cagnottes');
+    let misAJour;
+    try {
+      misAJour = await this.prisma.cagnotte.update({
+        where: { id_cagnotte: id },
+        data: { image: nouvelleImage },
+      });
+    } catch (e) {
+      // La base n'a pas été mise à jour : on ne laisse pas de fichier orphelin.
+      await this.imagesService.supprimer(nouvelleImage, 'cagnottes');
+      throw e;
+    }
+
+    await this.imagesService.supprimer(cagnotte.image, 'cagnottes');
+    return misAJour;
   }
 }

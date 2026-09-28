@@ -45,6 +45,7 @@ export default function DetailCagnotte() {
 
   // Image (propriétaire)
   const [fichierImage, setFichierImage] = useState(null);
+  const [donEnAttente, setDonEnAttente] = useState(null);
 
   function charger() {
     setErreur('');
@@ -68,19 +69,34 @@ export default function DetailCagnotte() {
   useEffect(charger, [id]);
 
   async function faireDon(e) {
-    e.preventDefault();
-    const res = await api.post('/dons', {
-      id_cagnotte: Number(id),
-      montant: Number(montant),
-      methode_paiement: methode,
-      numero_payeur: numero,
-    });
-    await api.post(`/dons/${res.data.id_don}/valider`);
+  e.preventDefault();
+  setMessageDon('Envoi de la demande de paiement...');
+  const res = await api.post('/dons', {
+    id_cagnotte: Number(id),
+    montant: Number(montant),
+    methode_paiement: methode,
+    numero_payeur: numero,
+  });
+  setMessageDon('Confirme le paiement sur ton téléphone, puis clique sur "Vérifier le statut" ci-dessous.');
+  setDonEnAttente(res.data.id_don);
+}
+
+async function verifierDon() {
+  setMessageDon('Vérification en cours...');
+  const res = await api.post(`/dons/${donEnAttente}/verifier-statut`);
+  if (res.data.statut === 'VALIDE') {
+    setMessageDon('Merci pour ton don !');
+    setDonEnAttente(null);
     setMontant('');
     setNumero('');
-    setMessageDon('Merci pour ton don !');
     charger();
+  } else if (res.data.statut === 'ECHOUE') {
+    setMessageDon('Le paiement a échoué. Réessaie.');
+    setDonEnAttente(null);
+  } else {
+    setMessageDon('Toujours en attente de ta confirmation sur ton téléphone.');
   }
+}
 
   async function posterCommentaire(e) {
     e.preventDefault();
@@ -302,6 +318,11 @@ export default function DetailCagnotte() {
                     <input placeholder="Numéro payeur" value={numero} onChange={(e) => setNumero(e.target.value)} required className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                     <Button type="submit" size="lg">Donner maintenant</Button>
                     {messageDon && <p className="text-sm text-primary">{messageDon}</p>}
+                    {donEnAttente && (
+  <Button type="button" variant="outline" onClick={verifierDon} className="mt-2 w-full">
+    Vérifier le statut du paiement
+  </Button>
+)}
                   </form>
                 ) : (
                   <div className="text-center">

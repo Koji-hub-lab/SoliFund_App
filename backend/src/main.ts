@@ -14,7 +14,11 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads',
+    // Empêche le navigateur de deviner un autre type que celui annoncé (ex. exécuter du HTML).
+    setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
+  });
   await app.listen(3000);
 }
 bootstrap();

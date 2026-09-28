@@ -120,7 +120,7 @@ export default function CreerCagnotte() {
             <div>
               <label htmlFor="id_categorie" className="mb-2 block text-sm font-medium text-foreground">Catégorie</label>
               <select id="id_categorie" name="id_categorie" value={form.id_categorie} onChange={handleChange} className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-                <option value="">Aucune catégorie</option>
+                <option value="">Aucune categorie</option>
                 {categories.map((cat) => (
                   <option key={cat.id_categorie} value={cat.id_categorie}>{cat.nom}</option>
                 ))}
