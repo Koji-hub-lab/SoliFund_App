@@ -1,11 +1,37 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateRetraitDto } from './dto/create-retrait.dto';
 import { RejectRetraitDto } from './dto/reject-retrait.dto';
+import { ListerRetraitsDto } from './dto/lister-retraits.dto';
+import { construirePage, lirePagination } from '../common/pagination';
+
+function formaterMontant(montant: unknown): string {
+  return `${Number(montant).toLocaleString('fr-FR')} XAF`;
+}
 
 @Injectable()
 export class RetraitsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(RetraitsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
+
+  // Prévient l'organisateur. Appelée après la transaction : un échec d'envoi ne doit pas
+  // faire croire à l'admin que le traitement a échoué.
+  private async notifierOrganisateur(
+    retrait: { id_retrait: number; id_utilisateur: number; id_cagnotte: number },
+    titre: string,
+    message: string,
+  ) {
+    try {
+      await this.notificationsService.envoyer(retrait.id_utilisateur, titre, message, 'RETRAIT', retrait.id_cagnotte);
+    } catch (e) {
+      this.logger.warn(`Notification non envoyée (retrait ${retrait.id_retrait}) : ${e instanceof Error ? e.message : e}`);
+    }
+  }
 
   async demander(idUtilisateur: number, dto: CreateRetraitDto) {
     return this.prisma.$transaction(async (tx) => {
@@ -49,7 +75,7 @@ export class RetraitsService {
   }
 
   async traiter(idRetrait: number) {
-    return this.prisma.$transaction(async (tx) => {
+    const traite = await this.prisma.$transaction(async (tx) => {
       const retrait = await tx.retrait.findUnique({ where: { id_retrait: idRetrait } });
       if (!retrait) {
         throw new NotFoundException('Retrait introuvable.');
@@ -76,10 +102,19 @@ export class RetraitsService {
 
       return tx.retrait.findUnique({ where: { id_retrait: idRetrait } });
     });
+
+    if (traite) {
+      await this.notifierOrganisateur(
+        traite,
+        'Retrait traité',
+        `Ton retrait de ${formaterMontant(traite.montant)} a été traité.`,
+      );
+    }
+    return traite;
   }
 
   async rejeter(idRetrait: number, dto: RejectRetraitDto) {
-    return this.prisma.$transaction(async (tx) => {
+    const rejete = await this.prisma.$transaction(async (tx) => {
       const retrait = await tx.retrait.findUnique({ where: { id_retrait: idRetrait } });
       if (!retrait) {
         throw new NotFoundException('Retrait introuvable.');
@@ -99,6 +134,16 @@ export class RetraitsService {
 
       return tx.retrait.findUnique({ where: { id_retrait: idRetrait } });
     });
+
+    if (rejete) {
+      const motif = rejete.motif_rejet?.trim() ? `Motif : ${rejete.motif_rejet.trim()}` : 'Aucun motif précisé.';
+      await this.notifierOrganisateur(
+        rejete,
+        'Retrait rejeté',
+        `Ton retrait de ${formaterMontant(rejete.montant)} a été rejeté. ${motif}`,
+      );
+    }
+    return rejete;
   }
 
   // Contient les numéros de téléphone des bénéficiaires : réservé au propriétaire ou à un admin.
@@ -120,13 +165,22 @@ export class RetraitsService {
     });
   }
 
-  async listerToutes() {
-    return this.prisma.retrait.findMany({
-      include: {
-        cagnotte: { select: { titre: true, devise: true } },
-        utilisateur: { select: { nom: true, prenom: true, email: true } },
-      },
-      orderBy: [{ statut: 'asc' }, { date_creation: 'desc' }],
-    });
+  async listerToutes(dto: ListerRetraitsDto) {
+    const { page, limite, skip, take } = lirePagination(dto, 20);
+    const where = dto.statut ? { statut: dto.statut } : {};
+    const [donnees, total] = await this.prisma.$transaction([
+      this.prisma.retrait.findMany({
+        where,
+        include: {
+          cagnotte: { select: { titre: true, devise: true } },
+          utilisateur: { select: { nom: true, prenom: true, email: true } },
+        },
+        orderBy: [{ statut: 'asc' }, { date_creation: 'desc' }, { id_retrait: 'desc' }],
+        skip,
+        take,
+      }),
+      this.prisma.retrait.count({ where }),
+    ]);
+    return construirePage(donnees, total, page, limite);
   }
 }

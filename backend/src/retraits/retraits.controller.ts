@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { ListerRetraitsDto } from './dto/lister-retraits.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -33,8 +34,8 @@ export class RetraitsController {
   @UseGuards(RolesGuard)
   @Roles('ROLE_ADMIN')
   @Get()
-  listerToutes() {
-    return this.retraitsService.listerToutes();
+  listerToutes(@Query() dto: ListerRetraitsDto) {
+    return this.retraitsService.listerToutes(dto);
   }
 
   @Get('cagnotte/:id')

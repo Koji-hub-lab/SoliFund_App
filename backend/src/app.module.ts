@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -15,12 +16,14 @@ import { CommentairesModule } from './commentaires/commentaires.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ActualitesModule } from './actualites/actualites.module';
 import { PaymentModule } from './payment/payment.module';
+import { TachesModule } from './taches/taches.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     // Limite globale par IP ; les routes /auth/* ont une limite plus stricte (voir AuthController).
     ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }] }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     UtilisateursModule,
     AuthModule,
@@ -32,6 +35,7 @@ import { PaymentModule } from './payment/payment.module';
     NotificationsModule,
     ActualitesModule,
     PaymentModule,
+    TachesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

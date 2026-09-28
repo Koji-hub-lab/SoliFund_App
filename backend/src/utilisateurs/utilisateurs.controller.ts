@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { PaginationDto } from '../common/pagination';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -25,8 +26,8 @@ export class UtilisateursController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ROLE_ADMIN')
   @Get()
-  listerTous() {
-    return this.utilisateursService.listerTous();
+  listerTous(@Query() dto: PaginationDto) {
+    return this.utilisateursService.listerTous(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

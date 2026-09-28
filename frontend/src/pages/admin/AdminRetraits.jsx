@@ -1,42 +1,63 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/Button';
 import api from '../../api/axios';
+import { chargerToutesLesPages } from '../../api/pagination';
 import { formaterMontant, formaterDateHeure } from '../../utils/format';
+import { statutsRetrait } from '../../utils/statuts';
 
-const statutStyles = {
-  EN_ATTENTE: 'bg-accent/20 text-accent-foreground',
-  APPROUVE: 'bg-primary/10 text-primary',
-  TRAITE: 'bg-primary/10 text-primary',
-  REJETE: 'bg-destructive/10 text-destructive',
-};
+function IconeStatut({ statut }) {
+  const Icone = statutsRetrait[statut]?.Icone;
+  return Icone ? <Icone className="size-3" /> : null;
+}
 
 export default function AdminRetraits() {
   const [retraits, setRetraits] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [filtre, setFiltre] = useState('EN_ATTENTE');
   const [motifs, setMotifs] = useState({});
+  // Retrait en cours de traitement et erreurs ({ chargement | id_retrait: message }).
+  const [enCours, setEnCours] = useState(null);
+  const [erreurs, setErreurs] = useState({});
 
   function charger() {
     setChargement(true);
-    api.get('/retraits').then((res) => setRetraits(res.data)).finally(() => setChargement(false));
+    setErreurs((e) => ({ ...e, chargement: '' }));
+    return chargerToutesLesPages('/retraits', filtre === 'TOUS' ? {} : { statut: filtre })
+      .then((res) => setRetraits(res.donnees))
+      .catch((err) => setErreurs((e) => ({ ...e, chargement: err.messageAffichable })))
+      .finally(() => setChargement(false));
   }
 
-  useEffect(charger, []);
+  useEffect(() => {
+    charger();
+  }, [filtre]);
 
-  async function approuver(id) {
+  async function executer(id, action) {
+    if (enCours) return;
+    setEnCours(id);
+    setErreurs((e) => ({ ...e, [id]: '' }));
+    try {
+      await action();
+      await charger();
+    } catch (err) {
+      setErreurs((e) => ({ ...e, [id]: err.messageAffichable }));
+    } finally {
+      setEnCours(null);
+    }
+  }
+
+  function approuver(id) {
     if (!window.confirm('Confirmer le traitement de ce retrait ?')) return;
-    await api.post(`/retraits/${id}/traiter`);
-    charger();
+    return executer(id, () => api.post(`/retraits/${id}/traiter`));
   }
 
-  async function rejeter(id) {
-    await api.post(`/retraits/${id}/rejeter`, { motif_rejet: motifs[id] || undefined });
-    charger();
+  function rejeter(id) {
+    return executer(id, () => api.post(`/retraits/${id}/rejeter`, { motif_rejet: motifs[id] || undefined }));
   }
 
-  const retraitsFiltres = filtre === 'TOUS' ? retraits : retraits.filter((r) => r.statut === filtre);
+  const retraitsFiltres = retraits;
 
   return (
     <AdminLayout>
@@ -59,6 +80,8 @@ export default function AdminRetraits() {
             </button>
           ))}
         </div>
+
+        {erreurs.chargement && <p className="text-sm text-destructive">{erreurs.chargement}</p>}
 
         {chargement && <p className="text-muted-foreground">Chargement...</p>}
 
@@ -84,10 +107,8 @@ export default function AdminRetraits() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-foreground">{formaterMontant(r.montant, r.cagnotte.devise)}</p>
-                  <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${statutStyles[r.statut]}`}>
-                    {r.statut === 'EN_ATTENTE' && <Clock className="size-3" />}
-                    {r.statut === 'TRAITE' && <CheckCircle2 className="size-3" />}
-                    {r.statut === 'REJETE' && <XCircle className="size-3" />}
+                  <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${statutsRetrait[r.statut]?.classes}`}>
+                    <IconeStatut statut={r.statut} />
                     {r.statut.replace('_', ' ')}
                   </span>
                 </div>
@@ -102,14 +123,15 @@ export default function AdminRetraits() {
                     className="h-10 flex-1 rounded-lg border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                   <div className="flex gap-2">
-                    <Button size="default" onClick={() => approuver(r.id_retrait)} className="gap-1.5">
+                    <Button size="default" onClick={() => approuver(r.id_retrait)} className="gap-1.5" disabled={enCours !== null}>
                       <CheckCircle2 className="size-4" />
-                      Approuver
+                      {enCours === r.id_retrait ? 'Envoi en cours...' : 'Approuver'}
                     </Button>
                     <Button
                       size="default"
                       variant="outline"
                       onClick={() => rejeter(r.id_retrait)}
+                      disabled={enCours !== null}
                       className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
                     >
                       <XCircle className="size-4" />
@@ -118,6 +140,7 @@ export default function AdminRetraits() {
                   </div>
                 </div>
               )}
+              {erreurs[r.id_retrait] && <p className="mt-2 text-sm text-destructive">{erreurs[r.id_retrait]}</p>}
             </div>
           ))}
         </div>

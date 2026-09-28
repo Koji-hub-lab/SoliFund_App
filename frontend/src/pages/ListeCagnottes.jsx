@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Users } from 'lucide-react';
 import { SiteHeader } from '../components/site/SiteHeader';
@@ -15,7 +15,7 @@ function joursRestants(dateFin) {
   return `${jours} jours restants`;
 }
 
-function CagnotteCard({ c, nomCategorie }) {
+function CagnotteCard({ c }) {
   const percent = Math.min(100, Math.round((c.montant_collecte / c.objectif) * 100));
   return (
     <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
@@ -23,9 +23,9 @@ function CagnotteCard({ c, nomCategorie }) {
         {c.image && (
           <img src={`${API_URL}${c.image}`} alt={c.titre} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
         )}
-        {c.id_categorie && (
+        {c.categorie?.nom && (
           <span className="absolute left-3 top-3 rounded-full bg-card/95 px-3 py-1 text-xs font-semibold text-primary shadow-sm">
-            {nomCategorie(c.id_categorie)}
+            {c.categorie.nom}
           </span>
         )}
       </div>
@@ -62,33 +62,57 @@ export default function ListeCagnottes() {
   const [cagnottes, setCagnottes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [recherche, setRecherche] = useState('');
+  const [rechercheEnvoyee, setRechercheEnvoyee] = useState('');
   const [categorieChoisie, setCategorieChoisie] = useState('');
+  const [tri, setTri] = useState('recentes');
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState('');
+  const derniereRequete = useRef(0);
 
+  // Recherche, catégorie et tri sont appliqués par l'API. Seule la réponse de la dernière
+  // requête est prise en compte (évite qu'une réponse lente écrase un résultat plus récent).
   function charger() {
-    setChargement(true);
+    const numero = ++derniereRequete.current;
     setErreur('');
-    Promise.all([api.get('/cagnottes'), api.get('/categories')])
-      .then(([resCagnottes, resCategories]) => {
-        setCagnottes(resCagnottes.data);
-        setCategories(resCategories.data);
+    const params = { page, tri };
+    if (rechercheEnvoyee) params.recherche = rechercheEnvoyee;
+    if (categorieChoisie) params.id_categorie = categorieChoisie;
+    api.get('/cagnottes', { params })
+      .then((res) => {
+        if (numero !== derniereRequete.current) return;
+        setCagnottes(res.data.donnees);
+        setPages(res.data.pages);
       })
-      .catch((err) => setErreur(err.messageAffichable))
-      .finally(() => setChargement(false));
+      .catch((err) => numero === derniereRequete.current && setErreur(err.messageAffichable))
+      .finally(() => numero === derniereRequete.current && setChargement(false));
   }
 
-  useEffect(charger, []);
-
-  function nomCategorie(idCategorie) {
-    return categories.find((cat) => cat.id_categorie === idCategorie)?.nom;
+  function reessayer() {
+    setChargement(true);
+    charger();
   }
 
-  const cagnottesFiltrees = cagnottes.filter((c) => {
-    const correspondRecherche = c.titre.toLowerCase().includes(recherche.toLowerCase());
-    const correspondCategorie = !categorieChoisie || c.id_categorie === Number(categorieChoisie);
-    return correspondRecherche && correspondCategorie;
-  });
+  useEffect(charger, [page, tri, categorieChoisie, rechercheEnvoyee]);
+
+  useEffect(() => {
+    api.get('/categories').then((res) => setCategories(res.data));
+  }, []);
+
+  // La recherche part 300 ms après la dernière frappe.
+  useEffect(() => {
+    const minuteur = setTimeout(() => {
+      setRechercheEnvoyee(recherche.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(minuteur);
+  }, [recherche]);
+
+  function changerPage(nouvellePage) {
+    setPage(nouvellePage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -113,7 +137,7 @@ export default function ListeCagnottes() {
             </div>
             <select
               value={categorieChoisie}
-              onChange={(e) => setCategorieChoisie(e.target.value)}
+              onChange={(e) => { setCategorieChoisie(e.target.value); setPage(1); }}
               className="h-11 rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-56"
             >
               <option value="">Toutes catégories</option>
@@ -121,25 +145,46 @@ export default function ListeCagnottes() {
                 <option key={cat.id_categorie} value={cat.id_categorie}>{cat.nom}</option>
               ))}
             </select>
+            <select
+              value={tri}
+              onChange={(e) => { setTri(e.target.value); setPage(1); }}
+              className="h-11 rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-56"
+            >
+              <option value="recentes">Plus récentes</option>
+              <option value="populaires">Plus populaires</option>
+              <option value="bientot_terminees">Bientôt terminées</option>
+            </select>
           </div>
 
           {chargement && <p className="mt-10 text-muted-foreground">Chargement...</p>}
           {erreur && (
             <div className="mt-10 flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-8 text-center">
               <p className="text-destructive">{erreur}</p>
-              <Button variant="outline" onClick={charger}>Réessayer</Button>
+              <Button variant="outline" onClick={reessayer}>Réessayer</Button>
             </div>
           )}
 
-          {!chargement && !erreur && cagnottesFiltrees.length === 0 && (
+          {!chargement && !erreur && cagnottes.length === 0 && (
             <p className="mt-10 text-muted-foreground">Aucune cagnotte ne correspond à ta recherche.</p>
           )}
 
           {!chargement && !erreur && (
             <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {cagnottesFiltrees.map((c) => (
-                <CagnotteCard key={c.id_cagnotte} c={c} nomCategorie={nomCategorie} />
+              {cagnottes.map((c) => (
+                <CagnotteCard key={c.id_cagnotte} c={c} />
               ))}
+            </div>
+          )}
+
+          {!chargement && !erreur && pages > 1 && (
+            <div className="mt-10 flex items-center justify-center gap-4">
+              <Button variant="outline" disabled={page <= 1} onClick={() => changerPage(page - 1)}>
+                Précédent
+              </Button>
+              <p className="text-sm text-muted-foreground">Page {page} sur {pages}</p>
+              <Button variant="outline" disabled={page >= pages} onClick={() => changerPage(page + 1)}>
+                Suivant
+              </Button>
             </div>
           )}
         </div>

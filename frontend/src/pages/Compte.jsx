@@ -15,8 +15,8 @@ export default function Compte() {
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
   useEffect(() => {
-    api.get('/cagnottes').then((res) => {
-      setMesCagnottes(res.data.filter((c) => c.id_utilisateur === utilisateur.id_utilisateur));
+    api.get('/cagnottes/mes').then((res) => {
+      setMesCagnottes(res.data);
     });
     setForm({ nom: utilisateur.nom, prenom: utilisateur.prenom, telephone: utilisateur.telephone || '', mot_de_passe: '' });
   }, [utilisateur]);

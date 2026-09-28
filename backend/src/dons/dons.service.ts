@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentService } from '../payment/payment.service';
 import { CreateDonDto } from './dto/create-don.dto';
+import { PaginationDto, construirePage, lirePagination } from '../common/pagination';
 
 @Injectable()
 export class DonsService {
@@ -22,6 +23,11 @@ export class DonsService {
     }
     if (cagnotte.statut !== 'ACTIVE') {
       throw new BadRequestException("Cette cagnotte n'accepte plus de dons.");
+    }
+    // date_fin est un jour : les dons restent possibles jusqu'à la fin de ce jour (UTC).
+    const finDuDernierJour = new Date(cagnotte.date_fin.getTime() + 24 * 60 * 60 * 1000);
+    if (finDuDernierJour <= new Date()) {
+      throw new BadRequestException('Cette cagnotte est terminée : la date de fin est dépassée.');
     }
 
     const don = await this.prisma.$transaction(async (tx) => {
@@ -185,21 +191,28 @@ export class DonsService {
   }
 
   // Liste publique : aucun identifiant interne, et aucun nom pour les dons anonymes.
-  async listerParCagnotte(idCagnotte: number) {
-    const dons = await this.prisma.don.findMany({
-      where: { id_cagnotte: idCagnotte, statut: 'VALIDE' },
-      select: {
-        id_don: true,
-        message: true,
-        est_anonyme: true,
-        date_creation: true,
-        paiement: { select: { montant: true, devise: true } },
-        utilisateur: { select: { nom: true, prenom: true } },
-      },
-      orderBy: { date_creation: 'desc' },
-    });
+  async listerParCagnotte(idCagnotte: number, dto: PaginationDto) {
+    const { page, limite, skip, take } = lirePagination(dto, 20);
+    const where = { id_cagnotte: idCagnotte, statut: 'VALIDE' as const };
+    const [dons, total] = await this.prisma.$transaction([
+      this.prisma.don.findMany({
+        where,
+        select: {
+          id_don: true,
+          message: true,
+          est_anonyme: true,
+          date_creation: true,
+          paiement: { select: { montant: true, devise: true } },
+          utilisateur: { select: { nom: true, prenom: true } },
+        },
+        orderBy: [{ date_creation: 'desc' }, { id_don: 'desc' }],
+        skip,
+        take,
+      }),
+      this.prisma.don.count({ where }),
+    ]);
 
-    return dons.map((don) => {
+    const donnees = dons.map((don) => {
       const visible = !don.est_anonyme && don.utilisateur;
       return {
         id_don: don.id_don,
@@ -214,6 +227,7 @@ export class DonsService {
         },
       };
     });
+    return construirePage(donnees, total, page, limite);
   }
 
   async listerTous() {

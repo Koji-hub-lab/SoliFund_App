@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { PaginationDto } from '../common/pagination';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -37,7 +38,7 @@ export class DonsController {
   }
 
   @Get('cagnotte/:id')
-  listerParCagnotte(@Param('id', ParseIntPipe) id: number) {
-    return this.donsService.listerParCagnotte(id);
+  listerParCagnotte(@Param('id', ParseIntPipe) id: number, @Query() dto: PaginationDto) {
+    return this.donsService.listerParCagnotte(id, dto);
   }
 }

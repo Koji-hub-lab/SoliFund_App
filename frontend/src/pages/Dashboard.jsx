@@ -14,9 +14,9 @@ export default function Dashboard() {
   const [chargement, setChargement] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.get('/cagnottes'), api.get('/notifications')])
+    Promise.all([api.get('/cagnottes/mes'), api.get('/notifications')])
       .then(([resCagnottes, resNotifs]) => {
-        setMesCagnottes(resCagnottes.data.filter((c) => c.id_utilisateur === utilisateur.id_utilisateur));
+        setMesCagnottes(resCagnottes.data);
         setNotifications(resNotifs.data);
       })
       .finally(() => setChargement(false));

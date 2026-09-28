@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ShieldBan, ShieldCheck, ShieldAlert } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import api from '../../api/axios';
+import { chargerToutesLesPages } from '../../api/pagination';
 import { formaterDate } from '../../utils/format';
 
 const statutStyles = {
@@ -14,18 +15,36 @@ const statutStyles = {
 export default function AdminUtilisateurs() {
   const [utilisateurs, setUtilisateurs] = useState([]);
   const [chargement, setChargement] = useState(true);
+  // Utilisateur en cours de modification et erreurs ({ chargement | id_utilisateur: message }).
+  const [enCours, setEnCours] = useState(null);
+  const [erreurs, setErreurs] = useState({});
 
   function charger() {
     setChargement(true);
-    api.get('/utilisateurs').then((res) => setUtilisateurs(res.data)).finally(() => setChargement(false));
+    setErreurs((e) => ({ ...e, chargement: '' }));
+    return chargerToutesLesPages('/utilisateurs')
+      .then((res) => setUtilisateurs(res.donnees))
+      .catch((err) => setErreurs((e) => ({ ...e, chargement: err.messageAffichable })))
+      .finally(() => setChargement(false));
   }
 
-  useEffect(charger, []);
+  useEffect(() => {
+    charger();
+  }, []);
 
   async function changerStatut(id, statut, confirmation) {
+    if (enCours) return;
     if (confirmation && !window.confirm(confirmation)) return;
-    await api.patch(`/utilisateurs/${id}/statut`, { statut });
-    charger();
+    setEnCours(id);
+    setErreurs((e) => ({ ...e, [id]: '' }));
+    try {
+      await api.patch(`/utilisateurs/${id}/statut`, { statut });
+      await charger();
+    } catch (err) {
+      setErreurs((e) => ({ ...e, [id]: err.messageAffichable }));
+    } finally {
+      setEnCours(null);
+    }
   }
 
   return (
@@ -36,6 +55,7 @@ export default function AdminUtilisateurs() {
           <p className="mt-1 text-muted-foreground">{utilisateurs.length} compte{utilisateurs.length > 1 ? 's' : ''} inscrit{utilisateurs.length > 1 ? 's' : ''} sur la plateforme.</p>
         </div>
 
+        {erreurs.chargement && <p className="text-sm text-destructive">{erreurs.chargement}</p>}
         {chargement && <p className="text-muted-foreground">Chargement...</p>}
 
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
@@ -69,21 +89,22 @@ export default function AdminUtilisateurs() {
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       {u.statut !== 'ACTIF' && (
-                        <button title="Réactiver" onClick={() => changerStatut(u.id_utilisateur, 'ACTIF')} className="rounded-lg p-1.5 text-primary hover:bg-primary/10">
+                        <button title="Réactiver" onClick={() => changerStatut(u.id_utilisateur, 'ACTIF')} disabled={enCours !== null} className="rounded-lg p-1.5 text-primary hover:bg-primary/10 disabled:opacity-60 disabled:cursor-not-allowed">
                           <ShieldCheck className="size-4" />
                         </button>
                       )}
                       {u.statut !== 'SUSPENDU' && (
-                        <button title="Suspendre" onClick={() => changerStatut(u.id_utilisateur, 'SUSPENDU', 'Suspendre ce compte ?')} className="rounded-lg p-1.5 text-accent-foreground hover:bg-accent/20">
+                        <button title="Suspendre" onClick={() => changerStatut(u.id_utilisateur, 'SUSPENDU', 'Suspendre ce compte ?')} disabled={enCours !== null} className="rounded-lg p-1.5 text-accent-foreground hover:bg-accent/20 disabled:opacity-60 disabled:cursor-not-allowed">
                           <ShieldAlert className="size-4" />
                         </button>
                       )}
                       {u.statut !== 'BANNI' && (
-                        <button title="Bannir" onClick={() => changerStatut(u.id_utilisateur, 'BANNI', 'Bannir définitivement ce compte ?')} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10">
+                        <button title="Bannir" onClick={() => changerStatut(u.id_utilisateur, 'BANNI', 'Bannir définitivement ce compte ?')} disabled={enCours !== null} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10 disabled:opacity-60 disabled:cursor-not-allowed">
                           <ShieldBan className="size-4" />
                         </button>
                       )}
                     </div>
+                    {erreurs[u.id_utilisateur] && <p className="mt-1 text-sm text-destructive">{erreurs[u.id_utilisateur]}</p>}
                   </td>
                 </tr>
               ))}

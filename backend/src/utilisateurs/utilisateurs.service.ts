@@ -1,3 +1,4 @@
+import { PaginationDto, construirePage, lirePagination } from '../common/pagination';
 import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -72,22 +73,28 @@ export class UtilisateursService {
     });
   }
 
-  async listerTous() {
-    const utilisateurs = await this.prisma.utilisateur.findMany({
-      select: {
-        id_utilisateur: true,
-        nom: true,
-        prenom: true,
-        email: true,
-        telephone: true,
-        statut: true,
-        date_inscription: true,
-        posseders: { include: { role: true } },
-      },
-      orderBy: { date_inscription: 'desc' },
-    });
+  async listerTous(dto: PaginationDto) {
+    const { page, limite, skip, take } = lirePagination(dto, 20);
+    const [utilisateurs, total] = await this.prisma.$transaction([
+      this.prisma.utilisateur.findMany({
+        select: {
+          id_utilisateur: true,
+          nom: true,
+          prenom: true,
+          email: true,
+          telephone: true,
+          statut: true,
+          date_inscription: true,
+          posseders: { include: { role: true } },
+        },
+        orderBy: [{ date_inscription: 'desc' }, { id_utilisateur: 'desc' }],
+        skip,
+        take,
+      }),
+      this.prisma.utilisateur.count(),
+    ]);
 
-    return utilisateurs.map((u) => ({
+    const donnees = utilisateurs.map((u) => ({
       id_utilisateur: u.id_utilisateur,
       nom: u.nom,
       prenom: u.prenom,
@@ -97,6 +104,7 @@ export class UtilisateursService {
       date_inscription: u.date_inscription,
       roles: u.posseders.map((p) => p.role.nom),
     }));
+    return construirePage(donnees, total, page, limite);
   }
 
   async changerStatut(idUtilisateur: number, dto: ChangeStatutDto) {

@@ -16,24 +16,42 @@ const icones = {
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [chargement, setChargement] = useState(true);
+  // Action en cours ('tout' ou id de notification) et erreur associée ({ cible, message }).
+  const [enCours, setEnCours] = useState(null);
+  const [erreur, setErreur] = useState(null);
 
   function charger() {
-    api.get('/notifications')
+    return api.get('/notifications')
       .then((res) => setNotifications(res.data))
+      .catch((err) => setErreur({ cible: 'tout', message: err.messageAffichable }))
       .finally(() => setChargement(false));
   }
 
-  useEffect(charger, []);
-
-  async function marquerLue(idNotification) {
-    await api.patch(`/notifications/${idNotification}/lue`);
+  useEffect(() => {
     charger();
+  }, []);
+
+  async function executer(cible, action) {
+    if (enCours) return;
+    setEnCours(cible);
+    setErreur(null);
+    try {
+      await action();
+      await charger();
+    } catch (err) {
+      setErreur({ cible, message: err.messageAffichable });
+    } finally {
+      setEnCours(null);
+    }
   }
 
-  async function toutMarquerLu() {
+  function marquerLue(idNotification) {
+    return executer(idNotification, () => api.patch(`/notifications/${idNotification}/lue`));
+  }
+
+  function toutMarquerLu() {
     const nonLues = notifications.filter((r) => r.statut === 'NON_LUE');
-    await Promise.all(nonLues.map((r) => api.patch(`/notifications/${r.id_notification}/lue`)));
-    charger();
+    return executer('tout', () => Promise.all(nonLues.map((r) => api.patch(`/notifications/${r.id_notification}/lue`))));
   }
 
   const nbNonLues = notifications.filter((r) => r.statut === 'NON_LUE').length;
@@ -49,12 +67,14 @@ export default function Notifications() {
             </p>
           </div>
           {nbNonLues > 0 && (
-            <button onClick={toutMarquerLu} className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary">
+            <button onClick={toutMarquerLu} disabled={enCours !== null} className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-60 disabled:cursor-not-allowed">
               <CheckCheck className="size-4" />
               Tout marquer comme lu
             </button>
           )}
         </div>
+
+        {erreur?.cible === 'tout' && <p className="mt-4 text-sm text-destructive">{erreur.message}</p>}
 
         {chargement && <p className="mt-6 text-muted-foreground">Chargement...</p>}
 
@@ -84,11 +104,12 @@ export default function Notifications() {
                       </Link>
                     )}
                     {r.statut === 'NON_LUE' && (
-                      <button onClick={() => marquerLue(r.id_notification)} className="text-xs font-medium text-muted-foreground hover:text-foreground">
+                      <button onClick={() => marquerLue(r.id_notification)} disabled={enCours !== null} className="text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-60 disabled:cursor-not-allowed">
                         Marquer comme lue
                       </button>
                     )}
                   </div>
+                  {erreur?.cible === r.id_notification && <p className="mt-2 text-sm text-destructive">{erreur.message}</p>}
                 </div>
               </div>
             </div>

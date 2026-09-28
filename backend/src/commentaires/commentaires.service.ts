@@ -1,3 +1,4 @@
+import { PaginationDto, construirePage, lirePagination } from '../common/pagination';
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentaireDto } from './dto/create-commentaire.dto';
@@ -16,12 +17,20 @@ export class CommentairesService {
     });
   }
 
-  listerParCagnotte(idCagnotte: number) {
-    return this.prisma.commentaire.findMany({
-      where: { id_cagnotte: idCagnotte },
-      include: { utilisateur: { select: { nom: true, prenom: true } } },
-      orderBy: { date_creation: 'desc' },
-    });
+  async listerParCagnotte(idCagnotte: number, dto: PaginationDto) {
+    const { page, limite, skip, take } = lirePagination(dto, 20);
+    const where = { id_cagnotte: idCagnotte };
+    const [donnees, total] = await this.prisma.$transaction([
+      this.prisma.commentaire.findMany({
+        where,
+        include: { utilisateur: { select: { nom: true, prenom: true } } },
+        orderBy: [{ date_creation: 'desc' }, { id_commentaire: 'desc' }],
+        skip,
+        take,
+      }),
+      this.prisma.commentaire.count({ where }),
+    ]);
+    return construirePage(donnees, total, page, limite);
   }
 
   async supprimer(idCommentaire: number, idUtilisateur: number) {

@@ -51,7 +51,7 @@ export function PopularCagnottes() {
   const [cagnottes, setCagnottes] = useState([]);
 
   useEffect(() => {
-    api.get('/cagnottes').then((res) => setCagnottes(res.data.slice(0, 4)));
+    api.get('/cagnottes?tri=populaires&limite=4').then((res) => setCagnottes(res.data.donnees));
   }, []);
 
   return (

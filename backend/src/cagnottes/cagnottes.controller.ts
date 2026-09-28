@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Request,
   UploadedFile,
   UseGuards,
@@ -14,22 +15,33 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { CagnottesService } from './cagnottes.service';
 import { CreateCagnotteDto } from './dto/create-cagnotte.dto';
 import { UpdateCagnotteDto } from './dto/update-cagnotte.dto';
+import { ListerCagnottesDto } from './dto/lister-cagnottes.dto';
 
 @Controller('cagnottes')
 export class CagnottesController {
   constructor(private readonly cagnottesService: CagnottesService) {}
 
   @Get()
-  lister() {
-    return this.cagnottesService.listerPubliques();
+  lister(@Query() dto: ListerCagnottesDto) {
+    return this.cagnottesService.listerPubliques(dto);
   }
 
+  // Déclarée avant GET :id, sinon « mes » serait pris pour un identifiant.
+  @UseGuards(JwtAuthGuard)
+  @Get('mes')
+  listerMiennes(@Request() req: any) {
+    return this.cagnottesService.listerMiennes(req.user.id_utilisateur);
+  }
+
+  // Token facultatif : le propriétaire ou un admin voit aussi les cagnottes privées/suspendues/annulées.
+  @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
-  trouver(@Param('id', ParseIntPipe) id: number) {
-    return this.cagnottesService.trouverParId(id);
+  trouver(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.cagnottesService.trouverVisible(id, req.user ?? null);
   }
 
   @UseGuards(JwtAuthGuard)

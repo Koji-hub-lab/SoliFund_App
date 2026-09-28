@@ -6,6 +6,8 @@ import { SiteFooter } from '../components/site/SiteFooter';
 import { Button } from '../components/ui/Button';
 import api, { API_URL } from '../api/axios';
 import { formaterMontant, formaterDate, formaterDateHeure } from '../utils/format';
+import { statutsRetrait } from '../utils/statuts';
+import { useAuth } from '../context/AuthContext';
 
 function joursRestants(dateFin) {
   const diff = new Date(dateFin) - new Date();
@@ -20,11 +22,12 @@ export default function DetailCagnotte() {
   const navigate = useNavigate();
   const [cagnotte, setCagnotte] = useState(null);
   const [commentaires, setCommentaires] = useState([]);
+  const [infosCommentaires, setInfosCommentaires] = useState({ total: 0, page: 1, pages: 1 });
   const [actualites, setActualites] = useState([]);
   const [retraits, setRetraits] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState('');
-  const utilisateurConnecte = JSON.parse(localStorage.getItem('utilisateur') || 'null');
+  const { utilisateur: utilisateurConnecte } = useAuth();
 
   // Don
   const [montant, setMontant] = useState('');
@@ -47,6 +50,24 @@ export default function DetailCagnotte() {
   const [fichierImage, setFichierImage] = useState(null);
   const [donEnAttente, setDonEnAttente] = useState(null);
 
+  // Action en cours (désactive le bouton concerné) et erreur affichée sous chaque zone.
+  const [enCours, setEnCours] = useState({});
+  const [erreurs, setErreurs] = useState({});
+
+  // Exécute une action : bloque les doubles clics, affiche l'erreur éventuelle sous la zone `zone`.
+  async function executer(zone, action) {
+    if (enCours[zone]) return;
+    setEnCours((z) => ({ ...z, [zone]: true }));
+    setErreurs((e) => ({ ...e, [zone]: '' }));
+    try {
+      await action();
+    } catch (err) {
+      setErreurs((e) => ({ ...e, [zone]: err.messageAffichable }));
+    } finally {
+      setEnCours((z) => ({ ...z, [zone]: false }));
+    }
+  }
+
   function charger() {
     setErreur('');
     Promise.all([
@@ -56,10 +77,13 @@ export default function DetailCagnotte() {
     ])
       .then(([resCagnotte, resCommentaires, resActualites]) => {
         setCagnotte(resCagnotte.data);
-        setCommentaires(resCommentaires.data);
+        setCommentaires(resCommentaires.data.donnees);
+        setInfosCommentaires(resCommentaires.data);
         setActualites(resActualites.data);
         if (utilisateurConnecte && resCagnotte.data.id_utilisateur === utilisateurConnecte.id_utilisateur) {
-          api.get(`/retraits/cagnotte/${id}`).then((res) => setRetraits(res.data));
+          api.get(`/retraits/cagnotte/${id}`)
+            .then((res) => setRetraits(res.data))
+            .catch((err) => setErreurs((e) => ({ ...e, retrait: err.messageAffichable })));
         }
       })
       .catch((err) => setErreur(err.messageAffichable))
@@ -68,84 +92,118 @@ export default function DetailCagnotte() {
 
   useEffect(charger, [id]);
 
-  async function faireDon(e) {
-  e.preventDefault();
-  setMessageDon('Envoi de la demande de paiement...');
-  const res = await api.post('/dons', {
-    id_cagnotte: Number(id),
-    montant: Number(montant),
-    methode_paiement: methode,
-    numero_payeur: numero,
-  });
-  setMessageDon('Confirme le paiement sur ton téléphone, puis clique sur "Vérifier le statut" ci-dessous.');
-  setDonEnAttente(res.data.id_don);
-}
-
-async function verifierDon() {
-  setMessageDon('Vérification en cours...');
-  const res = await api.post(`/dons/${donEnAttente}/verifier-statut`);
-  if (res.data.statut === 'VALIDE') {
-    setMessageDon('Merci pour ton don !');
-    setDonEnAttente(null);
-    setMontant('');
-    setNumero('');
-    charger();
-  } else if (res.data.statut === 'ECHOUE') {
-    setMessageDon('Le paiement a échoué. Réessaie.');
-    setDonEnAttente(null);
-  } else {
-    setMessageDon('Toujours en attente de ta confirmation sur ton téléphone.');
+  function faireDon(e) {
+    e.preventDefault();
+    return executer('don', async () => {
+      setMessageDon('Envoi de la demande de paiement...');
+      try {
+        const res = await api.post('/dons', {
+          id_cagnotte: Number(id),
+          montant: Number(montant),
+          methode_paiement: methode,
+          numero_payeur: numero,
+        });
+        setMessageDon('Confirme le paiement sur ton téléphone, puis clique sur "Vérifier le statut" ci-dessous.');
+        setDonEnAttente(res.data.id_don);
+      } catch (err) {
+        setMessageDon('');
+        throw err;
+      }
+    });
   }
-}
 
-  async function posterCommentaire(e) {
+  function verifierDon() {
+    return executer('don', async () => {
+      setMessageDon('Vérification en cours...');
+      try {
+        const res = await api.post(`/dons/${donEnAttente}/verifier-statut`);
+        if (res.data.statut === 'VALIDE') {
+          setMessageDon('Merci pour ton don !');
+          setDonEnAttente(null);
+          setMontant('');
+          setNumero('');
+          charger();
+        } else if (res.data.statut === 'ECHOUE') {
+          setMessageDon('Le paiement a échoué. Réessaie.');
+          setDonEnAttente(null);
+        } else {
+          setMessageDon('Toujours en attente de ta confirmation sur ton téléphone.');
+        }
+      } catch (err) {
+        setMessageDon('');
+        throw err;
+      }
+    });
+  }
+
+  function voirPlusCommentaires() {
+    return executer('listeCommentaires', async () => {
+      const res = await api.get(`/commentaires/cagnotte/${id}`, { params: { page: infosCommentaires.page + 1 } });
+      setCommentaires((actuels) => [...actuels, ...res.data.donnees]);
+      setInfosCommentaires(res.data);
+    });
+  }
+
+  function posterCommentaire(e) {
     e.preventDefault();
     if (!nouveauCommentaire.trim()) return;
-    await api.post('/commentaires', { id_cagnotte: Number(id), description: nouveauCommentaire });
-    setNouveauCommentaire('');
-    charger();
-  }
-
-  async function supprimerCommentaire(idCommentaire) {
-    if (!window.confirm('Supprimer ce commentaire ?')) return;
-    await api.delete(`/commentaires/${idCommentaire}`);
-    charger();
-  }
-
-  async function publierActualite(e) {
-    e.preventDefault();
-    await api.post('/actualites', { id_cagnotte: Number(id), ...nouvelleActualite });
-    setNouvelleActualite({ titre: '', contenu: '' });
-    charger();
-  }
-
-  async function demanderRetrait(e) {
-    e.preventDefault();
-    await api.post('/retraits', {
-      id_cagnotte: Number(id),
-      montant: Number(montantRetrait),
-      methode_retrait: methodeRetrait,
-      numero_beneficiaire: numeroRetrait,
+    return executer('commentaire', async () => {
+      await api.post('/commentaires', { id_cagnotte: Number(id), description: nouveauCommentaire });
+      setNouveauCommentaire('');
+      charger();
     });
-    setMontantRetrait('');
-    setNumeroRetrait('');
-    charger();
   }
 
-  async function uploaderImage(e) {
+  function supprimerCommentaire(idCommentaire) {
+    if (!window.confirm('Supprimer ce commentaire ?')) return;
+    return executer('listeCommentaires', async () => {
+      await api.delete(`/commentaires/${idCommentaire}`);
+      charger();
+    });
+  }
+
+  function publierActualite(e) {
+    e.preventDefault();
+    return executer('actualite', async () => {
+      await api.post('/actualites', { id_cagnotte: Number(id), ...nouvelleActualite });
+      setNouvelleActualite({ titre: '', contenu: '' });
+      charger();
+    });
+  }
+
+  function demanderRetrait(e) {
+    e.preventDefault();
+    return executer('retrait', async () => {
+      await api.post('/retraits', {
+        id_cagnotte: Number(id),
+        montant: Number(montantRetrait),
+        methode_retrait: methodeRetrait,
+        numero_beneficiaire: numeroRetrait,
+      });
+      setMontantRetrait('');
+      setNumeroRetrait('');
+      charger();
+    });
+  }
+
+  function uploaderImage(e) {
     e.preventDefault();
     if (!fichierImage) return;
-    const formData = new FormData();
-    formData.append('image', fichierImage);
-    await api.post(`/cagnottes/${id}/image`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-    setFichierImage(null);
-    charger();
+    return executer('image', async () => {
+      const formData = new FormData();
+      formData.append('image', fichierImage);
+      await api.post(`/cagnottes/${id}/image`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setFichierImage(null);
+      charger();
+    });
   }
 
-  async function supprimerCagnotte() {
+  function supprimerCagnotte() {
     if (!window.confirm('Supprimer définitivement cette cagnotte ? Cette action est irréversible.')) return;
-    await api.delete(`/cagnottes/${id}`);
-    navigate('/mes-cagnottes');
+    return executer('suppression', async () => {
+      await api.delete(`/cagnottes/${id}`);
+      navigate('/mes-cagnottes');
+    });
   }
 
   if (chargement) {
@@ -199,12 +257,13 @@ async function verifierDon() {
                       <Pencil className="size-3.5" />
                       Modifier
                     </Link>
-                    <button onClick={supprimerCagnotte} className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-transparent px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10">
+                    <button onClick={supprimerCagnotte} disabled={enCours.suppression} className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-transparent px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60 disabled:cursor-not-allowed">
                       <Trash2 className="size-3.5" />
                     </button>
                   </div>
                 )}
               </div>
+              {erreurs.suppression && <p className="mt-2 text-sm text-destructive">{erreurs.suppression}</p>}
               <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="size-4" />
@@ -221,8 +280,9 @@ async function verifierDon() {
                   </h3>
                   <form onSubmit={uploaderImage} className="flex flex-col gap-3 sm:flex-row">
                     <input type="file" accept="image/png, image/jpeg, image/webp" onChange={(e) => setFichierImage(e.target.files[0])} className="flex-1 text-sm" />
-                    <Button type="submit" variant="outline" size="default">Envoyer</Button>
+                    <Button type="submit" variant="outline" size="default" disabled={enCours.image}>{enCours.image ? 'Envoi en cours...' : 'Envoyer'}</Button>
                   </form>
+                  {erreurs.image && <p className="mt-3 text-sm text-destructive">{erreurs.image}</p>}
                 </div>
               )}
 
@@ -246,7 +306,8 @@ async function verifierDon() {
                       required
                       className="w-full rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
-                    <Button type="submit" className="self-start">Publier</Button>
+                    <Button type="submit" className="self-start" disabled={enCours.actualite}>{enCours.actualite ? 'Publication...' : 'Publier'}</Button>
+                    {erreurs.actualite && <p className="text-sm text-destructive">{erreurs.actualite}</p>}
                   </form>
                 )}
                 <div className="mt-4 flex flex-col gap-3">
@@ -263,7 +324,7 @@ async function verifierDon() {
 
               {/* Commentaires */}
               <section className="mt-10">
-                <h2 className="text-lg font-semibold text-foreground">Commentaires ({commentaires.length})</h2>
+                <h2 className="text-lg font-semibold text-foreground">Commentaires ({infosCommentaires.total})</h2>
                 {utilisateurConnecte && (
                   <form onSubmit={posterCommentaire} className="mt-4 flex gap-2">
                     <input
@@ -272,15 +333,16 @@ async function verifierDon() {
                       onChange={(e) => setNouveauCommentaire(e.target.value)}
                       className="h-11 flex-1 rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
-                    <Button type="submit" size="default"><Send className="size-4" /></Button>
+                    <Button type="submit" size="default" disabled={enCours.commentaire}><Send className="size-4" /></Button>
                   </form>
                 )}
+                {erreurs.commentaire && <p className="mt-2 text-sm text-destructive">{erreurs.commentaire}</p>}
                 <div className="mt-4 flex flex-col gap-3">
                   {commentaires.map((c) => (
                     <div key={c.id_commentaire} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-4">
                       <p className="text-sm text-foreground"><span className="font-semibold">{c.utilisateur.prenom} : </span>{c.description}</p>
                       {utilisateurConnecte && utilisateurConnecte.id_utilisateur === c.id_utilisateur && (
-                        <button onClick={() => supprimerCommentaire(c.id_commentaire)} className="shrink-0 text-xs font-medium text-destructive hover:underline">
+                        <button onClick={() => supprimerCommentaire(c.id_commentaire)} disabled={enCours.listeCommentaires} className="shrink-0 text-xs font-medium text-destructive hover:underline disabled:opacity-60 disabled:cursor-not-allowed">
                           Supprimer
                         </button>
                       )}
@@ -288,6 +350,12 @@ async function verifierDon() {
                   ))}
                   {commentaires.length === 0 && <p className="mt-2 text-sm text-muted-foreground">Aucun commentaire pour l'instant.</p>}
                 </div>
+                {infosCommentaires.page < infosCommentaires.pages && (
+                  <Button variant="outline" onClick={voirPlusCommentaires} className="mt-4" disabled={enCours.listeCommentaires}>
+                    {enCours.listeCommentaires ? 'Chargement...' : 'Voir plus de commentaires'}
+                  </Button>
+                )}
+                {erreurs.listeCommentaires && <p className="mt-2 text-sm text-destructive">{erreurs.listeCommentaires}</p>}
               </section>
             </div>
 
@@ -316,11 +384,12 @@ async function verifierDon() {
                       <option value="ORANGE_MONEY">Orange Money</option>
                     </select>
                     <input placeholder="Numéro payeur" value={numero} onChange={(e) => setNumero(e.target.value)} required className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                    <Button type="submit" size="lg">Donner maintenant</Button>
+                    <Button type="submit" size="lg" disabled={enCours.don}>{enCours.don && !donEnAttente ? 'Envoi en cours...' : 'Donner maintenant'}</Button>
                     {messageDon && <p className="text-sm text-primary">{messageDon}</p>}
+                    {erreurs.don && <p className="text-sm text-destructive">{erreurs.don}</p>}
                     {donEnAttente && (
-  <Button type="button" variant="outline" onClick={verifierDon} className="mt-2 w-full">
-    Vérifier le statut du paiement
+  <Button type="button" variant="outline" onClick={verifierDon} className="mt-2 w-full" disabled={enCours.don}>
+    {enCours.don ? 'Vérification...' : 'Vérifier le statut du paiement'}
   </Button>
 )}
                   </form>
@@ -334,7 +403,7 @@ async function verifierDon() {
 
               <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
                 <Users className="size-4" />
-                {cagnotte.id_categorie ? 'Catégorie renseignée' : 'Cagnotte solidaire'}
+                {cagnotte.categorie?.nom || 'Cagnotte solidaire'}
               </div>
 
               {estProprietaire && (
@@ -350,16 +419,27 @@ async function verifierDon() {
                       <option value="ORANGE_MONEY">Orange Money</option>
                     </select>
                     <input placeholder="Numéro bénéficiaire" value={numeroRetrait} onChange={(e) => setNumeroRetrait(e.target.value)} required className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                    <Button type="submit" variant="outline">Demander le retrait</Button>
+                    <Button type="submit" variant="outline" disabled={enCours.retrait}>{enCours.retrait ? 'Envoi en cours...' : 'Demander le retrait'}</Button>
+                    {erreurs.retrait && <p className="text-sm text-destructive">{erreurs.retrait}</p>}
                   </form>
                   {retraits.length > 0 && (
                     <div className="mt-4 flex flex-col gap-2">
-                      {retraits.map((r) => (
-                        <div key={r.id_retrait} className="flex items-center justify-between text-xs">
-                          <span className="text-foreground">{formaterMontant(r.montant, cagnotte.devise)}</span>
-                          <span className="rounded-full bg-secondary px-2 py-0.5 font-medium text-muted-foreground">{r.statut}</span>
-                        </div>
-                      ))}
+                      {retraits.map((r) => {
+                        const statut = statutsRetrait[r.statut];
+                        const Icone = statut?.Icone;
+                        return (
+                          <div key={r.id_retrait}>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-foreground">{formaterMontant(r.montant, cagnotte.devise)}</span>
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${statut?.classes}`}>
+                                {Icone && <Icone className="size-3" />}
+                                {statut?.libelle ?? r.statut}
+                              </span>
+                            </div>
+                            {r.motif_rejet && <p className="mt-1 text-xs text-destructive">Motif du rejet : {r.motif_rejet}</p>}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -22,8 +22,8 @@ export default function MesCagnottes() {
 
   function charger() {
     setChargement(true);
-    api.get('/cagnottes')
-      .then((res) => setCagnottes(res.data.filter((c) => c.id_utilisateur === utilisateur.id_utilisateur)))
+    api.get('/cagnottes/mes')
+      .then((res) => setCagnottes(res.data))
       .finally(() => setChargement(false));
   }
 
