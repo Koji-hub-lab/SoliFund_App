@@ -38,7 +38,8 @@ export class RetraitsController {
   }
 
   @Get('cagnotte/:id')
-  listerParCagnotte(@Param('id', ParseIntPipe) id: number) {
-    return this.retraitsService.listerParCagnotte(id);
+  listerParCagnotte(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    const estAdmin = req.user.roles?.includes('ROLE_ADMIN');
+    return this.retraitsService.listerParCagnotte(id, req.user.id_utilisateur, estAdmin);
   }
 }

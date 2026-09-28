@@ -101,7 +101,19 @@ export class RetraitsService {
     });
   }
 
-  async listerParCagnotte(idCagnotte: number) {
+  // Contient les numéros de téléphone des bénéficiaires : réservé au propriétaire ou à un admin.
+  async listerParCagnotte(idCagnotte: number, idUtilisateur: number, estAdmin: boolean) {
+    const cagnotte = await this.prisma.cagnotte.findUnique({
+      where: { id_cagnotte: idCagnotte },
+      select: { id_utilisateur: true },
+    });
+    if (!cagnotte) {
+      throw new NotFoundException('Cagnotte introuvable.');
+    }
+    if (cagnotte.id_utilisateur !== idUtilisateur && !estAdmin) {
+      throw new ForbiddenException("Tu n'es pas le propriétaire de cette cagnotte.");
+    }
+
     return this.prisma.retrait.findMany({
       where: { id_cagnotte: idCagnotte },
       orderBy: { date_creation: 'desc' },

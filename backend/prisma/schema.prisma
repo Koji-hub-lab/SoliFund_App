@@ -131,12 +131,14 @@ model Jeton {
   id_jeton        Int         @id @default(autoincrement())
   id_utilisateur  Int
   utilisateur     Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Cascade)
-  code            String      @unique @db.VarChar(255)
+  code            String      @db.VarChar(255) // hash sha256 du code, jamais le code en clair
   type            TypeJeton
   date_creation   DateTime    @default(now())
   date_expiration DateTime
   est_utilise     Boolean     @default(false)
+  tentatives      Int         @default(0)
 
+  @@index([id_utilisateur, type, est_utilise])
   @@map("slf_jeton")
 }
 

@@ -22,6 +22,16 @@ api.interceptors.response.use(
     } else {
       const msg = error.response.data?.message;
       error.messageAffichable = Array.isArray(msg) ? msg.join(', ') : msg || 'Une erreur est survenue.';
+
+      // Token expiré ou compte suspendu/banni : on vide la session et on renvoie vers la connexion.
+      // Uniquement pour les requêtes authentifiées (un mauvais mot de passe au login renvoie aussi 401).
+      if (error.response.status === 401 && error.config?.headers?.Authorization) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('utilisateur');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   },

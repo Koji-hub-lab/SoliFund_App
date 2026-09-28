@@ -184,11 +184,35 @@ export class DonsService {
     return { valide: true as const, don: donValide };
   }
 
+  // Liste publique : aucun identifiant interne, et aucun nom pour les dons anonymes.
   async listerParCagnotte(idCagnotte: number) {
-    return this.prisma.don.findMany({
+    const dons = await this.prisma.don.findMany({
       where: { id_cagnotte: idCagnotte, statut: 'VALIDE' },
-      include: { utilisateur: { select: { nom: true, prenom: true } } },
+      select: {
+        id_don: true,
+        message: true,
+        est_anonyme: true,
+        date_creation: true,
+        paiement: { select: { montant: true, devise: true } },
+        utilisateur: { select: { nom: true, prenom: true } },
+      },
       orderBy: { date_creation: 'desc' },
+    });
+
+    return dons.map((don) => {
+      const visible = !don.est_anonyme && don.utilisateur;
+      return {
+        id_don: don.id_don,
+        montant: don.paiement.montant,
+        devise: don.paiement.devise,
+        message: don.message,
+        date_creation: don.date_creation,
+        est_anonyme: don.est_anonyme,
+        donateur: {
+          nom: visible ? don.utilisateur!.nom : null,
+          prenom: visible ? don.utilisateur!.prenom : null,
+        },
+      };
     });
   }
 
