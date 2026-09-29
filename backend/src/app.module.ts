@@ -13,7 +13,6 @@ import { CategoriesModule } from './categories/categories.module';
 import { CommentairesModule } from './commentaires/commentaires.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ActualitesModule } from './actualites/actualites.module';
-import { PaymentModule } from './payment/payment.module';
 import { TachesModule } from './taches/taches.module';
 import { AdminModule } from './admin/admin.module';
 import { validerEnvironnement } from './config/env.validation';
@@ -38,7 +37,6 @@ import { SanteController } from './sante/sante.controller';
     CommentairesModule,
     NotificationsModule,
     ActualitesModule,
-    PaymentModule,
     TachesModule,
     AdminModule,
     PartageModule,

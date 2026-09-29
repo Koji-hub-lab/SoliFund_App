@@ -20,8 +20,10 @@ import { ChangerMotDePasseDto } from './dto/changer-mot-de-passe.dto';
 import { JetonsService } from '../jetons/jetons.service';
 
 // Champs du profil renvoyés à l'utilisateur lui-même (GET et PATCH /utilisateurs/moi).
+// mot_de_passe n'est lu que pour calculer a_mot_de_passe (voir formaterProfil) : jamais renvoyé.
 const SELECTION_PROFIL = {
   id_utilisateur: true,
+  mot_de_passe: true,
   nom: true,
   prenom: true,
   email: true,
@@ -33,9 +35,15 @@ const SELECTION_PROFIL = {
 
 function formaterProfil({
   posseders,
+  mot_de_passe,
   ...profil
 }: Prisma.UtilisateurGetPayload<{ select: typeof SELECTION_PROFIL }>) {
-  return { ...profil, roles: posseders.map((p) => p.role.nom) };
+  return {
+    ...profil,
+    roles: posseders.map((p) => p.role.nom),
+    // Faux pour un compte créé avec Google : l'interface propose alors « Définir un mot de passe ».
+    a_mot_de_passe: mot_de_passe !== null,
+  };
 }
 
 @Injectable()
@@ -122,7 +130,8 @@ export class UtilisateursService {
     }
   }
 
-  // Exige le mot de passe actuel. date_changement_mdp invalide les jetons émis avant (JwtStrategy) :
+  // Exige le mot de passe actuel, sauf pour un compte qui n'en a pas encore (créé avec Google) :
+  // il en définit alors un. date_changement_mdp invalide les jetons émis avant (JwtStrategy) :
   // le frontend reconnecte ensuite l'utilisateur avec son nouveau mot de passe.
   async changerMotDePasse(idUtilisateur: number, dto: ChangerMotDePasseDto) {
     const utilisateur = await this.prisma.utilisateur.findUnique({
@@ -132,16 +141,24 @@ export class UtilisateursService {
     if (!utilisateur) {
       throw new NotFoundException('Utilisateur introuvable.');
     }
-    // 400 et non 401 : un 401 déconnecterait l'utilisateur côté frontend.
-    if (
-      !(await bcrypt.compare(dto.ancien_mot_de_passe, utilisateur.mot_de_passe))
-    ) {
-      throw new BadRequestException('Le mot de passe actuel est incorrect.');
-    }
-    if (dto.ancien_mot_de_passe === dto.nouveau_mot_de_passe) {
-      throw new BadRequestException(
-        "Le nouveau mot de passe doit être différent de l'actuel.",
-      );
+    if (utilisateur.mot_de_passe) {
+      if (!dto.ancien_mot_de_passe) {
+        throw new BadRequestException('Saisissez votre mot de passe actuel.');
+      }
+      // 400 et non 401 : un 401 déconnecterait l'utilisateur côté frontend.
+      if (
+        !(await bcrypt.compare(
+          dto.ancien_mot_de_passe,
+          utilisateur.mot_de_passe,
+        ))
+      ) {
+        throw new BadRequestException('Le mot de passe actuel est incorrect.');
+      }
+      if (dto.ancien_mot_de_passe === dto.nouveau_mot_de_passe) {
+        throw new BadRequestException(
+          "Le nouveau mot de passe doit être différent de l'actuel.",
+        );
+      }
     }
 
     await this.prisma.utilisateur.update({
@@ -151,7 +168,11 @@ export class UtilisateursService {
         date_changement_mdp: new Date(),
       },
     });
-    return { message: 'Mot de passe modifié.' };
+    return {
+      message: utilisateur.mot_de_passe
+        ? 'Mot de passe modifié.'
+        : 'Mot de passe défini.',
+    };
   }
 
   async listerTous(dto: PaginationDto) {

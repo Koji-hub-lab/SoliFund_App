@@ -46,7 +46,8 @@ api.interceptors.response.use(
       if (error.response.status === 401 && error.config?.headers?.Authorization) {
         localStorage.removeItem('token');
         localStorage.removeItem('utilisateur');
-        if (window.location.pathname !== '/login') {
+        // La page de retour Google gère elle-même l'échec (message sur /login?erreur=google).
+        if (!['/login', '/auth/google/retour'].includes(window.location.pathname)) {
           window.location.href = '/login';
         }
       }

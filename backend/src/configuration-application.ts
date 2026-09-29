@@ -12,7 +12,5 @@ export function configurerApplication(app: INestApplication) {
     }),
   );
   // Erreurs Prisma traduites en 409 / 404 / 400, autres erreurs en 500 générique (détail dans les logs).
-  app.useGlobalFilters(
-    new FiltreErreurs(app.get(HttpAdapterHost).httpAdapter),
-  );
+  app.useGlobalFilters(new FiltreErreurs(app.get(HttpAdapterHost).httpAdapter));
 }

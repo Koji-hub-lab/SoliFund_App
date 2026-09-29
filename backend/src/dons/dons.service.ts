@@ -1,14 +1,12 @@
 import {
   BadRequestException,
   ForbiddenException,
-  forwardRef,
-  Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { PaymentService } from '../payment/payment.service';
 import { CreateDonDto } from './dto/create-don.dto';
 import {
   PaginationDto,
@@ -21,19 +19,11 @@ import {
   UtilisateurVisiteur,
 } from '../cagnottes/cagnottes.service';
 
-import { MethodePaiement } from '@prisma/client';
-// Réponses du prestataire de paiement actuel : le module payment n'est pas typé (il sera réécrit
-// au changement de fournisseur), on les type ici, là où elles sont utilisées.
-type ReponseInitiation = { payToken?: string; status?: string };
-type ReponseStatut = { status?: string };
-
 @Injectable()
 export class DonsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-    @Inject(forwardRef(() => PaymentService))
-    private readonly paymentService: PaymentService,
     private readonly cagnottesService: CagnottesService,
   ) {}
 
@@ -54,47 +44,11 @@ export class DonsService {
       );
     }
 
-    const don = await this.prisma.$transaction(async (tx) => {
-      const paiement = await tx.paiement.create({
-        data: {
-          montant: dto.montant,
-          devise: cagnotte.devise,
-          methode_paiement: dto.methode_paiement as MethodePaiement,
-          numero_payeur: dto.numero_payeur,
-          id_utilisateur: idUtilisateur,
-        },
-      });
-
-      return tx.don.create({
-        data: {
-          id_cagnotte: dto.id_cagnotte,
-          id_utilisateur: idUtilisateur,
-          id_paiement: paiement.id_paiement,
-          message: dto.message,
-          est_anonyme: dto.est_anonyme ?? false,
-        },
-        include: { paiement: true },
-      });
-    });
-
-    const referenceInterne = `don-${don.id_don}-${Date.now()}`;
-    const resultat = (await this.paymentService.initierPaiement(
-      dto.numero_payeur,
-      dto.montant,
-      `Don pour ${cagnotte.titre}`,
-      referenceInterne,
-      dto.methode_paiement,
-    )) as ReponseInitiation;
-
-    await this.prisma.paiement.update({
-      where: { id_paiement: don.id_paiement },
-      data: {
-        transaction_id: resultat.payToken,
-        reference_externe: referenceInterne,
-      },
-    });
-
-    return { ...don, statut_paiement: resultat.status };
+    // Passage d'AangaraaPay à 3SPAY : le client 3SPAY existe (src/paiement-3spay), mais les dons
+    // n'y sont pas encore branchés. Aucun don n'est créé en attendant.
+    throw new ServiceUnavailableException(
+      'Les dons sont momentanément indisponibles : le paiement Mobile Money est en cours de mise à jour. Veuillez réessayer plus tard.',
+    );
   }
 
   async verifierStatutDon(
@@ -115,46 +69,8 @@ export class DonsService {
     if (don.statut === 'VALIDE') {
       return { statut: 'VALIDE' };
     }
-    if (!don.paiement.transaction_id) {
-      return { statut: 'EN_ATTENTE' };
-    }
-
-    const resultat = (await this.paymentService.verifierStatut(
-      don.paiement.transaction_id,
-    )) as ReponseStatut;
-
-    if (resultat.status === 'SUCCESSFUL') {
-      await this.appliquerValidation(idDon);
-      return { statut: 'VALIDE' };
-    }
-    if (resultat.status === 'FAILED') {
-      // Si un autre appel a validé le don entre-temps, on renvoie son statut réel.
-      return { statut: await this.appliquerEchec(idDon, don.id_paiement) };
-    }
-
-    return { statut: 'EN_ATTENTE' };
-  }
-
-  async gererWebhookPaiement(transactionIdAangaraa: string, status: string) {
-    const paiement = await this.prisma.paiement.findUnique({
-      where: { transaction_id: transactionIdAangaraa },
-    });
-    if (!paiement) return;
-
-    const don = await this.prisma.don.findUnique({
-      where: { id_paiement: paiement.id_paiement },
-    });
-    if (!don || don.statut === 'VALIDE') return;
-
-    if (status === 'SUCCESSFUL') {
-      await this.appliquerValidation(don.id_don);
-    } else if (
-      status === 'FAILED' ||
-      status === 'CANCELLED' ||
-      status === 'EXPIRED'
-    ) {
-      await this.appliquerEchec(don.id_don, paiement.id_paiement);
-    }
+    // En attendant le branchement de 3SPAY : statut enregistré, sans interroger le prestataire.
+    return { statut: don.statut };
   }
 
   // Endpoint admin : même comportement visible qu'avant (erreur si le don est déjà validé).

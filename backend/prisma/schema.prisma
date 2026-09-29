@@ -95,7 +95,10 @@ model Utilisateur {
   nom                 String            @db.VarChar(100)
   prenom              String            @db.VarChar(100)
   email               String            @unique @db.VarChar(255)
-  mot_de_passe        String            @db.VarChar(255)
+  // Vide pour un compte créé avec Google (connexion par email et mot de passe impossible).
+  mot_de_passe        String?           @db.VarChar(255)
+  // Identifiant Google (« sub ») du compte lié, pour la connexion avec Google.
+  google_id           String?           @unique @db.VarChar(255)
   telephone           String?           @unique @db.VarChar(20)
   photo_profil        String?           @db.VarChar(255)
   date_inscription    DateTime          @default(now())
@@ -156,22 +159,22 @@ model Categorie {
 }
 
 model Cagnotte {
-  id_cagnotte        Int            @id @default(autoincrement())
-  titre              String         @db.VarChar(255)
-  slug               String         @unique @db.VarChar(255)
-  description        String?
-  objectif           Decimal        @db.Decimal(15, 2)
-  montant_collecte   Decimal        @default(0.00) @db.Decimal(15, 2)
-  date_debut         DateTime       @db.Date
-  date_fin           DateTime       @db.Date
-  statut             StatutCagnotte @default(ACTIVE)
-  est_publique       Boolean        @default(true)
-  date_creation      DateTime       @default(now())
-  date_modification  DateTime?      @updatedAt
-  devise             String         @default("XAF") @db.VarChar(10)
+  id_cagnotte       Int            @id @default(autoincrement())
+  titre             String         @db.VarChar(255)
+  slug              String         @unique @db.VarChar(255)
+  description       String?
+  objectif          Decimal        @db.Decimal(15, 2)
+  montant_collecte  Decimal        @default(0.00) @db.Decimal(15, 2)
+  date_debut        DateTime       @db.Date
+  date_fin          DateTime       @db.Date
+  statut            StatutCagnotte @default(ACTIVE)
+  est_publique      Boolean        @default(true)
+  date_creation     DateTime       @default(now())
+  date_modification DateTime?      @updatedAt
+  devise            String         @default("XAF") @db.VarChar(10)
   // Photo de couverture en WebP : 1200 px de large (page de la cagnotte) et 400 px (cartes, miniatures).
-  image              String?        @db.VarChar(255)
-  image_miniature    String?        @db.VarChar(255)
+  image             String?        @db.VarChar(255)
+  image_miniature   String?        @db.VarChar(255)
 
   id_utilisateur Int
   utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
@@ -193,16 +196,25 @@ model Cagnotte {
 }
 
 model Paiement {
-  id_paiement       Int             @id @default(autoincrement())
-  montant           Decimal         @db.Decimal(15, 2)
-  devise            String          @default("XAF") @db.VarChar(10)
-  methode_paiement  MethodePaiement
-  transaction_id    String?         @unique @db.VarChar(255)
-  reference_externe String?         @db.VarChar(255)
-  statut            StatutPaiement  @default(EN_ATTENTE)
-  date_creation     DateTime        @default(now())
-  date_maj          DateTime?       @updatedAt
-  numero_payeur     String?         @db.VarChar(20)
+  id_paiement        Int             @id @default(autoincrement())
+  montant            Decimal         @db.Decimal(15, 2)
+  devise             String          @default("XAF") @db.VarChar(10)
+  methode_paiement   MethodePaiement
+  // Prestataire 3SPAY : identifiant de la transaction 3SPAY, référence SoliFund envoyée
+  // (partner_reference, unique) et clé d'idempotence, réutilisée si l'appel doit être rejoué.
+  transaction_id     String?         @unique @db.VarChar(255)
+  partner_reference  String?         @unique @db.VarChar(100)
+  cle_idempotence    String?         @unique @db.VarChar(36)
+  // Code opérateur 3SPAY (mtn, intouch...) et référence de la transaction chez l'opérateur.
+  operateur          String?         @db.VarChar(30)
+  operator_reference String?         @db.VarChar(255)
+  // Échec renvoyé par 3SPAY : catégorie normalisée (INSUFFICIENT_BALANCE...) et code brut.
+  error_type         String?         @db.VarChar(40)
+  error_code         String?         @db.VarChar(100)
+  statut             StatutPaiement  @default(EN_ATTENTE)
+  date_creation      DateTime        @default(now())
+  date_maj           DateTime?       @updatedAt
+  numero_payeur      String?         @db.VarChar(20)
 
   id_utilisateur Int
   utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
@@ -253,16 +265,16 @@ model Commentaire {
 }
 
 model Retrait {
-  id_retrait           Int             @id @default(autoincrement())
-  montant              Decimal         @db.Decimal(15, 2)
-  methode_retrait      MethodePaiement
-  numero_beneficiaire  String          @db.VarChar(20)
-  reference_retrait    String?         @unique @db.VarChar(255)
-  motif_rejet          String?
-  statut               StatutRetrait   @default(EN_ATTENTE)
-  date_creation        DateTime        @default(now())
-  date_traitement      DateTime?
-  date_validation      DateTime?
+  id_retrait          Int             @id @default(autoincrement())
+  montant             Decimal         @db.Decimal(15, 2)
+  methode_retrait     MethodePaiement
+  numero_beneficiaire String          @db.VarChar(20)
+  reference_retrait   String?         @unique @db.VarChar(255)
+  motif_rejet         String?
+  statut              StatutRetrait   @default(EN_ATTENTE)
+  date_creation       DateTime        @default(now())
+  date_traitement     DateTime?
+  date_validation     DateTime?
 
   id_utilisateur Int
   utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
@@ -298,11 +310,11 @@ model Transaction {
 }
 
 model Notification {
-  id_notification Int               @id @default(autoincrement())
-  titre           String            @db.VarChar(255)
+  id_notification Int              @id @default(autoincrement())
+  titre           String           @db.VarChar(255)
   message         String
   type            TypeNotification
-  date_envoi      DateTime          @default(now())
+  date_envoi      DateTime         @default(now())
 
   id_cagnotte Int?
   cagnotte    Cagnotte? @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Cascade)
@@ -315,8 +327,8 @@ model Notification {
 }
 
 model Recevoir {
-  statut        StatutLecture @default(NON_LUE)
-  date_lecture  DateTime?
+  statut       StatutLecture @default(NON_LUE)
+  date_lecture DateTime?
 
   id_utilisateur Int
   utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Cascade)
@@ -331,10 +343,10 @@ model Recevoir {
 }
 
 model Actualite {
-  id_actualite      Int      @id @default(autoincrement())
-  titre             String   @db.VarChar(255)
-  contenu           String
-  date_publication  DateTime @default(now())
+  id_actualite     Int      @id @default(autoincrement())
+  titre            String   @db.VarChar(255)
+  contenu          String
+  date_publication DateTime @default(now())
 
   id_cagnotte Int
   cagnotte    Cagnotte @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Cascade)

@@ -13,6 +13,7 @@ import MotDePasseOublie from './pages/MotDePasseOublie';
 import NonTrouve from './pages/NonTrouve';
 import Conditions from './pages/Conditions';
 import Confidentialite from './pages/Confidentialite';
+import RetourGoogle from './pages/RetourGoogle';
 
 // Espace connecté et administration : code chargé seulement à la première visite de ces pages,
 // pour alléger le chargement de l'accueil.
@@ -47,6 +48,7 @@ function ContenuApp() {
         <Route path="/notifications" element={<RouteProtegee><Notifications /></RouteProtegee>} />
         <Route path="/compte" element={<RouteProtegee><Compte /></RouteProtegee>} />
         <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+        <Route path="/auth/google/retour" element={<RetourGoogle />} />
         <Route path="/conditions" element={<Conditions />} />
         <Route path="/confidentialite" element={<Confidentialite />} />
         <Route path="/admin/tableau-de-bord" element={<AdminRoute><AdminTableauDeBord /></AdminRoute>} />

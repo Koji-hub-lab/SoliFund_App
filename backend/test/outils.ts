@@ -12,8 +12,12 @@ export const MOT_DE_PASSE = 'motdepasse-test-1';
 
 // Application complète (mêmes modules et réglages que l'API), branchée sur la base de test.
 export async function creerApplication() {
-  const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app: INestApplication<App> = module.createNestApplication({ logger: false });
+  const module = await Test.createTestingModule({
+    imports: [AppModule],
+  }).compile();
+  const app: INestApplication<App> = module.createNestApplication({
+    logger: false,
+  });
   configurerApplication(app);
   await app.init();
   return { app, prisma: app.get(PrismaService), jwt: app.get(JwtService) };
@@ -26,7 +30,9 @@ export async function viderBase(prisma: PrismaService) {
     WHERE schemaname = current_schema() AND tablename NOT IN ('_prisma_migrations', 'slf_role')`;
   if (tables.length === 0) return;
   const liste = tables.map((t) => `"${t.tablename}"`).join(', ');
-  await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${liste} RESTART IDENTITY CASCADE`);
+  await prisma.$executeRawUnsafe(
+    `TRUNCATE TABLE ${liste} RESTART IDENTITY CASCADE`,
+  );
 }
 
 let compteur = 0;
@@ -35,7 +41,11 @@ let compteur = 0;
 export async function creerUtilisateur(
   prisma: PrismaService,
   jwt: JwtService,
-  options: { admin?: boolean; statut?: StatutUtilisateur; dateFinSuspension?: Date } = {},
+  options: {
+    admin?: boolean;
+    statut?: StatutUtilisateur;
+    dateFinSuspension?: Date;
+  } = {},
 ) {
   compteur += 1;
   const roles = options.admin ? ['ROLE_USER', 'ROLE_ADMIN'] : ['ROLE_USER'];
@@ -49,11 +59,17 @@ export async function creerUtilisateur(
       statut: options.statut ?? 'ACTIF',
       date_fin_suspension: options.dateFinSuspension,
       posseders: {
-        create: roles.map((nom) => ({ role: { connect: { nom: nom as 'ROLE_USER' | 'ROLE_ADMIN' } } })),
+        create: roles.map((nom) => ({
+          role: { connect: { nom: nom as 'ROLE_USER' | 'ROLE_ADMIN' } },
+        })),
       },
     },
   });
-  const jeton = jwt.sign({ sub: utilisateur.id_utilisateur, email: utilisateur.email, roles });
+  const jeton = jwt.sign({
+    sub: utilisateur.id_utilisateur,
+    email: utilisateur.email,
+    roles,
+  });
   return { ...utilisateur, jeton };
 }
 
@@ -64,7 +80,11 @@ export function entete(jeton: string) {
 export async function creerCagnotte(
   prisma: PrismaService,
   idUtilisateur: number,
-  donnees: { statut?: StatutCagnotte; est_publique?: boolean; montant_collecte?: number } = {},
+  donnees: {
+    statut?: StatutCagnotte;
+    est_publique?: boolean;
+    montant_collecte?: number;
+  } = {},
 ) {
   compteur += 1;
   return prisma.cagnotte.create({
@@ -103,7 +123,12 @@ export async function creerDon(
     },
   });
   const don = await prisma.don.create({
-    data: { id_cagnotte: idCagnotte, id_utilisateur: idDonateur, id_paiement: paiement.id_paiement, statut },
+    data: {
+      id_cagnotte: idCagnotte,
+      id_utilisateur: idDonateur,
+      id_paiement: paiement.id_paiement,
+      statut,
+    },
   });
   if (statut === 'VALIDE') {
     await prisma.cagnotte.update({

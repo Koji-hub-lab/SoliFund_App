@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // Tests e2e uniquement : Jest charge du CommonJS, et @nestjs/schedule n'est publié qu'en ESM
+    // (il est transformé par ts-jest, voir transformIgnorePatterns dans jest-e2e.json).
+    "allowJs": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolvePackageJsonExports": null,
+    "resolvePackageJsonImports": null,
+    "isolatedModules": true
+  }
+}

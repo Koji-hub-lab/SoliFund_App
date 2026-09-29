@@ -6,8 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    // src/payment : module du fournisseur de paiement actuel, réécrit au changement de fournisseur.
-    ignores: ['eslint.config.mjs', 'src/payment/**'],
+    ignores: ['eslint.config.mjs'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

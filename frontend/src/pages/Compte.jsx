@@ -9,9 +9,10 @@ import { formaterMontant } from '../utils/format';
 
 const MDP_VIDE = { actuel: '', nouveau: '', confirmation: '' };
 
-function validerMotDePasse(mdp) {
+// avecActuel : faux pour un compte créé avec Google, qui n'a pas encore de mot de passe.
+function validerMotDePasse(mdp, avecActuel) {
   const erreurs = {};
-  if (!mdp.actuel) erreurs.actuel = 'Saisissez votre mot de passe actuel.';
+  if (avecActuel && !mdp.actuel) erreurs.actuel = 'Saisissez votre mot de passe actuel.';
   if (mdp.nouveau.length < 8) erreurs.nouveau = 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
   if (mdp.confirmation !== mdp.nouveau) erreurs.confirmation = 'Les deux mots de passe ne correspondent pas.';
   return erreurs;
@@ -72,19 +73,26 @@ export default function Compte() {
     setMdp({ ...mdp, [e.target.name]: e.target.value });
   }
 
+  // Compte créé avec Google, sans mot de passe : « Définir un mot de passe », sans l'ancien.
+  // (a_mot_de_passe vient de /utilisateurs/moi ; absent = compte avec mot de passe.)
+  const sansMotDePasse = utilisateur.a_mot_de_passe === false;
+
   // Le changement invalide le jeton actuel (côté serveur) : on reconnecte aussitôt l'utilisateur
   // avec son nouveau mot de passe pour qu'il reste connecté.
   async function changerMotDePasse(e) {
     e.preventDefault();
     setErreurMdp('');
     setMessageMdp('');
-    const erreurs = validerMotDePasse(mdp);
+    const erreurs = validerMotDePasse(mdp, !sansMotDePasse);
     setErreursMdp(erreurs);
     if (Object.keys(erreurs).length > 0) return;
 
     setMdpEnCours(true);
     try {
-      await api.patch('/utilisateurs/moi/mot-de-passe', { ancien_mot_de_passe: mdp.actuel, nouveau_mot_de_passe: mdp.nouveau });
+      await api.patch(
+        '/utilisateurs/moi/mot-de-passe',
+        sansMotDePasse ? { nouveau_mot_de_passe: mdp.nouveau } : { ancien_mot_de_passe: mdp.actuel, nouveau_mot_de_passe: mdp.nouveau },
+      );
     } catch (err) {
       setErreurMdp(err.messageAffichable);
       setMdpEnCours(false);
@@ -92,9 +100,9 @@ export default function Compte() {
     }
     try {
       const res = await api.post('/auth/login', { email: utilisateur.email, mot_de_passe: mdp.nouveau });
-      connecter(res.data.access_token, { ...utilisateur, ...res.data.utilisateur });
+      connecter(res.data.access_token, { ...utilisateur, ...res.data.utilisateur, a_mot_de_passe: true });
       setMdp(MDP_VIDE);
-      setMessageMdp('Votre mot de passe a été modifié.');
+      setMessageMdp(sansMotDePasse ? 'Votre mot de passe a été défini.' : 'Votre mot de passe a été modifié.');
     } catch {
       // Mot de passe changé mais reconnexion impossible : l'ancien jeton n'est plus valide.
       deconnecter();
@@ -161,25 +169,33 @@ export default function Compte() {
           </Button>
         </form>
 
-        {/* Changement du mot de passe */}
+        {/* Changement (ou définition, pour un compte Google) du mot de passe */}
         <form onSubmit={changerMotDePasse} noValidate className="flex flex-col gap-6 rounded-[32px] border border-border bg-card p-6 sm:p-8">
           <div>
-            <h2 className="font-display text-[26px] font-bold leading-tight text-foreground">Changer le mot de passe</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Vos autres appareils seront déconnectés.</p>
+            <h2 className="font-display text-[26px] font-bold leading-tight text-foreground">
+              {sansMotDePasse ? 'Définir un mot de passe' : 'Changer le mot de passe'}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {sansMotDePasse
+                ? 'Vous vous connectez avec Google. Définissez un mot de passe pour pouvoir aussi vous connecter avec votre adresse email.'
+                : 'Vos autres appareils seront déconnectés.'}
+            </p>
           </div>
 
           {/* Pour l'enregistrement du mot de passe par le navigateur. */}
           <input type="email" name="email" value={utilisateur.email} autoComplete="username" readOnly hidden />
 
-          <ChampMotDePasse
-            id="mdp-actuel"
-            name="actuel"
-            libelle="Mot de passe actuel"
-            value={mdp.actuel}
-            onChange={changerChampMdp}
-            erreur={erreursMdp.actuel}
-            autoComplete="current-password"
-          />
+          {!sansMotDePasse && (
+            <ChampMotDePasse
+              id="mdp-actuel"
+              name="actuel"
+              libelle="Mot de passe actuel"
+              value={mdp.actuel}
+              onChange={changerChampMdp}
+              erreur={erreursMdp.actuel}
+              autoComplete="current-password"
+            />
+          )}
           <ChampMotDePasse
             id="mdp-nouveau"
             name="nouveau"
@@ -204,7 +220,7 @@ export default function Compte() {
           {erreurMdp && <p className="text-sm text-destructive">{erreurMdp}</p>}
 
           <Button type="submit" disabled={mdpEnCours} className="sm:self-start">
-            {mdpEnCours ? 'Modification en cours...' : 'Changer le mot de passe'}
+            {mdpEnCours ? 'Enregistrement...' : sansMotDePasse ? 'Définir le mot de passe' : 'Changer le mot de passe'}
           </Button>
         </form>
       </div>

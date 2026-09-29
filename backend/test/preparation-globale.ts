@@ -14,11 +14,17 @@ export default async function preparationGlobale() {
   const urlServeur = new URL(url);
   urlServeur.pathname = '/postgres';
   urlServeur.searchParams.delete('schema');
-  const serveur = new PrismaClient({ adapter: new PrismaPg({ connectionString: urlServeur.toString() }) });
+  const serveur = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: urlServeur.toString() }),
+  });
   try {
-    const existe = await serveur.$queryRaw<unknown[]>`SELECT 1 FROM pg_database WHERE datname = ${nom}`;
+    const existe = await serveur.$queryRaw<
+      unknown[]
+    >`SELECT 1 FROM pg_database WHERE datname = ${nom}`;
     if (existe.length === 0) {
-      await serveur.$executeRawUnsafe(`CREATE DATABASE "${nom.replace(/"/g, '""')}"`);
+      await serveur.$executeRawUnsafe(
+        `CREATE DATABASE "${nom.replace(/"/g, '""')}"`,
+      );
       console.log(`\nBase de test « ${nom} » créée.`);
     }
   } catch (e) {
@@ -36,14 +42,24 @@ export default async function preparationGlobale() {
       stdio: 'pipe',
     });
   } catch (e) {
-    const sortie = (e as { stderr?: Buffer; stdout?: Buffer }).stderr?.toString() || (e as { stdout?: Buffer }).stdout?.toString();
-    throw new Error(`Échec des migrations sur la base de test « ${nom} » :\n${sortie ?? String(e)}`);
+    const sortie =
+      (e as { stderr?: Buffer; stdout?: Buffer }).stderr?.toString() ||
+      (e as { stdout?: Buffer }).stdout?.toString();
+    throw new Error(
+      `Échec des migrations sur la base de test « ${nom} » :\n${sortie ?? String(e)}`,
+    );
   }
 
-  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: url }),
+  });
   try {
     for (const role of ['ROLE_USER', 'ROLE_ADMIN'] as const) {
-      await prisma.role.upsert({ where: { nom: role }, update: {}, create: { nom: role } });
+      await prisma.role.upsert({
+        where: { nom: role },
+        update: {},
+        create: { nom: role },
+      });
     }
   } finally {
     await prisma.$disconnect();

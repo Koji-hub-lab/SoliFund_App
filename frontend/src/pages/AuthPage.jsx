@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import Champ from '../components/ui/Champ';
 import SaisieCode from '../components/ui/SaisieCode';
 import MiseEnPageAuth from '../components/auth/MiseEnPageAuth';
 import ChampMotDePasse from '../components/auth/ChampMotDePasse';
-import api from '../api/axios';
+import api, { API_URL } from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 
 function GoogleIcon(props) {
@@ -29,14 +29,24 @@ function Diviseur() {
   );
 }
 
+// Messages affichés au retour d'une connexion Google refusée (/login?erreur=google&motif=...).
+// Le motif est un code : aucun texte libre venant de l'adresse n'est affiché.
+const MESSAGES_GOOGLE = {
+  banni: 'Votre compte a été banni.',
+  suspendu: "Votre compte est suspendu. Contactez l'administrateur.",
+  'deja-lie': 'Ce compte SoliFund est déjà lié à un autre compte Google.',
+  'email-non-verifie': "La connexion avec Google n'a pas abouti : votre adresse Google n'est pas vérifiée.",
+};
+const MESSAGE_GOOGLE = "La connexion avec Google n'a pas abouti. Réessayez.";
+
+// Navigation complète vers le backend (proxy « /api » en développement), qui redirige vers Google.
 function BoutonGoogle() {
   return (
     <Button
-      type="button"
       variant="outline"
       size="lg"
       className="w-full gap-2.5"
-      onClick={() => alert('Connexion avec Google bientôt disponible.')}
+      href={`${API_URL}/auth/google`}
     >
       <GoogleIcon className="size-5" />
       Continuer avec Google
@@ -52,7 +62,10 @@ export default function AuthPage({ defaultTab = 'login' }) {
   // -- Connexion --
   const [emailLogin, setEmailLogin] = useState('');
   const [mdpLogin, setMdpLogin] = useState('');
-  const [erreurLogin, setErreurLogin] = useState('');
+  const [parametres] = useSearchParams();
+  const [erreurLogin, setErreurLogin] = useState(() =>
+    parametres.get('erreur') === 'google' ? MESSAGES_GOOGLE[parametres.get('motif')] ?? MESSAGE_GOOGLE : '',
+  );
 
   async function soumettreLogin(e) {
     e.preventDefault();
