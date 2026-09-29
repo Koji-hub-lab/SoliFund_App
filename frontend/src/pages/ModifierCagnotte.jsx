@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import { Button } from '../components/ui/Button';
+import Champ from '../components/ui/Champ';
+import { SqueletteFormulaire } from '../components/ui/Squelette';
 import api from '../api/axios';
 
 function validerForm(form) {
@@ -23,19 +25,26 @@ export default function ModifierCagnotte() {
   const [erreursChamps, setErreursChamps] = useState({});
   const [erreurServeur, setErreurServeur] = useState('');
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
+  const [erreurChargement, setErreurChargement] = useState('');
 
-  useEffect(() => {
-    api.get(`/cagnottes/${id}`).then((res) => {
-      const c = res.data;
-      setForm({
-        titre: c.titre,
-        description: c.description || '',
-        objectif: c.objectif,
-        date_debut: c.date_debut.slice(0, 10),
-        date_fin: c.date_fin.slice(0, 10),
-      });
-    });
-  }, [id]);
+  // Le formulaire n'est affiché qu'une fois la cagnotte chargée : jamais de formulaire vide.
+  function charger() {
+    setErreurChargement('');
+    api.get(`/cagnottes/${id}`)
+      .then((res) => {
+        const c = res.data;
+        setForm({
+          titre: c.titre,
+          description: c.description || '',
+          objectif: c.objectif,
+          date_debut: c.date_debut.slice(0, 10),
+          date_fin: c.date_fin.slice(0, 10),
+        });
+      })
+      .catch((err) => setErreurChargement(err.messageAffichable));
+  }
+
+  useEffect(charger, [id]);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -58,56 +67,55 @@ export default function ModifierCagnotte() {
     }
   }
 
+  const enTete = (
+    <div>
+      <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] text-foreground sm:text-[44px]">
+        Modifier la cagnotte
+      </h1>
+      <p className="mt-2 text-lg text-muted-foreground">Mettez à jour les informations de votre collecte.</p>
+    </div>
+  );
+
   if (!form) {
     return (
       <DashboardLayout>
-        <p className="text-muted-foreground">Chargement...</p>
+        <div className="mx-auto flex max-w-3xl flex-col gap-8">
+          {enTete}
+          {erreurChargement ? (
+            <div className="flex flex-col items-center gap-4 rounded-[32px] border border-border bg-card p-10 text-center">
+              <p className="text-destructive">La cagnotte n'a pas pu être chargée. {erreurChargement}</p>
+              <Button variant="outline" onClick={charger}>Réessayer</Button>
+              <Link to="/mes-cagnottes" className="inline-flex min-h-11 items-center font-bold text-primary underline decoration-2 underline-offset-[5px]">
+                Retour à mes cagnottes
+              </Link>
+            </div>
+          ) : (
+            <SqueletteFormulaire champs={4} />
+          )}
+        </div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-bold text-foreground">Modifier la cagnotte</h1>
-        <p className="mt-1 text-muted-foreground">Mets à jour les informations de ta collecte.</p>
+      <div className="mx-auto flex max-w-3xl flex-col gap-8">
+        {enTete}
 
-        <form onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-5 rounded-xl border border-border bg-card p-6">
-          <div>
-            <label htmlFor="titre" className="mb-2 block text-sm font-medium text-foreground">Titre de la cagnotte</label>
-            <input id="titre" name="titre" value={form.titre} onChange={handleChange} className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-            {erreursChamps.titre && <p className="mt-1 text-xs text-destructive">{erreursChamps.titre}</p>}
-          </div>
-
-          <div>
-            <label htmlFor="description" className="mb-2 block text-sm font-medium text-foreground">Description</label>
-            <textarea id="description" name="description" value={form.description} onChange={handleChange} rows={4} className="w-full rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-          </div>
-
-          <div>
-            <label htmlFor="objectif" className="mb-2 block text-sm font-medium text-foreground">Objectif (XAF)</label>
-            <input id="objectif" name="objectif" type="number" value={form.objectif} onChange={handleChange} className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-            {erreursChamps.objectif && <p className="mt-1 text-xs text-destructive">{erreursChamps.objectif}</p>}
-          </div>
-
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div>
-              <label htmlFor="date_debut" className="mb-2 block text-sm font-medium text-foreground">Date de début</label>
-              <input id="date_debut" name="date_debut" type="date" value={form.date_debut} onChange={handleChange} className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              {erreursChamps.date_debut && <p className="mt-1 text-xs text-destructive">{erreursChamps.date_debut}</p>}
-            </div>
-            <div>
-              <label htmlFor="date_fin" className="mb-2 block text-sm font-medium text-foreground">Date de fin</label>
-              <input id="date_fin" name="date_fin" type="date" value={form.date_fin} onChange={handleChange} className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-              {erreursChamps.date_fin && <p className="mt-1 text-xs text-destructive">{erreursChamps.date_fin}</p>}
-            </div>
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6 rounded-[32px] border border-border bg-card p-6 sm:p-8">
+          <Champ id="titre" name="titre" libelle="Titre de la cagnotte" value={form.titre} onChange={handleChange} erreur={erreursChamps.titre} />
+          <Champ as="textarea" id="description" name="description" libelle="Description" value={form.description} onChange={handleChange} rows={5} />
+          <Champ id="objectif" name="objectif" type="number" libelle="Objectif (XAF)" value={form.objectif} onChange={handleChange} erreur={erreursChamps.objectif} />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <Champ id="date_debut" name="date_debut" type="date" libelle="Date de début" value={form.date_debut} onChange={handleChange} erreur={erreursChamps.date_debut} />
+            <Champ id="date_fin" name="date_fin" type="date" libelle="Date de fin" value={form.date_fin} onChange={handleChange} erreur={erreursChamps.date_fin} />
           </div>
 
           {erreurServeur && <p className="text-sm text-destructive">{erreurServeur}</p>}
 
-          <div className="flex gap-3">
-            <Button type="submit" disabled={envoiEnCours}>{envoiEnCours ? 'Enregistrement...' : 'Enregistrer'}</Button>
-            <Button type="button" variant="outline" onClick={() => navigate(`/cagnottes/${id}`)}>Annuler</Button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button type="submit" size="lg" disabled={envoiEnCours}>{envoiEnCours ? 'Enregistrement...' : 'Enregistrer'}</Button>
+            <Button type="button" size="lg" variant="outline" onClick={() => navigate(`/cagnottes/${id}`)}>Annuler</Button>
           </div>
         </form>
       </div>

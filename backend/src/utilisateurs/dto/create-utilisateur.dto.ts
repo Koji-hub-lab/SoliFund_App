@@ -1,30 +1,30 @@
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+  Email,
+  NouveauMotDePasse,
+  TexteObligatoire,
+  VideEnNull,
+} from '../../common/validation';
 
 export class CreateUtilisateurDto {
-  @IsString()
-  @IsNotEmpty()
+  @TexteObligatoire('Le nom', 100)
   nom!: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @TexteObligatoire('Le prénom', 100)
   prenom!: string;
 
-  @IsEmail()
+  @Email()
   email!: string;
 
-  @IsString()
-  @MinLength(8, {
-    message: 'Le mot de passe doit contenir au moins 8 caractères',
-  })
+  @NouveauMotDePasse()
   mot_de_passe!: string;
 
+  // Chaîne vide = pas de numéro (null) : la colonne est unique.
   @IsOptional()
+  @VideEnNull()
   @IsString()
-  telephone?: string;
+  @MaxLength(20, {
+    message: 'Le numéro de téléphone ne peut pas dépasser 20 caractères.',
+  })
+  telephone?: string | null;
 }

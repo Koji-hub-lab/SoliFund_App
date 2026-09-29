@@ -1,19 +1,33 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ListerRetraitsDto } from './dto/lister-retraits.dto';
+import { EmailVerifieGuard } from '../auth/email-verifie.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RetraitsService } from './retraits.service';
 import { CreateRetraitDto } from './dto/create-retrait.dto';
 import { RejectRetraitDto } from './dto/reject-retrait.dto';
+import type { RequeteAuthentifiee } from '../auth/utilisateur-connecte';
 
 @Controller('retraits')
 @UseGuards(JwtAuthGuard)
 export class RetraitsController {
   constructor(private readonly retraitsService: RetraitsService) {}
 
+  // JwtAuthGuard (niveau classe) s'exécute avant : req.user est disponible.
+  @UseGuards(EmailVerifieGuard)
   @Post()
-  demander(@Request() req: any, @Body() dto: CreateRetraitDto) {
+  demander(@Request() req: RequeteAuthentifiee, @Body() dto: CreateRetraitDto) {
     return this.retraitsService.demander(req.user.id_utilisateur, dto);
   }
 
@@ -27,7 +41,10 @@ export class RetraitsController {
   @UseGuards(RolesGuard)
   @Roles('ROLE_ADMIN')
   @Post(':id/rejeter')
-  rejeter(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectRetraitDto) {
+  rejeter(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RejectRetraitDto,
+  ) {
     return this.retraitsService.rejeter(id, dto);
   }
 
@@ -39,8 +56,15 @@ export class RetraitsController {
   }
 
   @Get('cagnotte/:id')
-  listerParCagnotte(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  listerParCagnotte(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: RequeteAuthentifiee,
+  ) {
     const estAdmin = req.user.roles?.includes('ROLE_ADMIN');
-    return this.retraitsService.listerParCagnotte(id, req.user.id_utilisateur, estAdmin);
+    return this.retraitsService.listerParCagnotte(
+      id,
+      req.user.id_utilisateur,
+      estAdmin,
+    );
   }
 }

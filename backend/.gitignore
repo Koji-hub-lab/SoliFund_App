@@ -5,4 +5,4 @@ node_modules
 /generated/prisma
 
 # Fichiers envoyés par les utilisateurs
-uploads/
+/uploads/

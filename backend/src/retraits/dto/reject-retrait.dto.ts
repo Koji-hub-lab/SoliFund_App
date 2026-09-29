@@ -1,7 +1,8 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional } from 'class-validator';
+import { TexteFacultatif } from '../../common/validation';
 
 export class RejectRetraitDto {
   @IsOptional()
-  @IsString()
+  @TexteFacultatif('Le motif', 500)
   motif_rejet?: string;
 }

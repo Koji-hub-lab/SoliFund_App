@@ -1,12 +1,12 @@
-import { IsNumber, IsString } from 'class-validator';
+import { Identifiant, TexteObligatoire } from '../../common/validation';
 
 export class CreateActualiteDto {
-  @IsNumber()
+  @Identifiant('La cagnotte')
   id_cagnotte!: number;
 
-  @IsString()
+  @TexteObligatoire('Le titre', 255)
   titre!: string;
 
-  @IsString()
+  @TexteObligatoire('Le contenu', 5000)
   contenu!: string;
 }

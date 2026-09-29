@@ -1,13 +1,15 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsString, Length } from 'class-validator';
+import { Email, NouveauMotDePasse, SansEspaces } from '../../common/validation';
 
 export class ResetPasswordDto {
-  @IsEmail()
+  @Email()
   email!: string;
 
+  @SansEspaces()
   @IsString()
+  @Length(6, 6, { message: 'Le code doit contenir 6 chiffres.' })
   code!: string;
 
-  @IsString()
-  @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
+  @NouveauMotDePasse()
   mot_de_passe!: string;
 }

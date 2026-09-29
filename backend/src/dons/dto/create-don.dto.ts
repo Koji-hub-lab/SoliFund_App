@@ -1,28 +1,28 @@
+import { IsBoolean, IsIn, IsOptional } from 'class-validator';
 import {
-  IsBoolean,
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-} from 'class-validator';
+  Identifiant,
+  Montant,
+  TexteFacultatif,
+  TexteObligatoire,
+} from '../../common/validation';
 
 export class CreateDonDto {
-  @IsNumber()
+  @Identifiant('La cagnotte')
   id_cagnotte!: number;
 
-  @IsNumber()
-  @Min(100)
+  @Montant('Le montant du don', 100)
   montant!: number;
 
-  @IsIn(['MTN_MOBILE_MONEY', 'ORANGE_MONEY'])
+  @IsIn(['MTN_MOBILE_MONEY', 'ORANGE_MONEY'], {
+    message: 'Choisissez MTN Mobile Money ou Orange Money.',
+  })
   methode_paiement!: string;
 
-  @IsString()
+  @TexteObligatoire('Le numéro de téléphone', 20)
   numero_payeur!: string;
 
   @IsOptional()
-  @IsString()
+  @TexteFacultatif('Le message', 500)
   message?: string;
 
   @IsOptional()

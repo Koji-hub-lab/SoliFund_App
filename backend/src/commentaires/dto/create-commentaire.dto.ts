@@ -1,9 +1,9 @@
-import { IsNumber, IsString } from 'class-validator';
+import { Identifiant, TexteObligatoire } from '../../common/validation';
 
 export class CreateCommentaireDto {
-  @IsNumber()
+  @Identifiant('La cagnotte')
   id_cagnotte!: number;
 
-  @IsString()
+  @TexteObligatoire('Le commentaire', 1000)
   description!: string;
 }

@@ -1,10 +1,25 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { PaginationDto } from '../common/pagination';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { DonsService } from './dons.service';
 import { CreateDonDto } from './dto/create-don.dto';
+import type {
+  RequeteAuthentifiee,
+  RequeteOptionnelle,
+} from '../auth/utilisateur-connecte';
 
 @Controller('dons')
 export class DonsController {
@@ -12,15 +27,22 @@ export class DonsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  creer(@Request() req: any, @Body() dto: CreateDonDto) {
+  creer(@Request() req: RequeteAuthentifiee, @Body() dto: CreateDonDto) {
     return this.donsService.creer(req.user.id_utilisateur, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/verifier-statut')
-  verifierStatut(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  verifierStatut(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: RequeteAuthentifiee,
+  ) {
     const estAdmin = req.user.roles?.includes('ROLE_ADMIN');
-    return this.donsService.verifierStatutDon(id, req.user.id_utilisateur, estAdmin);
+    return this.donsService.verifierStatutDon(
+      id,
+      req.user.id_utilisateur,
+      estAdmin,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -37,8 +59,14 @@ export class DonsController {
     return this.donsService.listerTous();
   }
 
+  // Token facultatif : le propriétaire ou un admin voit aussi les cagnottes masquées.
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('cagnotte/:id')
-  listerParCagnotte(@Param('id', ParseIntPipe) id: number, @Query() dto: PaginationDto) {
-    return this.donsService.listerParCagnotte(id, dto);
+  listerParCagnotte(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() dto: PaginationDto,
+    @Request() req: RequeteOptionnelle,
+  ) {
+    return this.donsService.listerParCagnotte(id, dto, req.user ?? null);
   }
 }

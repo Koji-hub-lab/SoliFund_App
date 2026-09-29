@@ -1,173 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Sans:wght@400;500;700&display=swap');
 @import "tailwindcss/theme.css";
+/* Remise à zéro de Tailwind (marges, bordures, boutons, listes…) : importée avant les utilitaires,
+   dont les classes restent donc prioritaires. */
+@import "tailwindcss/preflight.css";
 @import "tailwindcss/utilities.css";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* Charte graphique SoliFund : voir frontend/DESIGN.md */
 @theme inline {
-  --color-background: #ffffff;
-  --color-foreground: #0f2a2a;
-  --color-card: #ffffff;
-  --color-primary: #0ea5a0;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #f7f9fa;
-  --color-secondary-foreground: #0f2a2a;
-  --color-muted: #f7f9fa;
-  --color-muted-foreground: #5f7070;
-  --color-accent: #f5b942;
-  --color-accent-foreground: #4a3410;
+  --color-background: #FBF7F1;
+  --color-foreground: #17262A;
+  --color-card: #FFFFFF;
+  --color-primary: #087F7A;
+  --color-primary-foreground: #FFFFFF;
+  --color-primary-dark: #055955;
+  --color-primary-soft: #E3F2F0;
+  --color-secondary: #F3EDE3;
+  --color-secondary-foreground: #17262A;
+  --color-muted: #F3EDE3;
+  --color-muted-foreground: #5E6B6D;
+  --color-accent: #E9A23B;
+  --color-accent-foreground: #17262A;
+  --color-accent-dark: #C4822A;
+  --color-accent-soft: #FBEBD0;
+  --color-encre: #17262A;
   --color-destructive: #e5484d;
-  --color-border: #e6ecec;
+  --color-border: #ECE4D8;
+
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
 }
 
-html, body, #root {
-  width: 100%;
+/* Mêmes valeurs que --font-sans / --font-display : @theme inline ne génère pas de variables CSS. */
+body {
   min-height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-
-body {
   overflow-x: hidden;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #FBF7F1;
+  color: #17262A;
 }
 
-* { box-sizing: border-box; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif; }
 
-:root {
-  --primaire: #0EA5A0;
-  --primaire-fonce: #0B8A85;
-  --accent: #F5B942;
-  --fond: #F7F9FA;
-  --carte: #FFFFFF;
-  --texte: #1F2937;
-  --texte-clair: #6B7280;
-  --bordure: #E5E7EB;
-  --danger: #DC2626;
-  --succes: #16A34A;
-  --radius: 10px;
+hr { border-color: #ECE4D8; }
+
+/* Le preflight de Tailwind 4 remet le curseur par défaut sur les boutons. */
+button:not(:disabled), [role='button']:not(:disabled), label[for] { cursor: pointer; }
+
+/* Focus clavier visible sur tous les éléments cliquables : anneau Lagune de 3 px, légèrement décalé.
+   Les champs de saisie gardent leur propre indicateur (bordure Lagune au focus). */
+:focus-visible:not(input, textarea, select) {
+  outline: 3px solid #087F7A;
+  outline-offset: 3px;
 }
 
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
-  background: var(--fond);
-  color: var(--texte);
-}
-
-h1, h2, h3 { font-weight: 600; margin: 0 0 12px; }
-h2 { font-size: 22px; }
-h3 { font-size: 17px; }
-
-a { color: var(--primaire-fonce); text-decoration: none; font-weight: 500; }
-a:hover { text-decoration: underline; }
-
-input, textarea, select {
-  width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 12px;
-  border: 1px solid var(--bordure);
-  border-radius: var(--radius);
-  font-size: 15px;
-  font-family: inherit;
-  background: var(--carte);
-  color: var(--texte);
-}
-input:focus, textarea:focus, select:focus {
-  outline: none;
-  border-color: var(--primaire);
-}
-
-button {
-  background: var(--primaire);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: var(--radius);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-}
-button:hover { background: var(--primaire-fonce); }
-
-.conteneur {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 24px 16px;
-}
-
-.carte {
-  background: var(--carte);
-  border: 1px solid var(--bordure);
-  border-radius: 12px;
-  padding: 16px 18px;
-  margin-bottom: 12px;
-}
-
-.barre-progression {
-  height: 8px;
-  background: var(--bordure);
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 8px 0;
-}
-.barre-progression-remplissage {
-  height: 100%;
-  background: var(--primaire);
-}
-
-.nav-app {
-  background: var(--carte);
-  border-bottom: 1px solid var(--bordure);
-  padding: 12px 0;
-}
-.nav-app-contenu {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 18px;
-  color: var(--primaire-fonce);
-}
-.nav-logo img { width: 28px; height: 28px; }
-
-.erreur { color: var(--danger); font-size: 14px; }
-.succes-texte { color: var(--succes); font-size: 14px; }
-
-.badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  background: #E0F2F1;
-  color: var(--primaire-fonce);
-}
-
-@media (max-width: 640px) {
-  .nav-app-contenu {
-    flex-wrap: wrap;
-    gap: 12px 16px;
+/* Animations coupées si l'utilisateur les réduit (survol, barres de progression, squelettes…). */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  .conteneur { padding: 16px 12px; }
-}
-
-.stat-bloc {
-  display: flex;
-  gap: 24px;
-  margin: 16px 0;
-}
-.stat-chiffre {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--primaire-fonce);
-}
-.stat-label {
-  font-size: 13px;
-  color: var(--texte-clair);
 }

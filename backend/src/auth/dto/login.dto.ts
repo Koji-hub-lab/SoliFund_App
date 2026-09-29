@@ -1,9 +1,9 @@
-import { IsEmail, IsString } from 'class-validator';
+import { Email, MotDePasseSaisi } from '../../common/validation';
 
 export class LoginDto {
-  @IsEmail()
+  @Email()
   email!: string;
 
-  @IsString()
+  @MotDePasseSaisi('Saisissez votre mot de passe.')
   mot_de_passe!: string;
 }

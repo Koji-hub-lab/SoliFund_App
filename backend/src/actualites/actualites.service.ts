@@ -1,14 +1,22 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateActualiteDto } from './dto/create-actualite.dto';
+import {
+  CagnottesService,
+  UtilisateurVisiteur,
+} from '../cagnottes/cagnottes.service';
 
 @Injectable()
 export class ActualitesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cagnottesService: CagnottesService,
+  ) {}
 
   async creer(idUtilisateur: number, dto: CreateActualiteDto) {
     const cagnotte = await this.prisma.cagnotte.findUnique({
@@ -19,7 +27,12 @@ export class ActualitesService {
     }
     if (cagnotte.id_utilisateur !== idUtilisateur) {
       throw new ForbiddenException(
-        "Tu n'es pas le propriétaire de cette cagnotte.",
+        "Vous n'êtes pas le propriétaire de cette cagnotte.",
+      );
+    }
+    if (cagnotte.statut === 'SUSPENDUE' || cagnotte.statut === 'ANNULEE') {
+      throw new BadRequestException(
+        'Impossible de publier une actualité sur une cagnotte suspendue ou annulée.',
       );
     }
 
@@ -32,7 +45,12 @@ export class ActualitesService {
     });
   }
 
-  async listerParCagnotte(idCagnotte: number) {
+  // Même règle de visibilité que GET /cagnottes/:id (404 pour une cagnotte masquée).
+  async listerParCagnotte(
+    idCagnotte: number,
+    utilisateur: UtilisateurVisiteur,
+  ) {
+    await this.cagnottesService.trouverVisible(idCagnotte, utilisateur);
     return this.prisma.actualite.findMany({
       where: { id_cagnotte: idCagnotte },
       orderBy: { date_publication: 'desc' },

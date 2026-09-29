@@ -102,6 +102,8 @@ model Utilisateur {
   est_verifie         Boolean           @default(false)
   statut              StatutUtilisateur @default(ACTIF)
   date_fin_suspension DateTime?
+  // Dernier changement de mot de passe : les jetons JWT émis avant cette date sont refusés.
+  date_changement_mdp DateTime?
 
   posseders     Posseder[]
   jetons        Jeton[]
@@ -167,7 +169,9 @@ model Cagnotte {
   date_creation      DateTime       @default(now())
   date_modification  DateTime?      @updatedAt
   devise             String         @default("XAF") @db.VarChar(10)
+  // Photo de couverture en WebP : 1200 px de large (page de la cagnotte) et 400 px (cartes, miniatures).
   image              String?        @db.VarChar(255)
+  image_miniature    String?        @db.VarChar(255)
 
   id_utilisateur Int
   utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)

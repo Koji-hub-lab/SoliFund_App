@@ -1,35 +1,33 @@
+import { IsDateString, IsIn, IsOptional } from 'class-validator';
 import {
-  IsDateString,
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-} from 'class-validator';
+  Identifiant,
+  Montant,
+  TexteFacultatif,
+  TexteObligatoire,
+} from '../../common/validation';
 
 export class CreateCagnotteDto {
-  @IsString()
+  @TexteObligatoire('Le titre', 255)
   titre!: string;
 
   @IsOptional()
-  @IsString()
+  @TexteFacultatif('La description', 5000)
   description?: string;
 
-  @IsNumber()
-  @Min(1)
+  @Montant("L'objectif", 1)
   objectif!: number;
 
-  @IsDateString()
+  @IsDateString({}, { message: 'La date de début est invalide.' })
   date_debut!: string;
 
-  @IsDateString()
+  @IsDateString({}, { message: 'La date de fin est invalide.' })
   date_fin!: string;
 
   @IsOptional()
-  @IsIn(['XAF'])
+  @IsIn(['XAF'], { message: 'Seule la devise XAF est acceptée.' })
   devise?: string;
 
   @IsOptional()
-  @IsNumber()
+  @Identifiant('La catégorie')
   id_categorie?: number;
 }

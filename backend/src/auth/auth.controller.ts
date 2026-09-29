@@ -5,6 +5,8 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifierEmailDto } from './dto/verifier-email.dto';
+import { RenvoyerCodeDto } from './dto/renvoyer-code.dto';
 
 // 5 requêtes par minute et par IP sur /auth/* : limite la force brute sur le login et les codes.
 @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -30,5 +32,15 @@ export class AuthController {
   @Post('reinitialiser-mot-de-passe')
   reinitialiserMotDePasse(@Body() dto: ResetPasswordDto) {
     return this.authService.reinitialiserMotDePasse(dto);
+  }
+
+  @Post('verifier-email')
+  verifierEmail(@Body() dto: VerifierEmailDto) {
+    return this.authService.verifierEmail(dto);
+  }
+
+  @Post('renvoyer-code-verification')
+  renvoyerCodeVerification(@Body() dto: RenvoyerCodeDto) {
+    return this.authService.renvoyerCodeVerification(dto);
   }
 }

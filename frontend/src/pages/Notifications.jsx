@@ -1,17 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import ElementActivite from '../components/dashboard/ElementActivite';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import api from '../api/axios';
-import { formaterDateHeure } from '../utils/format';
-
-const icones = {
-  DON: '💰',
-  RETRAIT: '🏦',
-  COMMENTAIRE: '💬',
-  SYSTEME: '🔔',
-  VERIFICATION: '✅',
-};
+import { SqueletteListe } from '../components/ui/Squelette';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -56,65 +50,79 @@ export default function Notifications() {
 
   const nbNonLues = notifications.filter((r) => r.statut === 'NON_LUE').length;
 
+  const lien = 'inline-flex min-h-11 items-center text-sm font-bold text-primary underline decoration-2 underline-offset-[5px]';
+
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-2xl">
-        <div className="flex items-center justify-between">
+      <div className="mx-auto flex max-w-3xl flex-col gap-8">
+        <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
-            <p className="mt-1 text-muted-foreground">
-              {nbNonLues > 0 ? `${nbNonLues} notification${nbNonLues > 1 ? 's' : ''} non lue${nbNonLues > 1 ? 's' : ''}` : 'Tu es à jour.'}
+            <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] text-foreground sm:text-[44px]">
+              Notifications
+            </h1>
+            <p className="mt-2 text-lg text-muted-foreground">
+              {nbNonLues > 0 ? `${nbNonLues} notification${nbNonLues > 1 ? 's' : ''} non lue${nbNonLues > 1 ? 's' : ''}` : 'Vous êtes à jour.'}
             </p>
           </div>
           {nbNonLues > 0 && (
-            <button onClick={toutMarquerLu} disabled={enCours !== null} className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-60 disabled:cursor-not-allowed">
-              <CheckCheck className="size-4" />
-              Tout marquer comme lu
-            </button>
+            <Button variant="outline" onClick={toutMarquerLu} disabled={enCours !== null} className="shrink-0">
+              <CheckCheck className="size-5" />
+              {enCours === 'tout' ? 'Enregistrement...' : 'Tout marquer comme lu'}
+            </Button>
           )}
         </div>
 
-        {erreur?.cible === 'tout' && <p className="mt-4 text-sm text-destructive">{erreur.message}</p>}
+        {erreur?.cible === 'tout' && <p className="text-sm text-destructive">{erreur.message}</p>}
 
-        {chargement && <p className="mt-6 text-muted-foreground">Chargement...</p>}
+        {chargement && <SqueletteListe lignes={4} />}
 
-        {!chargement && notifications.length === 0 && (
-          <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card p-12 text-center">
-            <Bell className="size-8 text-muted-foreground" />
-            <p className="text-muted-foreground">Aucune notification pour l'instant.</p>
-          </div>
-        )}
-
-        <div className="mt-6 flex flex-col gap-3">
-          {notifications.map((r) => (
-            <div
-              key={r.id_notification}
-              className={`rounded-xl border p-4 ${r.statut === 'NON_LUE' ? 'border-primary/30 bg-primary/5' : 'border-border bg-card'}`}
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-xl">{icones[r.notification.type] || '🔔'}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground">{r.notification.titre}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">{r.notification.message}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <span className="text-xs text-muted-foreground">{formaterDateHeure(r.notification.date_envoi)}</span>
-                    {r.notification.id_cagnotte && (
-                      <Link to={`/cagnottes/${r.notification.id_cagnotte}`} className="text-xs font-medium text-primary hover:underline">
-                        Voir la cagnotte
-                      </Link>
-                    )}
-                    {r.statut === 'NON_LUE' && (
-                      <button onClick={() => marquerLue(r.id_notification)} disabled={enCours !== null} className="text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-60 disabled:cursor-not-allowed">
-                        Marquer comme lue
-                      </button>
-                    )}
-                  </div>
-                  {erreur?.cible === r.id_notification && <p className="mt-2 text-sm text-destructive">{erreur.message}</p>}
-                </div>
+        {!chargement && (
+          <section className="rounded-[28px] border border-border bg-card p-6 sm:p-7">
+            {notifications.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <Bell className="size-8 text-muted-foreground" />
+                <p className="text-base text-muted-foreground">Aucune notification pour le moment.</p>
               </div>
-            </div>
-          ))}
-        </div>
+            ) : (
+              <ul className="m-0 flex list-none flex-col divide-y divide-border p-0">
+                {notifications.map((r) => {
+                  const idCagnotte = r.notification.id_cagnotte;
+                  const versGestion = idCagnotte && ['DON', 'RETRAIT'].includes(r.notification.type);
+                  const versCommentaires = r.notification.type === 'COMMENTAIRE';
+                  return (
+                    <ElementActivite key={r.id_notification} recu={r} className="py-5 first:pt-0 last:pb-0">
+                        {(idCagnotte || r.statut === 'NON_LUE') && (
+                          <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2">
+                            {idCagnotte && (
+                              <Link
+                                to={versGestion
+                                  ? `/mes-cagnottes/${idCagnotte}${r.notification.type === 'RETRAIT' ? '?onglet=retraits' : ''}`
+                                  : `/cagnottes/${idCagnotte}${versCommentaires ? '?onglet=commentaires' : ''}`}
+                                className={lien}
+                              >
+                                {versGestion ? 'Gérer la cagnotte' : versCommentaires ? 'Voir le commentaire' : 'Voir la cagnotte'}
+                              </Link>
+                            )}
+                            {r.statut === 'NON_LUE' && (
+                              <button
+                                type="button"
+                                onClick={() => marquerLue(r.id_notification)}
+                                disabled={enCours !== null}
+                                className="inline-flex min-h-11 items-center bg-transparent p-0 font-sans text-sm font-bold text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Marquer comme lue
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {erreur?.cible === r.id_notification && <p className="mt-2 text-sm text-destructive">{erreur.message}</p>}
+                    </ElementActivite>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -1,119 +1,102 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
+import CarteCagnotteOrganisateur from '../components/dashboard/CarteCagnotteOrganisateur';
+import AccueilSansCagnotte from '../components/dashboard/AccueilSansCagnotte';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
-import api, { API_URL } from '../api/axios';
-import { formaterMontant } from '../utils/format';
+import api from '../api/axios';
+import { SqueletteListe } from '../components/ui/Squelette';
 
-const statutStyles = {
-  ACTIVE: 'bg-primary/10 text-primary',
-  TERMINEE: 'bg-secondary text-muted-foreground',
-  SUSPENDUE: 'bg-accent/20 text-accent-foreground',
-  ANNULEE: 'bg-destructive/10 text-destructive',
-};
+// Filtres par statut, appliqués à la liste déjà chargée.
+const FILTRES = [
+  { valeur: '', libelle: 'Toutes' },
+  { valeur: 'ACTIVE', libelle: 'Actives' },
+  { valeur: 'TERMINEE', libelle: 'Terminées' },
+  { valeur: 'SUSPENDUE', libelle: 'Suspendues' },
+  { valeur: 'ANNULEE', libelle: 'Annulées' },
+];
 
 export default function MesCagnottes() {
   const { utilisateur } = useAuth();
-  const navigate = useNavigate();
   const [cagnottes, setCagnottes] = useState([]);
   const [chargement, setChargement] = useState(true);
+  const [filtre, setFiltre] = useState('');
+  const [erreur, setErreur] = useState('');
 
   function charger() {
     setChargement(true);
+    setErreur('');
     api.get('/cagnottes/mes')
       .then((res) => setCagnottes(res.data))
+      .catch((err) => setErreur(err.messageAffichable))
       .finally(() => setChargement(false));
   }
 
   useEffect(charger, [utilisateur]);
 
-  async function supprimer(e, id) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!window.confirm('Supprimer définitivement cette cagnotte ? Cette action est irréversible.')) return;
-    await api.delete(`/cagnottes/${id}`);
-    charger();
-  }
+  const affichees = filtre ? cagnottes.filter((c) => c.statut === filtre) : cagnottes;
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Mes cagnottes</h1>
-            <p className="mt-1 text-muted-foreground">Gère toutes les cagnottes que tu as créées.</p>
+            <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] text-foreground sm:text-[44px]">
+              Mes cagnottes
+            </h1>
+            <p className="mt-2 text-lg text-muted-foreground">Gérez toutes les cagnottes que vous avez créées.</p>
           </div>
-          <Button to="/creer-cagnotte">
-            <PlusCircle className="size-4" />
+          <Button to="/creer-cagnotte" className="shrink-0">
+            <Plus className="size-5" />
             Créer une cagnotte
           </Button>
         </div>
 
-        {chargement && <p className="text-muted-foreground">Chargement...</p>}
+        {chargement && <SqueletteListe lignes={3} />}
 
-        {!chargement && cagnottes.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
-            <p className="text-muted-foreground">Tu n'as pas encore créé de cagnotte.</p>
-            <Button to="/creer-cagnotte" className="mt-4">
-              <PlusCircle className="size-4" />
-              Lancer ma première cagnotte
-            </Button>
+        {!chargement && erreur && (
+          <div className="flex flex-col items-center gap-4 rounded-[32px] border border-border bg-card p-10 text-center">
+            <p className="text-destructive">{erreur}</p>
+            <Button variant="outline" onClick={charger}>Réessayer</Button>
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {cagnottes.map((c) => {
-            const percent = Math.min(100, Math.round((c.montant_collecte / c.objectif) * 100));
-            return (
-              <div
-                key={c.id_cagnotte}
-                onClick={() => navigate(`/cagnottes/${c.id_cagnotte}`)}
-                className="group cursor-pointer overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden bg-secondary">
-                  {c.image && (
-                    <img src={`${API_URL}${c.image}`} alt={c.titre} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                  )}
-                  <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${statutStyles[c.statut] || statutStyles.ACTIVE}`}>
-                    {c.statut}
-                  </span>
-                </div>
+        {!chargement && !erreur && cagnottes.length === 0 && <AccueilSansCagnotte />}
 
-                <div className="p-5">
-                  <h3 className="truncate font-semibold text-foreground">{c.titre}</h3>
+        {!chargement && !erreur && cagnottes.length > 0 && (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {FILTRES.map((f) => {
+                const actif = f.valeur === filtre;
+                const nombre = f.valeur ? cagnottes.filter((c) => c.statut === f.valeur).length : cagnottes.length;
+                return (
+                  <button
+                    key={f.valeur || 'toutes'}
+                    type="button"
+                    onClick={() => setFiltre(f.valeur)}
+                    aria-pressed={actif}
+                    className={`inline-flex min-h-11 items-center rounded-full border px-5 py-2.5 font-sans text-sm font-bold transition-colors ${
+                      actif ? 'border-encre bg-encre text-primary-foreground hover:bg-encre' : 'border-border bg-card text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    {f.libelle} ({nombre})
+                  </button>
+                );
+              })}
+            </div>
 
-                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
-                  </div>
-                  <div className="mt-2 flex items-baseline justify-between text-sm">
-                    <span className="font-semibold text-foreground">{formaterMontant(c.montant_collecte, c.devise)}</span>
-                    <span className="font-semibold text-primary">{percent}%</span>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <Link
-                      to={`/cagnottes/${c.id_cagnotte}/modifier`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-sm font-medium text-foreground hover:bg-secondary"
-                    >
-                      <Pencil className="size-3.5" />
-                      Modifier
-                    </Link>
-                    <button
-                      onClick={(e) => supprimer(e, c.id_cagnotte)}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-destructive/30 bg-transparent py-2 text-sm font-medium text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-3.5" />
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
+            {affichees.length === 0 ? (
+              <p className="text-base text-muted-foreground">Aucune cagnotte dans cette catégorie.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {affichees.map((c) => (
+                  <CarteCagnotteOrganisateur key={c.id_cagnotte} cagnotte={c} />
+                ))}
               </div>
-            );
-          })}
-        </div>
+            )}
+          </>
+        )}
       </div>
     </DashboardLayout>
   );

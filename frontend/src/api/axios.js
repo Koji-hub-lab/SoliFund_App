@@ -1,7 +1,24 @@
 import axios from 'axios';
 
-// URL du backend : VITE_API_URL dans frontend/.env (voir .env.example), localhost en développement.
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// En développement, VITE_API_URL reste vide : les appels passent par le proxy Vite (« /api », voir
+// vite.config.js), ce qui fonctionne aussi depuis un téléphone du réseau local.
+// En production, VITE_API_URL contient l'URL publique du backend (voir .env.example).
+const URL_BACKEND = import.meta.env.VITE_API_URL || '';
+export const API_URL = URL_BACKEND || '/api';
+
+// URL d'un fichier servi par le backend (ex. image « /uploads/cagnottes/x.png ») :
+// relative en développement (proxy « /uploads »), absolue en production.
+export function urlFichier(chemin) {
+  return chemin ? `${URL_BACKEND}${chemin}` : null;
+}
+
+// Lien de partage d'une cagnotte (WhatsApp, Facebook, copie) : page du backend qui fournit l'aperçu
+// (photo, titre, description) puis redirige vers la page de la cagnotte. En développement, il passe
+// par le proxy Vite (« /api »).
+export function urlPartageCagnotte(idCagnotte) {
+  const base = URL_BACKEND || `${window.location.origin}/api`;
+  return `${base}/partage/cagnottes/${idCagnotte}`;
+}
 
 const api = axios.create({
   baseURL: API_URL,
@@ -19,7 +36,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (!error.response) {
-      error.messageAffichable = 'Impossible de joindre le serveur. Vérifie ta connexion.';
+      error.messageAffichable = 'Impossible de joindre le serveur. Vérifiez votre connexion.';
     } else {
       const msg = error.response.data?.message;
       error.messageAffichable = Array.isArray(msg) ? msg.join(', ') : msg || 'Une erreur est survenue.';

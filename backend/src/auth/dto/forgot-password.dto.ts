@@ -1,6 +1,6 @@
-import { IsEmail } from 'class-validator';
+import { Email } from '../../common/validation';
 
 export class ForgotPasswordDto {
-  @IsEmail()
+  @Email()
   email!: string;
 }

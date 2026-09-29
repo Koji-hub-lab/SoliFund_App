@@ -8,27 +8,28 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="comment-ca-marche" className="scroll-mt-16 bg-background">
-      <div className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:py-24">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Simple et rapide</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Comment ça marche ?</h2>
-          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-            Trois étapes suffisent pour lancer votre collecte et rassembler votre communauté.
-          </p>
+    <section id="comment-ca-marche" className="scroll-mt-[88px] bg-primary-soft">
+      <div className="mx-auto max-w-[1400px] px-5 py-16 sm:px-8 lg:px-[72px] lg:py-24">
+        <div className="max-w-3xl">
+          <p className="text-sm font-bold uppercase tracking-[0.12em] text-primary">Simple et rapide</p>
+          <h2 className="mb-0 mt-3 font-display text-[36px] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground lg:text-[52px]">
+            Trois étapes pour rassembler votre communauté
+          </h2>
         </div>
 
-        <ol className="mt-14 grid gap-6 md:grid-cols-3">
+        <ol className="mb-0 mt-12 grid list-none gap-6 p-0 md:grid-cols-3">
           {steps.map((step, i) => {
             const Icon = step.icon;
             return (
-              <li key={step.title} className="relative rounded-xl border border-border bg-card p-7 shadow-sm transition-shadow hover:shadow-md">
-                <span className="absolute right-6 top-6 text-4xl font-bold text-foreground/10">{i + 1}</span>
-                <span className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <li key={step.title} className="relative rounded-[32px] border border-border bg-card p-8">
+                <span className="absolute right-7 top-5 font-display text-[64px] font-extrabold leading-none text-primary-soft" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <span className="flex size-14 items-center justify-center rounded-[18px] bg-primary text-primary-foreground">
                   <Icon className="size-6" />
                 </span>
-                <h3 className="mt-5 text-xl font-semibold text-foreground">{step.title}</h3>
-                <p className="mt-2 leading-relaxed text-muted-foreground">{step.description}</p>
+                <h3 className="mb-0 mt-6 font-display text-[22px] font-bold leading-tight text-foreground lg:text-[26px]">{step.title}</h3>
+                <p className="mt-3 text-[17px] leading-[1.6] text-[#45524F]">{step.description}</p>
               </li>
             );
           })}

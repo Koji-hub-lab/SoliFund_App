@@ -1,5 +1,9 @@
-import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { createHash, randomInt, timingSafeEqual } from 'crypto';
+import {
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,19 +12,14 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { BrevoService } from './brevo.service';
+import { VerifierEmailDto } from './dto/verifier-email.dto';
+import { RenvoyerCodeDto } from './dto/renvoyer-code.dto';
+import { BrevoService } from '../jetons/brevo.service';
+import { DUREE_RESET_MDP_MS, JetonsService } from '../jetons/jetons.service';
 
-const MAX_TENTATIVES = 5;
-const DUREE_CODE_MS = 15 * 60 * 1000; // 15 minutes
 const MESSAGE_ENVOI = 'Si ce compte existe, un code a été envoyé par email.';
-
-function genererCodeSixChiffres(): string {
-  return randomInt(100000, 1000000).toString();
-}
-
-function hacherCode(code: string): string {
-  return createHash('sha256').update(code).digest('hex');
-}
+const MESSAGE_RENVOI_VERIF =
+  "Si ce compte existe et n'est pas encore vérifié, un nouveau code a été envoyé par email.";
 
 @Injectable()
 export class AuthService {
@@ -31,15 +30,21 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly brevoService: BrevoService,
+    private readonly jetonsService: JetonsService,
   ) {}
 
   async login(dto: LoginDto) {
-    const utilisateur = await this.utilisateursService.trouverParEmail(dto.email);
+    const utilisateur = await this.utilisateursService.trouverParEmail(
+      dto.email,
+    );
     if (!utilisateur) {
       throw new UnauthorizedException('Identifiants invalides.');
     }
 
-    const motDePasseValide = await bcrypt.compare(dto.mot_de_passe, utilisateur.mot_de_passe);
+    const motDePasseValide = await bcrypt.compare(
+      dto.mot_de_passe,
+      utilisateur.mot_de_passe,
+    );
     if (!motDePasseValide) {
       throw new UnauthorizedException('Identifiants invalides.');
     }
@@ -52,7 +57,11 @@ export class AuthService {
     });
     const roles = possessions.map((p) => p.role.nom);
 
-    const payload = { sub: utilisateur.id_utilisateur, email: utilisateur.email, roles };
+    const payload = {
+      sub: utilisateur.id_utilisateur,
+      email: utilisateur.email,
+      roles,
+    };
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -61,6 +70,7 @@ export class AuthService {
         nom: utilisateur.nom,
         prenom: utilisateur.prenom,
         email: utilisateur.email,
+        est_verifie: utilisateur.est_verifie,
         roles,
       },
     };
@@ -86,42 +96,39 @@ export class AuthService {
       }
       throw new UnauthorizedException(
         fin
-          ? `Ton compte est suspendu jusqu'au ${fin.toLocaleDateString('fr-FR')}.`
-          : "Ton compte est suspendu. Contacte l'administrateur.",
+          ? `Votre compte est suspendu jusqu'au ${fin.toLocaleDateString('fr-FR')}.`
+          : "Votre compte est suspendu. Contactez l'administrateur.",
       );
     }
     if (utilisateur.statut === 'BANNI') {
-      throw new UnauthorizedException('Ton compte a été banni.');
+      throw new UnauthorizedException('Votre compte a été banni.');
     }
-    throw new UnauthorizedException("Ton compte est désactivé. Contacte l'administrateur.");
+    throw new UnauthorizedException(
+      "Votre compte est désactivé. Contactez l'administrateur.",
+    );
   }
 
   async demanderReinitialisation(dto: ForgotPasswordDto) {
-    const utilisateur = await this.utilisateursService.trouverParEmail(dto.email);
+    const utilisateur = await this.utilisateursService.trouverParEmail(
+      dto.email,
+    );
     if (!utilisateur) {
       // Réponse identique que le compte existe ou non, pour ne pas révéler les emails inscrits
       return { message: MESSAGE_ENVOI };
     }
 
-    const code = genererCodeSixChiffres();
-    await this.prisma.$transaction([
-      // Un seul code valide à la fois : les anciens codes de cet utilisateur sont invalidés.
-      this.prisma.jeton.updateMany({
-        where: { id_utilisateur: utilisateur.id_utilisateur, type: 'RESET_MDP', est_utilise: false },
-        data: { est_utilise: true },
-      }),
-      this.prisma.jeton.create({
-        data: {
-          id_utilisateur: utilisateur.id_utilisateur,
-          code: hacherCode(code),
-          type: 'RESET_MDP',
-          date_expiration: new Date(Date.now() + DUREE_CODE_MS),
-        },
-      }),
-    ]);
+    const code = await this.jetonsService.creerCode(
+      utilisateur.id_utilisateur,
+      'RESET_MDP',
+      DUREE_RESET_MDP_MS,
+    );
 
     try {
-      await this.brevoService.envoyerCodeReinitialisation(utilisateur.email, utilisateur.prenom, code);
+      await this.brevoService.envoyerCodeReinitialisation(
+        utilisateur.email,
+        utilisateur.prenom,
+        code,
+      );
     } catch (e) {
       // Pas d'erreur côté client : elle révélerait que le compte existe.
       this.logger.error(
@@ -134,12 +141,22 @@ export class AuthService {
   }
 
   async verifierCode(dto: VerifyCodeDto) {
-    await this.consommerTentative(dto.email, dto.code, false);
+    await this.jetonsService.verifierCode(
+      await this.idParEmail(dto.email),
+      'RESET_MDP',
+      dto.code,
+      true,
+    );
     return { message: 'Code valide.' };
   }
 
   async reinitialiserMotDePasse(dto: ResetPasswordDto) {
-    const jeton = await this.consommerTentative(dto.email, dto.code, true);
+    const jeton = await this.jetonsService.verifierCode(
+      await this.idParEmail(dto.email),
+      'RESET_MDP',
+      dto.code,
+      false,
+    );
     const mot_de_passe_hash = await bcrypt.hash(dto.mot_de_passe, 10);
 
     await this.prisma.$transaction(async (tx) => {
@@ -153,59 +170,61 @@ export class AuthService {
       }
       await tx.utilisateur.update({
         where: { id_utilisateur: jeton.id_utilisateur },
-        data: { mot_de_passe: mot_de_passe_hash },
+        // Déconnecte les sessions ouvertes avec l'ancien mot de passe (voir JwtStrategy).
+        data: {
+          mot_de_passe: mot_de_passe_hash,
+          date_changement_mdp: new Date(),
+        },
       });
     });
 
     return { message: 'Mot de passe réinitialisé avec succès.' };
   }
 
-  // Vérifie le code du jeton RESET_MDP actif de l'utilisateur. Chaque essai réserve d'abord une
-  // tentative de façon atomique (pas de dépassement avec des requêtes simultanées) ; un essai réussi
-  // la rend, un essai raté la garde. Au 5e échec, le jeton est invalidé.
-  private async consommerTentative(email: string, code: string, pourReinitialiser: boolean) {
-    const erreur = new BadRequestException('Code invalide ou expiré.');
+  async verifierEmail(dto: VerifierEmailDto) {
+    const utilisateur = await this.utilisateursService.trouverParEmail(
+      dto.email,
+    );
+    if (utilisateur?.est_verifie) {
+      return { message: 'Votre adresse email est déjà vérifiée.' };
+    }
+    const jeton = await this.jetonsService.verifierCode(
+      utilisateur?.id_utilisateur ?? null,
+      'VERIF_EMAIL',
+      dto.code,
+      false,
+    );
 
-    const utilisateur = await this.utilisateursService.trouverParEmail(email);
-    if (!utilisateur) throw erreur;
-
-    const jeton = await this.prisma.jeton.findFirst({
-      where: {
-        id_utilisateur: utilisateur.id_utilisateur,
-        type: 'RESET_MDP',
-        est_utilise: false,
-        date_expiration: { gt: new Date() },
-        tentatives: { lt: MAX_TENTATIVES },
-      },
-      orderBy: { date_creation: 'desc' },
-    });
-    if (!jeton) throw erreur;
-
-    const reserve = await this.prisma.jeton.updateMany({
-      where: { id_jeton: jeton.id_jeton, est_utilise: false, tentatives: { lt: MAX_TENTATIVES } },
-      data: { tentatives: { increment: 1 } },
-    });
-    if (reserve.count === 0) throw erreur;
-
-    const attendu = Buffer.from(jeton.code, 'hex');
-    const recu = Buffer.from(hacherCode(code), 'hex');
-    const correct = attendu.length === recu.length && timingSafeEqual(attendu, recu);
-
-    if (correct) {
-      if (!pourReinitialiser) {
-        await this.prisma.jeton.update({
-          where: { id_jeton: jeton.id_jeton },
-          data: { tentatives: { decrement: 1 } },
-        });
+    await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.jeton.updateMany({
+        where: { id_jeton: jeton.id_jeton, est_utilise: false },
+        data: { est_utilise: true },
+      });
+      if (count === 0) {
+        throw new BadRequestException('Code invalide ou expiré.');
       }
-      return jeton;
-    }
+      await tx.utilisateur.update({
+        where: { id_utilisateur: jeton.id_utilisateur },
+        data: { est_verifie: true },
+      });
+    });
 
-    const apres = await this.prisma.jeton.findUnique({ where: { id_jeton: jeton.id_jeton } });
-    if (apres && apres.tentatives >= MAX_TENTATIVES) {
-      await this.prisma.jeton.update({ where: { id_jeton: jeton.id_jeton }, data: { est_utilise: true } });
-      throw new BadRequestException('Trop de tentatives. Demande un nouveau code.');
+    return { message: 'Adresse email vérifiée.' };
+  }
+
+  async renvoyerCodeVerification(dto: RenvoyerCodeDto) {
+    const utilisateur = await this.utilisateursService.trouverParEmail(
+      dto.email,
+    );
+    // Réponse identique dans tous les cas, pour ne pas révéler les emails inscrits.
+    if (utilisateur && !utilisateur.est_verifie) {
+      await this.jetonsService.envoyerCodeVerification(utilisateur);
     }
-    throw erreur;
+    return { message: MESSAGE_RENVOI_VERIF };
+  }
+
+  private async idParEmail(email: string): Promise<number | null> {
+    const utilisateur = await this.utilisateursService.trouverParEmail(email);
+    return utilisateur?.id_utilisateur ?? null;
   }
 }

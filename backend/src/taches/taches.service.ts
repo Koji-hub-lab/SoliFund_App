@@ -2,14 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-
-const FUSEAU = 'Africa/Douala';
-
-// Date du jour à Douala, sous forme de minuit UTC (même format que les colonnes @db.Date).
-function aujourdhuiADouala(): Date {
-  const jour = new Intl.DateTimeFormat('en-CA', { timeZone: FUSEAU }).format(new Date()); // AAAA-MM-JJ
-  return new Date(`${jour}T00:00:00.000Z`);
-}
+import { FUSEAU, estEchue } from '../common/dates';
 
 @Injectable()
 export class TachesService {
@@ -25,19 +18,34 @@ export class TachesService {
     try {
       const terminees = await this.terminerCagnottesEchues();
       const reactives = await this.leverSuspensionsEchues();
-      this.logger.log(`Maintenance : ${terminees} cagnotte(s) terminée(s), ${reactives} compte(s) réactivé(s).`);
+      this.logger.log(
+        `Maintenance : ${terminees} cagnotte(s) terminée(s), ${reactives} compte(s) réactivé(s).`,
+      );
     } catch (e) {
-      this.logger.error('Échec de la maintenance nocturne', e instanceof Error ? e.stack : String(e));
+      this.logger.error(
+        'Échec de la maintenance nocturne',
+        e instanceof Error ? e.stack : String(e),
+      );
     }
   }
 
   // Passe en TERMINEE les cagnottes ACTIVE dont le dernier jour (date_fin) est passé,
   // puis prévient chaque organisateur avec le montant collecté.
   async terminerCagnottesEchues(): Promise<number> {
-    const echues = await this.prisma.cagnotte.findMany({
-      where: { statut: 'ACTIVE', date_fin: { lt: aujourdhuiADouala() } },
-      select: { id_cagnotte: true, id_utilisateur: true, titre: true, montant_collecte: true, devise: true },
+    // date_fin <= maintenant : présélection large en base ; estEchue (même règle que les dons) tranche.
+    const maintenant = new Date();
+    const candidates = await this.prisma.cagnotte.findMany({
+      where: { statut: 'ACTIVE', date_fin: { lte: maintenant } },
+      select: {
+        id_cagnotte: true,
+        id_utilisateur: true,
+        titre: true,
+        montant_collecte: true,
+        devise: true,
+        date_fin: true,
+      },
     });
+    const echues = candidates.filter((c) => estEchue(c.date_fin, maintenant));
 
     let nb = 0;
     for (const c of echues) {
@@ -54,12 +62,14 @@ export class TachesService {
         await this.notificationsService.envoyer(
           c.id_utilisateur,
           'Cagnotte terminée',
-          `Ta cagnotte « ${c.titre} » est terminée. Montant collecté : ${montant}.`,
+          `Votre cagnotte « ${c.titre} » est terminée. Montant collecté : ${montant}.`,
           'SYSTEME',
           c.id_cagnotte,
         );
       } catch (e) {
-        this.logger.warn(`Notification de fin non envoyée (cagnotte ${c.id_cagnotte}) : ${e instanceof Error ? e.message : e}`);
+        this.logger.warn(
+          `Notification de fin non envoyée (cagnotte ${c.id_cagnotte}) : ${e instanceof Error ? e.message : e}`,
+        );
       }
     }
     return nb;

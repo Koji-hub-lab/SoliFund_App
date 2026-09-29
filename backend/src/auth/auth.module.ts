@@ -6,11 +6,12 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { UtilisateursModule } from '../utilisateurs/utilisateurs.module';
-import { BrevoService } from './brevo.service';
+import { JetonsModule } from '../jetons/jetons.module';
 
 @Module({
   imports: [
     UtilisateursModule,
+    JetonsModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -22,6 +23,6 @@ import { BrevoService } from './brevo.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, BrevoService],
+  providers: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

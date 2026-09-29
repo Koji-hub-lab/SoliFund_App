@@ -1,18 +1,27 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, Matches } from 'class-validator';
+import {
+  SansEspaces,
+  TexteFacultatif,
+  TexteObligatoire,
+} from '../../common/validation';
 
 export class CreateCategorieDto {
-  @IsString()
+  @TexteObligatoire('Le nom', 100)
   nom!: string;
 
   @IsOptional()
-  @IsString()
+  @TexteFacultatif('La description', 500)
   description?: string;
 
   @IsOptional()
-  @IsString()
+  @TexteFacultatif("L'icône", 255)
   icone?: string;
 
+  // Code couleur hexadécimal (#RRGGBB) ; l'interface propose les couleurs de la charte.
   @IsOptional()
-  @IsString()
+  @SansEspaces()
+  @Matches(/^#[0-9A-Fa-f]{6}$/, {
+    message: 'La couleur doit être un code du type #087F7A.',
+  })
   couleur?: string;
 }

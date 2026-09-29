@@ -1,79 +1,84 @@
 import { useEffect, useState } from 'react';
-import { Users } from 'lucide-react';
-import { Button } from '../ui/Button';
-import api, { API_URL } from '../../api/axios';
-import { formaterMontant } from '../../utils/format';
-
-const categorieClasses = {
-  default: 'bg-primary/10 text-primary',
-};
-
-function CagnotteCard({ c }) {
-  const percent = Math.min(100, Math.round((c.montant_collecte / c.objectif) * 100));
-  return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-      <div className="relative aspect-[16/10] overflow-hidden bg-secondary">
-        {c.image && (
-          <img
-            src={`${API_URL}${c.image}`}
-            alt={c.titre}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-base font-semibold leading-snug text-foreground">{c.titre}</h3>
-
-        <div className="mt-4 flex-1">
-          <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
-          </div>
-          <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-sm font-bold text-foreground">{formaterMontant(c.montant_collecte, c.devise)}</span>
-            <span className="text-sm font-semibold text-primary">{percent}%</span>
-          </div>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Users className="size-3.5" />
-            objectif {formaterMontant(c.objectif, c.devise)}
-          </p>
-        </div>
-
-        <Button variant="outline" to={`/cagnottes/${c.id_cagnotte}`} className="mt-5 w-full">
-          Participer
-        </Button>
-      </div>
-    </article>
-  );
-}
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import CarteCagnotte from '../cagnotte/CarteCagnotte';
+import api from '../../api/axios';
 
 export function PopularCagnottes() {
   const [cagnottes, setCagnottes] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [categorie, setCategorie] = useState('');
+  const [erreur, setErreur] = useState('');
 
   useEffect(() => {
-    api.get('/cagnottes?tri=populaires&limite=4').then((res) => setCagnottes(res.data.donnees));
+    api.get('/categories').then((res) => setCategories(res.data)).catch(() => setCategories([]));
   }, []);
 
+  useEffect(() => {
+    let actif = true;
+    const params = { tri: 'populaires', limite: 4 };
+    if (categorie) params.id_categorie = categorie;
+    setErreur('');
+    api.get('/cagnottes', { params })
+      .then((res) => actif && setCagnottes(res.data.donnees))
+      .catch((err) => actif && setErreur(err.messageAffichable));
+    return () => {
+      actif = false;
+    };
+  }, [categorie]);
+
+  const filtres = [{ id_categorie: '', nom: 'Toutes' }, ...categories];
+
   return (
-    <section id="cagnottes" className="scroll-mt-16 bg-secondary">
-      <div className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:py-24">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+    <section id="cagnottes" className="scroll-mt-[88px] bg-background">
+      <div className="mx-auto max-w-[1400px] px-5 py-16 sm:px-8 lg:px-[72px] lg:py-24">
+        <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-primary">En ce moment</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Cagnottes populaires</h2>
-            <p className="mt-3 max-w-xl leading-relaxed text-muted-foreground">
-              Rejoignez les Camerounais qui soutiennent des causes qui comptent.
-            </p>
+            <p className="text-sm font-bold uppercase tracking-[0.12em] text-primary">En ce moment</p>
+            <h2 className="mb-0 mt-3 font-display text-[36px] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground lg:text-[52px]">
+              Cagnottes populaires
+            </h2>
           </div>
-          <Button variant="outline" to="/cagnottes-toutes">Voir toutes les cagnottes</Button>
+          <Link
+            to="/cagnottes"
+            className="inline-flex min-h-11 items-center gap-1.5 text-base font-bold text-primary underline decoration-2 underline-offset-[5px]"
+          >
+            Voir toutes les cagnottes
+            <ArrowRight className="size-4" />
+          </Link>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 flex flex-wrap gap-2">
+          {filtres.map((f) => {
+            const actif = String(f.id_categorie) === String(categorie);
+            return (
+              <button
+                key={f.id_categorie || 'toutes'}
+                type="button"
+                onClick={() => setCategorie(f.id_categorie)}
+                aria-pressed={actif}
+                className={`inline-flex min-h-11 items-center rounded-full border px-5 py-2.5 font-sans text-sm font-bold transition-colors ${
+                  actif ? 'border-encre bg-encre text-primary-foreground hover:bg-encre' : 'border-border bg-card text-foreground hover:bg-secondary'
+                }`}
+              >
+                {f.nom}
+              </button>
+            );
+          })}
+        </div>
+
+        {erreur && <p className="mt-10 text-sm text-destructive">{erreur}</p>}
+
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {cagnottes.map((c) => (
-            <CagnotteCard key={c.id_cagnotte} c={c} />
+            <CarteCagnotte key={c.id_cagnotte} c={c} />
           ))}
         </div>
-        {cagnottes.length === 0 && <p className="mt-8 text-center text-muted-foreground">Aucune cagnotte pour le moment.</p>}
+        {!erreur && cagnottes.length === 0 && (
+          <p className="mt-8 text-muted-foreground">
+            {categorie ? 'Aucune cagnotte dans cette catégorie pour le moment.' : 'Aucune cagnotte pour le moment.'}
+          </p>
+        )}
       </div>
     </section>
   );
