@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Lock, Smartphone } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -6,7 +7,8 @@ import api from '../../api/axios';
 import { formaterMontant } from '../../utils/format';
 import { champPilule, champZone, erreurTexte } from './classes';
 import ChoixOperateur, { nomOperateur } from './ChoixOperateur';
-import { MESSAGE_NUMERO_INVALIDE, normaliserNumero } from '../../utils/telephone';
+import { messageNumeroInvalide, normaliserNumero } from '../../utils/telephone';
+import { localeActive } from '../../i18n';
 
 const MONTANTS_RAPIDES = [1000, 2000, 5000, 10000];
 const MONTANT_MIN = 100; // même minimum que le backend (CreateDonDto)
@@ -30,6 +32,7 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
   const [etape, setEtape] = useState('formulaire');
   const [donEnAttente, setDonEnAttente] = useState(null);
   const [toujoursEnAttente, setToujoursEnAttente] = useState(false);
+  const { t } = useTranslation('cagnotte');
 
   const montantNombre = Number(montant);
   const montantValide = Number.isFinite(montantNombre) && montantNombre >= MONTANT_MIN;
@@ -38,8 +41,8 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
     e.preventDefault();
     const numeroNormalise = normaliserNumero(numero);
     const nouvellesErreurs = {};
-    if (!montantValide) nouvellesErreurs.montant = `Le montant minimum est de ${formaterMontant(MONTANT_MIN)}.`;
-    if (!numeroNormalise) nouvellesErreurs.numero = MESSAGE_NUMERO_INVALIDE;
+    if (!montantValide) nouvellesErreurs.montant = t('don.montantMinimum', { montant: formaterMontant(MONTANT_MIN) });
+    if (!numeroNormalise) nouvellesErreurs.numero = messageNumeroInvalide();
     setErreursChamps(nouvellesErreurs);
     if (Object.keys(nouvellesErreurs).length > 0) return;
 
@@ -86,8 +89,8 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
   if (!utilisateurConnecte) {
     return (
       <div className="text-center">
-        <p className="text-sm text-muted-foreground">Connectez-vous pour soutenir cette cagnotte.</p>
-        <Button to="/login" className="mt-3 w-full">Se connecter</Button>
+        <p className="text-sm text-muted-foreground">{t('don.connexion')}</p>
+        <Button to="/login" className="mt-3 w-full">{t('don.seConnecter')}</Button>
       </div>
     );
   }
@@ -99,17 +102,21 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
           <Smartphone className="size-6" />
         </span>
         <div className="mt-4">
-          <TitreEtape>Confirmez sur votre téléphone</TitreEtape>
+          <TitreEtape>{t('don.attente.titre')}</TitreEtape>
         </div>
         <p className="mt-2 text-base leading-[1.6] text-[#45524F]">
-          Une demande de paiement de <strong>{formaterMontant(montantNombre)}</strong> a été envoyée au{' '}
-          <strong>{numero}</strong>. Validez-la avec votre code {nomOperateur(methode)}, puis vérifiez le paiement.
+          <Trans
+            t={t}
+            i18nKey="don.attente.texte"
+            values={{ montant: formaterMontant(montantNombre), numero, operateur: nomOperateur(methode) }}
+            components={{ b: <strong /> }}
+          />
         </p>
         <Button onClick={verifierDon} disabled={enCours.don} className="mt-5 w-full">
-          {enCours.don ? 'Vérification...' : 'Vérifier le paiement'}
+          {enCours.don ? t('don.attente.verification') : t('don.attente.verifier')}
         </Button>
         {toujoursEnAttente && !enCours.don && (
-          <p className="mt-3 text-sm text-muted-foreground">Le paiement est toujours en attente de votre confirmation.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t('don.attente.toujours')}</p>
         )}
         {erreurs.don && <p className={`mt-3 ${erreurTexte}`}>{erreurs.don}</p>}
       </div>
@@ -121,14 +128,13 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
       <div className="flex flex-col items-center text-center" aria-live="polite">
         <SymboleNjangi taille={64} />
         <div className="mt-4">
-          <TitreEtape>Merci, {utilisateurConnecte.prenom} !</TitreEtape>
+          <TitreEtape>{t('don.succes.titre', { prenom: utilisateurConnecte.prenom })}</TitreEtape>
         </div>
         <p className="mt-2 text-base leading-[1.6] text-[#45524F]">
-          Votre don de <strong>{formaterMontant(montantNombre)}</strong> a bien été reçu. Comme au njangi, chaque
-          contribution fait avancer tout le monde.
+          <Trans t={t} i18nKey="don.succes.texte" values={{ montant: formaterMontant(montantNombre) }} components={{ b: <strong /> }} />
         </p>
         <Button variant="outline" onClick={nouveauDon} className="mt-5 w-full">
-          Faire un autre don
+          {t('don.succes.autre')}
         </Button>
       </div>
     );
@@ -137,12 +143,12 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
   if (etape === 'echec') {
     return (
       <div className="flex flex-col items-center text-center" aria-live="polite">
-        <TitreEtape>Le paiement n'a pas abouti</TitreEtape>
+        <TitreEtape>{t('don.echec.titre')}</TitreEtape>
         <p className="mt-2 text-base leading-[1.6] text-[#45524F]">
-          Le paiement a été refusé ou annulé sur votre téléphone. Vous pouvez réessayer.
+          {t('don.echec.texte')}
         </p>
         <Button onClick={() => setEtape('formulaire')} className="mt-5 w-full">
-          Réessayer
+          {t('commun:actions.reessayer')}
         </Button>
       </div>
     );
@@ -150,7 +156,7 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
 
   return (
     <form onSubmit={faireDon} noValidate className="flex flex-col gap-5">
-      <TitreEtape>Faire un don</TitreEtape>
+      <TitreEtape>{t('don.titre')}</TitreEtape>
 
       <div>
         <div className="grid grid-cols-4 gap-2">
@@ -164,18 +170,18 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
                 onClick={() => setMontant(String(m))}
                 className={`h-11 rounded-full border-2 px-0 font-sans text-sm font-bold transition-colors ${actif ? choixActif : choixInactif}`}
               >
-                {m.toLocaleString('fr-FR')}
+                {m.toLocaleString(localeActive())}
               </button>
             );
           })}
         </div>
-        <label htmlFor="don-montant" className={`${libelle} mt-4`}>Montant (XAF)</label>
+        <label htmlFor="don-montant" className={`${libelle} mt-4`}>{t('don.montant')}</label>
         <input
           id="don-montant"
           type="number"
           inputMode="numeric"
           min={MONTANT_MIN}
-          placeholder="Ex. 2 000"
+          placeholder={t('don.montantPlaceholder')}
           value={montant}
           onChange={(e) => setMontant(e.target.value)}
           aria-invalid={!!erreursChamps.montant}
@@ -185,10 +191,10 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
         {erreursChamps.montant && <p id="don-montant-erreur" className={`mt-1.5 ${erreurTexte}`}>{erreursChamps.montant}</p>}
       </div>
 
-      <ChoixOperateur libelle="Payer avec" valeur={methode} onChanger={setMethode} />
+      <ChoixOperateur libelle={t('don.payerAvec')} valeur={methode} onChanger={setMethode} />
 
       <div>
-        <label htmlFor="don-numero" className={libelle}>Numéro de téléphone</label>
+        <label htmlFor="don-numero" className={libelle}>{t('don.numero')}</label>
         <input
           id="don-numero"
           type="tel"
@@ -205,12 +211,12 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
       </div>
 
       <div>
-        <label htmlFor="don-message" className={libelle}>Un petit mot (facultatif)</label>
+        <label htmlFor="don-message" className={libelle}>{t('don.message')}</label>
         <textarea
           id="don-message"
           rows={2}
           maxLength={500}
-          placeholder="Un message d'encouragement pour l'organisateur..."
+          placeholder={t('don.messagePlaceholder')}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           className={champZone}
@@ -224,17 +230,17 @@ export default function FormulaireDon({ idCagnotte, utilisateurConnecte, execute
           onChange={(e) => setAnonyme(e.target.checked)}
           className="size-5 shrink-0 cursor-pointer p-0 accent-primary"
         />
-        Donner anonymement
+        {t('don.anonyme')}
       </label>
 
       <div>
         <Button type="submit" variant="don" size="xl" disabled={enCours.don} className="w-full">
-          {enCours.don ? 'Envoi en cours...' : montantValide ? `Donner ${formaterMontant(montantNombre)}` : 'Donner'}
+          {enCours.don ? t('commun:actions.envoiEnCours') : montantValide ? t('don.donnerMontant', { montant: formaterMontant(montantNombre) }) : t('don.donner')}
         </Button>
         {erreurs.don && <p className={`mt-2 ${erreurTexte}`}>{erreurs.don}</p>}
         <p className="mt-3 flex items-center justify-center gap-1.5 text-[13px] text-muted-foreground">
           <Lock className="size-3.5" />
-          Vous confirmez le paiement sur votre téléphone
+          {t('don.confirmation')}
         </p>
       </div>
     </form>

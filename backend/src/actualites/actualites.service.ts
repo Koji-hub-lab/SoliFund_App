@@ -10,6 +10,7 @@ import {
   CagnottesService,
   UtilisateurVisiteur,
 } from '../cagnottes/cagnottes.service';
+import { m } from '../i18n/messages';
 
 @Injectable()
 export class ActualitesService {
@@ -23,17 +24,13 @@ export class ActualitesService {
       where: { id_cagnotte: dto.id_cagnotte },
     });
     if (!cagnotte) {
-      throw new NotFoundException('Cagnotte introuvable.');
+      throw new NotFoundException(m('cagnottes.introuvable'));
     }
     if (cagnotte.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException(
-        "Vous n'êtes pas le propriétaire de cette cagnotte.",
-      );
+      throw new ForbiddenException(m('cagnottes.pasProprietaire'));
     }
     if (cagnotte.statut === 'SUSPENDUE' || cagnotte.statut === 'ANNULEE') {
-      throw new BadRequestException(
-        'Impossible de publier une actualité sur une cagnotte suspendue ou annulée.',
-      );
+      throw new BadRequestException(m('actualites.cagnotteFermee'));
     }
 
     return this.prisma.actualite.create({

@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategorieDto } from './dto/create-categorie.dto';
 import { UpdateCategorieDto } from './dto/update-categorie.dto';
+import { m } from '../i18n/messages';
 
 @Injectable()
 export class CategoriesService {
@@ -48,11 +49,16 @@ export class CategoriesService {
     });
     if (nbCagnottes > 0) {
       throw new ConflictException(
-        `Cette catégorie est utilisée par ${nbCagnottes} cagnotte${nbCagnottes > 1 ? 's' : ''} : elle ne peut pas être supprimée.`,
+        m(
+          nbCagnottes > 1
+            ? 'categories.utiliseePluriel'
+            : 'categories.utilisee',
+          { nombre: nbCagnottes },
+        ),
       );
     }
     await this.prisma.categorie.delete({ where: { id_categorie: id } });
-    return { message: 'Catégorie supprimée.' };
+    return { message: m('categories.supprimee') };
   }
 
   private async trouver(id: number) {
@@ -60,7 +66,7 @@ export class CategoriesService {
       where: { id_categorie: id },
     });
     if (!categorie) {
-      throw new NotFoundException('Catégorie introuvable.');
+      throw new NotFoundException(m('categories.introuvable'));
     }
     return categorie;
   }

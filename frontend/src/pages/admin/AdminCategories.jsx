@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { CarteListe, EnTeteAdmin, classeLigne } from '../../components/admin/ElementsAdmin';
@@ -8,12 +9,7 @@ import { SqueletteListe } from '../../components/ui/Squelette';
 import api from '../../api/axios';
 
 // Couleurs proposées : celles de la charte (voir DESIGN.md).
-const COULEURS = [
-  { valeur: '#087F7A', libelle: 'Lagune' },
-  { valeur: '#055955', libelle: 'Lagune foncée' },
-  { valeur: '#E9A23B', libelle: 'Ambre' },
-  { valeur: '#17262A', libelle: 'Encre' },
-];
+const COULEURS = ['#087F7A', '#055955', '#E9A23B', '#17262A'];
 const FORMULAIRE_VIDE = { nom: '', couleur: '' };
 
 // Pastille de couleur ; neutre si la catégorie n'a pas de couleur valide (anciennes valeurs libres).
@@ -29,11 +25,12 @@ function PastilleCouleur({ couleur }) {
 }
 
 function ChoixCouleur({ id, valeur, onChange }) {
+  const { t } = useTranslation('admin');
   return (
-    <Champ as="select" id={id} libelle="Couleur" value={valeur} onChange={(e) => onChange(e.target.value)}>
-      <option value="">Aucune</option>
+    <Champ as="select" id={id} libelle={t('categories.couleur')} value={valeur} onChange={(e) => onChange(e.target.value)}>
+      <option value="">{t('categories.aucuneCouleur')}</option>
       {COULEURS.map((c) => (
-        <option key={c.valeur} value={c.valeur}>{c.libelle}</option>
+        <option key={c} value={c}>{t(`categories.couleurs.${c}`)}</option>
       ))}
     </Champ>
   );
@@ -45,6 +42,7 @@ function donneesFormulaire(form) {
 }
 
 export default function AdminCategories() {
+  const { t } = useTranslation('admin');
   const [categories, setCategories] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreurChargement, setErreurChargement] = useState('');
@@ -75,7 +73,7 @@ export default function AdminCategories() {
     e.preventDefault();
     setErreurCreation('');
     if (!nouvelle.nom.trim()) {
-      setErreurCreation('Le nom est obligatoire.');
+      setErreurCreation(t('categories.nomObligatoire'));
       return;
     }
     setCreationEnCours(true);
@@ -92,14 +90,14 @@ export default function AdminCategories() {
 
   function commencerEdition(c) {
     setErreurs((e) => ({ ...e, [c.id_categorie]: '' }));
-    setEdition({ id: c.id_categorie, nom: c.nom, couleur: COULEURS.some((x) => x.valeur === c.couleur) ? c.couleur : '' });
+    setEdition({ id: c.id_categorie, nom: c.nom, couleur: COULEURS.includes(c.couleur) ? c.couleur : '' });
   }
 
   async function enregistrer(e) {
     e.preventDefault();
     const { id } = edition;
     if (!edition.nom.trim()) {
-      setErreurs((x) => ({ ...x, [id]: 'Le nom est obligatoire.' }));
+      setErreurs((x) => ({ ...x, [id]: t('categories.nomObligatoire') }));
       return;
     }
     setEnregistrement(true);
@@ -123,17 +121,17 @@ export default function AdminCategories() {
   return (
     <AdminLayout>
       <div className="flex flex-col gap-8">
-        <EnTeteAdmin titre="Catégories" sousTitre="Les catégories proposées aux organisateurs et utilisées comme filtres sur le site." />
+        <EnTeteAdmin titre={t('categories.titre')} sousTitre={t('categories.sousTitre')} />
 
         <form onSubmit={creer} noValidate className="flex flex-col gap-5 rounded-[28px] border border-border bg-card p-6 sm:p-7">
-          <h2 className="font-display text-[22px] font-bold leading-tight text-foreground">Ajouter une catégorie</h2>
+          <h2 className="font-display text-[22px] font-bold leading-tight text-foreground">{t('categories.ajouterTitre')}</h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-            <Champ id="nouvelle-nom" libelle="Nom" value={nouvelle.nom} maxLength={100} onChange={(e) => setNouvelle({ ...nouvelle, nom: e.target.value })} placeholder="Éducation" />
+            <Champ id="nouvelle-nom" libelle={t('categories.nom')} value={nouvelle.nom} maxLength={100} onChange={(e) => setNouvelle({ ...nouvelle, nom: e.target.value })} placeholder={t('categories.nomPlaceholder')} />
             <ChoixCouleur id="nouvelle-couleur" valeur={nouvelle.couleur} onChange={(couleur) => setNouvelle({ ...nouvelle, couleur })} />
           </div>
           {erreurCreation && <p className="text-sm text-destructive">{erreurCreation}</p>}
           <Button type="submit" disabled={creationEnCours} className="sm:self-start">
-            {creationEnCours ? 'Ajout en cours...' : 'Ajouter la catégorie'}
+            {creationEnCours ? t('categories.ajout') : t('categories.ajouter')}
           </Button>
         </form>
 
@@ -141,7 +139,7 @@ export default function AdminCategories() {
         {chargement ? (
           <SqueletteListe lignes={3} />
         ) : (
-          <CarteListe vide={categories.length === 0} messageVide="Aucune catégorie pour le moment.">
+          <CarteListe vide={categories.length === 0} messageVide={t('categories.vide')}>
             {categories.map((c) => {
               const nb = c.nb_cagnottes;
               if (edition?.id === c.id_categorie) {
@@ -149,13 +147,13 @@ export default function AdminCategories() {
                   <li key={c.id_categorie} className="py-5">
                     <form onSubmit={enregistrer} noValidate className="flex flex-col gap-4">
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                        <Champ id={`nom-${c.id_categorie}`} libelle="Nom" value={edition.nom} maxLength={100} onChange={(e) => setEdition({ ...edition, nom: e.target.value })} />
+                        <Champ id={`nom-${c.id_categorie}`} libelle={t('categories.nom')} value={edition.nom} maxLength={100} onChange={(e) => setEdition({ ...edition, nom: e.target.value })} />
                         <ChoixCouleur id={`couleur-${c.id_categorie}`} valeur={edition.couleur} onChange={(couleur) => setEdition({ ...edition, couleur })} />
                       </div>
                       {erreurs[c.id_categorie] && <p className="text-sm text-destructive">{erreurs[c.id_categorie]}</p>}
                       <div className="flex flex-wrap gap-2">
-                        <Button type="submit" size="sm" disabled={enregistrement}>{enregistrement ? 'Enregistrement...' : 'Enregistrer'}</Button>
-                        <Button type="button" size="sm" variant="outline" onClick={() => setEdition(null)} disabled={enregistrement}>Annuler</Button>
+                        <Button type="submit" size="sm" disabled={enregistrement}>{enregistrement ? t('commun:actions.enregistrement') : t('commun:actions.enregistrer')}</Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => setEdition(null)} disabled={enregistrement}>{t('commun:actions.annuler')}</Button>
                       </div>
                     </form>
                   </li>
@@ -168,21 +166,21 @@ export default function AdminCategories() {
                     <div className="min-w-0">
                       <p className="truncate font-bold text-foreground">{c.nom}</p>
                       <p className="text-sm text-muted-foreground">
-                        {nb === 0 ? 'Aucune cagnotte' : `${nb} cagnotte${nb > 1 ? 's' : ''}`}
+                        {nb === 0 ? t('categories.aucuneCagnotte') : t('categories.cagnottes', { count: nb })}
                       </p>
                       {erreurs[c.id_categorie] && <p className="mt-1 text-sm text-destructive">{erreurs[c.id_categorie]}</p>}
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => commencerEdition(c)} disabled={edition !== null}>Modifier</Button>
+                    <Button size="sm" variant="outline" onClick={() => commencerEdition(c)} disabled={edition !== null}>{t('categories.modifier')}</Button>
                     <Button
                       size="sm"
                       variant="danger"
                       onClick={() => setASupprimer(c)}
                       disabled={edition !== null || nb > 0}
-                      title={nb > 0 ? 'Une catégorie utilisée par des cagnottes ne peut pas être supprimée.' : undefined}
+                      title={nb > 0 ? t('categories.suppressionImpossible') : undefined}
                     >
-                      Supprimer
+                      {t('categories.supprimer')}
                     </Button>
                   </div>
                 </li>
@@ -191,15 +189,15 @@ export default function AdminCategories() {
           </CarteListe>
         )}
         {categories.some((c) => c.nb_cagnottes > 0) && (
-          <p className="-mt-4 text-sm text-muted-foreground">Une catégorie utilisée par des cagnottes ne peut pas être supprimée.</p>
+          <p className="-mt-4 text-sm text-muted-foreground">{t('categories.suppressionImpossible')}</p>
         )}
       </div>
 
       <Confirmation
         ouvert={!!aSupprimer}
-        titre="Supprimer cette catégorie ?"
-        message={aSupprimer ? `« ${aSupprimer.nom} » ne sera plus proposée aux organisateurs.` : ''}
-        libelleConfirmer="Supprimer la catégorie"
+        titre={t('categories.supprimerTitre')}
+        message={aSupprimer ? t('categories.supprimerMessage', { nom: aSupprimer.nom }) : ''}
+        libelleConfirmer={t('categories.supprimerLibelle')}
         onConfirmer={supprimer}
         onAnnuler={() => setASupprimer(null)}
       />

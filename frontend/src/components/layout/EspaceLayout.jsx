@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Logo from '../Logo';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import SelecteurLangue from '../ui/SelecteurLangue';
 
 // Lien de navigation en pilule sur fond Encre (voir DESIGN.md).
 function classeLien(actif) {
@@ -19,6 +21,7 @@ export default function EspaceLayout({ liens, liensSecondaires = [], etiquette, 
   const { utilisateur, deconnecter } = useAuth();
   const location = useLocation();
   const [ouvert, setOuvert] = useState(false);
+  const { t } = useTranslation('commun');
 
   const nomComplet = [utilisateur?.prenom, utilisateur?.nom].filter(Boolean).join(' ');
   const initiale = (utilisateur?.prenom || utilisateur?.nom || '?').charAt(0).toUpperCase();
@@ -79,7 +82,7 @@ export default function EspaceLayout({ liens, liensSecondaires = [], etiquette, 
         </div>
         <p className="mt-3 text-sm text-[#B9C6C4]">
           <Link to="/" className="text-[#B9C6C4] decoration-1 underline-offset-4 hover:text-[#FBF7F1] hover:underline">
-            Retour au site
+            {t('nav.retourAuSite')}
           </Link>
           <span aria-hidden="true"> · </span>
           <button
@@ -87,9 +90,10 @@ export default function EspaceLayout({ liens, liensSecondaires = [], etiquette, 
             onClick={deconnecter}
             className="inline-flex min-h-11 items-center bg-transparent p-0 font-sans text-sm font-normal text-[#B9C6C4] decoration-1 underline-offset-4 hover:text-[#FBF7F1] hover:underline"
           >
-            Déconnexion
+            {t('nav.deconnexion')}
           </button>
         </p>
+        <SelecteurLangue variante="clair" />
       </div>
     </>
   );
@@ -105,11 +109,11 @@ export default function EspaceLayout({ liens, liensSecondaires = [], etiquette, 
       {ouvert && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-encre/60" onClick={() => setOuvert(false)} aria-hidden="true" />
-          <aside className="absolute left-0 top-0 flex h-full w-[280px] max-w-[85vw] flex-col bg-encre" aria-label="Menu">
+          <aside className="absolute left-0 top-0 flex h-full w-[280px] max-w-[85vw] flex-col bg-encre" aria-label={t('nav.menu')}>
             <button
               type="button"
               onClick={() => setOuvert(false)}
-              aria-label="Fermer le menu"
+              aria-label={t('nav.fermerMenu')}
               className="absolute right-4 top-6 inline-flex size-10 items-center justify-center rounded-full border border-[#2C3D41] bg-transparent p-0 text-[#FBF7F1] hover:bg-[#2C3D41]"
             >
               <X className="size-5" />
@@ -128,7 +132,7 @@ export default function EspaceLayout({ liens, liensSecondaires = [], etiquette, 
           <button
             type="button"
             onClick={() => setOuvert(true)}
-            aria-label="Ouvrir le menu"
+            aria-label={t('nav.ouvrirMenu')}
             aria-expanded={ouvert}
             className="inline-flex size-11 items-center justify-center rounded-full border border-[#2C3D41] bg-transparent p-0 text-[#FBF7F1] hover:bg-[#2C3D41]"
           >

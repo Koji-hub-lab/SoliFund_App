@@ -1,22 +1,23 @@
-import { IsIn } from 'class-validator';
-import {
-  Identifiant,
-  Montant,
-  TexteObligatoire,
-} from '../../common/validation';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { Identifiant, Montant } from '../../common/validation';
 
 export class CreateRetraitDto {
-  @Identifiant('La cagnotte')
+  @Identifiant('cagnotte')
   id_cagnotte!: number;
 
-  @Montant('Le montant du retrait', 100)
+  @Montant('montantRetrait', 100)
   montant!: number;
 
-  @IsIn(['MTN_MOBILE_MONEY', 'ORANGE_MONEY'], {
-    message: 'Choisissez MTN Mobile Money ou Orange Money.',
-  })
-  methode_retrait!: string;
+  // Ces deux champs ne sont plus pris en compte : le retrait est toujours versé sur le numéro et
+  // l'opérateur de la vérification d'identité validée. Ils restent acceptés (et ignorés) pour les
+  // clients qui les envoient encore.
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  methode_retrait?: string;
 
-  @TexteObligatoire('Le numéro de téléphone', 20)
-  numero_beneficiaire!: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  numero_beneficiaire?: string;
 }

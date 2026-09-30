@@ -1,4 +1,5 @@
 import axios from 'axios';
+import i18n, { langueActive } from '../i18n';
 
 // En développement, VITE_API_URL reste vide : les appels passent par le proxy Vite (« /api », voir
 // vite.config.js), ce qui fonctionne aussi depuis un téléphone du réseau local.
@@ -25,6 +26,8 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  // Langue de l'interface : le backend répond (erreurs, confirmations) dans cette langue.
+  config.headers['Accept-Language'] = langueActive();
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -36,10 +39,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (!error.response) {
-      error.messageAffichable = 'Impossible de joindre le serveur. Vérifiez votre connexion.';
+      error.messageAffichable = i18n.t('erreurs:serveurInjoignable');
     } else {
       const msg = error.response.data?.message;
-      error.messageAffichable = Array.isArray(msg) ? msg.join(', ') : msg || 'Une erreur est survenue.';
+      error.messageAffichable = Array.isArray(msg) ? msg.join(', ') : msg || i18n.t('erreurs:generique');
 
       // Token expiré ou compte suspendu/banni : on vide la session et on renvoie vers la connexion.
       // Uniquement pour les requêtes authentifiées (un mauvais mot de passe au login renvoie aussi 401).

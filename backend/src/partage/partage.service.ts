@@ -2,11 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import { CagnottesService } from '../cagnottes/cagnottes.service';
+import type { Langue } from '../i18n/langues';
+import { traduire } from '../i18n/messages';
 
 const NOM_SITE = 'SoliFund';
-const TITRE_GENERIQUE = 'SoliFund — Cagnottes solidaires au Cameroun';
-const DESCRIPTION_GENERIQUE =
-  'Réalisez vos projets, soutenez vos proches : cagnottes solidaires, dons par MTN Mobile Money et Orange Money.';
+// Valeur de og:locale selon la langue de la page.
+const LOCALES_OG: Record<Langue, string> = { fr: 'fr_FR', en: 'en_GB' };
 const LONGUEUR_DESCRIPTION = 160;
 
 // Redirection du visiteur vers la vraie page. Les robots de WhatsApp et de Facebook n'exécutent pas
@@ -40,6 +41,9 @@ function extrait(texte: string, max: number): string {
 }
 
 type Apercu = {
+  langue: Langue;
+  // Vrai pour les balises génériques de SoliFund (pas de cagnotte à montrer).
+  generique: boolean;
   titre: string;
   description: string;
   image: string;
@@ -68,14 +72,18 @@ export class PartageService {
 
   // Page HTML de partage d'une cagnotte. Une cagnotte inexistante ou non visible publiquement
   // (privée, suspendue, annulée) reçoit les balises génériques de SoliFund, sans aucun détail.
-  async pageCagnotte(idTexte: string): Promise<string> {
+  // Le contenu de la cagnotte (titre, description) est repris tel quel ; les textes génériques
+  // sont écrits dans la langue demandée (Accept-Language).
+  async pageCagnotte(idTexte: string, langue: Langue): Promise<string> {
     const id = /^\d{1,9}$/.test(idTexte) ? Number(idTexte) : null;
     const urlPartage = `${this.urlApi}/partage/cagnottes/${encodeURIComponent(idTexte)}`;
     const generique: Apercu = {
-      titre: TITRE_GENERIQUE,
-      description: DESCRIPTION_GENERIQUE,
+      langue,
+      generique: true,
+      titre: traduire(langue, 'partage.titreGenerique'),
+      description: traduire(langue, 'partage.descriptionGenerique'),
       image: `${this.urlFrontend}/og-solifund.png`,
-      texteImage: 'SoliFund, cagnottes solidaires au Cameroun',
+      texteImage: traduire(langue, 'partage.imageGenerique'),
       urlPartage,
       urlPage: id ? `${this.urlFrontend}/cagnottes/${id}` : this.urlFrontend,
     };
@@ -91,10 +99,14 @@ export class PartageService {
     }
 
     return this.html({
+      langue,
+      generique: false,
       titre: cagnotte.titre,
       description: cagnotte.description?.trim()
         ? extrait(cagnotte.description, LONGUEUR_DESCRIPTION)
-        : `Soutenez « ${extrait(cagnotte.titre, 80)} » sur SoliFund, par MTN Mobile Money ou Orange Money.`,
+        : traduire(langue, 'partage.soutenez', {
+            titre: extrait(cagnotte.titre, 80),
+          }),
       // Image de 1200 px (WebP) ; image générique si la cagnotte n'a pas de photo.
       image: cagnotte.image
         ? `${this.urlApi}${cagnotte.image}`
@@ -109,10 +121,9 @@ export class PartageService {
   // React (sans balises) ferait perdre l'aperçu.
   private html(a: Apercu): string {
     const e = echapperHtml;
-    const titrePage =
-      a.titre === TITRE_GENERIQUE ? a.titre : `${a.titre} · ${NOM_SITE}`;
+    const titrePage = a.generique ? a.titre : `${a.titre} · ${NOM_SITE}`;
     return `<!doctype html>
-<html lang="fr">
+<html lang="${a.langue}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -120,7 +131,7 @@ export class PartageService {
 <meta name="description" content="${e(a.description)}">
 <meta property="og:site_name" content="${NOM_SITE}">
 <meta property="og:type" content="website">
-<meta property="og:locale" content="fr_FR">
+<meta property="og:locale" content="${LOCALES_OG[a.langue]}">
 <meta property="og:title" content="${e(a.titre)}">
 <meta property="og:description" content="${e(a.description)}">
 <meta property="og:image" content="${e(a.image)}">
@@ -134,7 +145,7 @@ export class PartageService {
 <script>${SCRIPT_REDIRECTION}</script>
 </head>
 <body>
-<p><a href="${e(a.urlPage)}">Continuer vers SoliFund</a></p>
+<p><a href="${e(a.urlPage)}">${e(traduire(a.langue, 'partage.continuer'))}</a></p>
 </body>
 </html>
 `;

@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next';
 import { formaterDateHeure } from '../../utils/format';
 
 // Frise chronologique verticale ; les actualités arrivent de la plus récente à la plus ancienne.
 export default function ActualitesCagnotte({ actualites }) {
+  const { t } = useTranslation('cagnotte');
   if (actualites.length === 0) {
-    return <p className="text-[17px] text-muted-foreground">Aucune actualité pour le moment.</p>;
+    return <p className="text-[17px] text-muted-foreground">{t('page.sansActualite')}</p>;
   }
 
   return (

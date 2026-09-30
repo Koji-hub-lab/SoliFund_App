@@ -1,0 +1,124 @@
+{
+  "carte": {
+    "terminee": "Terminée",
+    "dernierJour": "Dernier jour",
+    "joursRestants_one": "{{count}} jour restant",
+    "joursRestants_other": "{{count}} jours restants",
+    "donateurs_one": "{{count}} donateur",
+    "donateurs_other": "{{count}} donateurs"
+  },
+  "liste": {
+    "surTitre": "Découvrir",
+    "titre": "Toutes les cagnottes",
+    "rechercher": "Rechercher une cagnotte",
+    "rechercherPlaceholder": "Rechercher une cagnotte...",
+    "trier": "Trier les cagnottes",
+    "tris": { "recentes": "Plus récentes", "populaires": "Plus populaires", "bientot_terminees": "Bientôt terminées" },
+    "toutes": "Toutes",
+    "erreurCategories": "Les catégories n'ont pas pu être chargées. {{detail}}",
+    "total_one": "{{count}} cagnotte",
+    "total_other": "{{count}} cagnottes",
+    "aucunResultat": "Aucune cagnotte ne correspond à votre recherche",
+    "effacerFiltres": "Effacer les filtres"
+  },
+  "page": {
+    "introuvable": "Cagnotte introuvable.",
+    "retour": "Retour aux cagnottes",
+    "toutes": "Toutes les cagnottes",
+    "felicitationsTitre": "Félicitations, votre cagnotte est en ligne",
+    "felicitationsTexte": "Partagez-la dès maintenant à vos proches : les premiers dons viennent presque toujours d'eux.",
+    "organisateur": "Vous êtes l'organisateur de cette cagnotte",
+    "gerer": "Gérer la cagnotte →",
+    "onglets": { "histoire": "L'histoire", "actualites": "Actualités", "commentaires": "Commentaires" },
+    "organiseePar": "Organisée par {{nom}}",
+    "membreDepuis": "Membre depuis {{date}}",
+    "emailVerifie": "Email vérifié",
+    "dates": "Du {{debut}} au {{fin}}",
+    "sansHistoire": "L'organisateur n'a pas encore raconté l'histoire de cette cagnotte.",
+    "sansActualite": "Aucune actualité pour le moment."
+  },
+  "montant": {
+    "objectif": "collectés sur un objectif de {{objectif}}",
+    "atteint": "atteint",
+    "donateur_one": "donateur",
+    "donateur_other": "donateurs",
+    "jourRestant_one": "jour restant",
+    "jourRestant_other": "jours restants",
+    "terminee": "terminée"
+  },
+  "don": {
+    "montantMinimum": "Le montant minimum est de {{montant}}.",
+    "connexion": "Connectez-vous pour soutenir cette cagnotte.",
+    "seConnecter": "Se connecter",
+    "attente": {
+      "titre": "Confirmez sur votre téléphone",
+      "texte": "Une demande de paiement de <b>{{montant}}</b> a été envoyée au <b>{{numero}}</b>. Validez-la avec votre code {{operateur}}, puis vérifiez le paiement.",
+      "verifier": "Vérifier le paiement",
+      "verification": "Vérification...",
+      "toujours": "Le paiement est toujours en attente de votre confirmation."
+    },
+    "succes": {
+      "titre": "Merci, {{prenom}} !",
+      "texte": "Votre don de <b>{{montant}}</b> a bien été reçu. Comme au njangi, chaque contribution fait avancer tout le monde.",
+      "autre": "Faire un autre don"
+    },
+    "echec": {
+      "titre": "Le paiement n'a pas abouti",
+      "texte": "Le paiement a été refusé ou annulé sur votre téléphone. Vous pouvez réessayer."
+    },
+    "titre": "Faire un don",
+    "montant": "Montant (XAF)",
+    "montantPlaceholder": "Ex. 2 000",
+    "payerAvec": "Payer avec",
+    "numero": "Numéro de téléphone",
+    "message": "Un petit mot (facultatif)",
+    "messagePlaceholder": "Un message d'encouragement pour l'organisateur...",
+    "anonyme": "Donner anonymement",
+    "donner": "Donner",
+    "donnerMontant": "Donner {{montant}}",
+    "confirmation": "Vous confirmez le paiement sur votre téléphone"
+  },
+  "dons": {
+    "titre": "Derniers dons",
+    "vide": "Aucun don pour le moment.",
+    "anonyme": "Anonyme",
+    "voirPlus": "Voir plus de dons",
+    "moins": "Afficher moins",
+    "tous": "Voir tous les dons ({{total}})"
+  },
+  "commentaires": {
+    "titre": "Mots d'encouragement",
+    "confirmerSuppression": "Supprimer ce commentaire ?",
+    "champ": "Votre mot d'encouragement",
+    "placeholder": "Écrivez un commentaire d'encouragement...",
+    "publier": "Publier",
+    "connexion": "Connectez-vous pour laisser un mot",
+    "supprimer": "Supprimer",
+    "vide": "Aucun commentaire pour le moment.",
+    "voirPlus": "Voir plus de commentaires"
+  },
+  "partage": {
+    "titre": "Partagez, ça compte aussi",
+    "texte": "Chaque partage peut amener un nouveau donateur.",
+    "whatsapp": "{{titre}} — Soutenez cette cagnotte : {{url}}",
+    "copier": "Copier le lien",
+    "copie": "Lien copié",
+    "copieImpossible": "Copie impossible : copiez l'adresse depuis la barre du navigateur."
+  },
+  "signalement": {
+    "lien": "Signaler cette cagnotte",
+    "merci": "Merci, notre équipe va examiner cette cagnotte.",
+    "titre": "Signaler cette cagnotte",
+    "texte": "Dites-nous ce qui vous semble anormal. Votre signalement est transmis à notre équipe de modération.",
+    "envoyer": "Envoyer le signalement",
+    "motif": "Motif",
+    "commentaire": "Commentaire",
+    "commentairePlaceholder": "Précisez si vous le souhaitez",
+    "motifs": {
+      "ARNAQUE": "Arnaque",
+      "CONTENU_INAPPROPRIE": "Contenu inapproprié",
+      "FAUSSES_INFORMATIONS": "Fausses informations",
+      "AUTRE": "Autre"
+    }
+  }
+}

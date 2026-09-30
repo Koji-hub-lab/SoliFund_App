@@ -57,12 +57,15 @@ export class TachesService {
       if (count === 0) continue;
       nb++;
 
-      const montant = `${Number(c.montant_collecte).toLocaleString('fr-FR')} ${c.devise}`;
       try {
         await this.notificationsService.envoyer(
           c.id_utilisateur,
-          'Cagnotte terminée',
-          `Votre cagnotte « ${c.titre} » est terminée. Montant collecté : ${montant}.`,
+          'CAGNOTTE_TERMINEE',
+          {
+            titre: c.titre,
+            montant: Number(c.montant_collecte),
+            devise: c.devise,
+          },
           'SYSTEME',
           c.id_cagnotte,
         );

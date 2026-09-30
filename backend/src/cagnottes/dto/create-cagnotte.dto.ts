@@ -5,29 +5,30 @@ import {
   TexteFacultatif,
   TexteObligatoire,
 } from '../../common/validation';
+import { m } from '../../i18n/messages';
 
 export class CreateCagnotteDto {
-  @TexteObligatoire('Le titre', 255)
+  @TexteObligatoire('titre', 255)
   titre!: string;
 
   @IsOptional()
-  @TexteFacultatif('La description', 5000)
+  @TexteFacultatif('description', 5000)
   description?: string;
 
-  @Montant("L'objectif", 1)
+  @Montant('objectif', 1)
   objectif!: number;
 
-  @IsDateString({}, { message: 'La date de début est invalide.' })
+  @IsDateString({}, { message: m('validation.dateDebut') })
   date_debut!: string;
 
-  @IsDateString({}, { message: 'La date de fin est invalide.' })
+  @IsDateString({}, { message: m('validation.dateFin') })
   date_fin!: string;
 
   @IsOptional()
-  @IsIn(['XAF'], { message: 'Seule la devise XAF est acceptée.' })
+  @IsIn(['XAF'], { message: m('validation.devise') })
   devise?: string;
 
   @IsOptional()
-  @Identifiant('La catégorie')
+  @Identifiant('categorie')
   id_categorie?: number;
 }

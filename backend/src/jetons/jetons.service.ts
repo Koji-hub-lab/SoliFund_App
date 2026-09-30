@@ -2,6 +2,8 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { createHash, randomInt, timingSafeEqual } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BrevoService } from './brevo.service';
+import type { Langue } from '../i18n/langues';
+import { m } from '../i18n/messages';
 
 type TypeJeton = 'RESET_MDP' | 'VERIF_EMAIL';
 
@@ -55,6 +57,7 @@ export class JetonsService {
     id_utilisateur: number;
     email: string;
     prenom: string;
+    langue_preferee: Langue;
   }) {
     const code = await this.creerCode(
       utilisateur.id_utilisateur,
@@ -62,11 +65,7 @@ export class JetonsService {
       DUREE_VERIF_EMAIL_MS,
     );
     try {
-      await this.brevoService.envoyerCodeVerification(
-        utilisateur.email,
-        utilisateur.prenom,
-        code,
-      );
+      await this.brevoService.envoyerCodeVerification(utilisateur, code);
     } catch (e) {
       this.logger.error(
         `Échec de l'envoi du code de vérification (utilisateur ${utilisateur.id_utilisateur})`,
@@ -84,7 +83,7 @@ export class JetonsService {
     code: string,
     rendreTentative: boolean,
   ) {
-    const erreur = new BadRequestException('Code invalide ou expiré.');
+    const erreur = new BadRequestException(m('auth.codeInvalide'));
     if (idUtilisateur === null) throw erreur;
 
     const jeton = await this.prisma.jeton.findFirst({
@@ -132,9 +131,7 @@ export class JetonsService {
         where: { id_jeton: jeton.id_jeton },
         data: { est_utilise: true },
       });
-      throw new BadRequestException(
-        'Trop de tentatives. Demandez un nouveau code.',
-      );
+      throw new BadRequestException(m('auth.tropDeTentatives'));
     }
     throw erreur;
   }

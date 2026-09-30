@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
@@ -9,13 +10,8 @@ import api from '../api/axios';
 import { SqueletteListe } from '../components/ui/Squelette';
 
 // Filtres par statut, appliqués à la liste déjà chargée.
-const FILTRES = [
-  { valeur: '', libelle: 'Toutes' },
-  { valeur: 'ACTIVE', libelle: 'Actives' },
-  { valeur: 'TERMINEE', libelle: 'Terminées' },
-  { valeur: 'SUSPENDUE', libelle: 'Suspendues' },
-  { valeur: 'ANNULEE', libelle: 'Annulées' },
-];
+// (libellés dans la zone de traduction « tableau-de-bord », liste.filtres)
+const FILTRES = ['', 'ACTIVE', 'TERMINEE', 'SUSPENDUE', 'ANNULEE'];
 
 export default function MesCagnottes() {
   const { utilisateur } = useAuth();
@@ -23,6 +19,7 @@ export default function MesCagnottes() {
   const [chargement, setChargement] = useState(true);
   const [filtre, setFiltre] = useState('');
   const [erreur, setErreur] = useState('');
+  const { t } = useTranslation('tableau-de-bord');
 
   function charger() {
     setChargement(true);
@@ -43,13 +40,13 @@ export default function MesCagnottes() {
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
             <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] text-foreground sm:text-[44px]">
-              Mes cagnottes
+              {t('liste.titre')}
             </h1>
-            <p className="mt-2 text-lg text-muted-foreground">Gérez toutes les cagnottes que vous avez créées.</p>
+            <p className="mt-2 text-lg text-muted-foreground">{t('liste.sousTitre')}</p>
           </div>
           <Button to="/creer-cagnotte" className="shrink-0">
             <Plus className="size-5" />
-            Créer une cagnotte
+            {t('accueil.creer')}
           </Button>
         </div>
 
@@ -58,7 +55,7 @@ export default function MesCagnottes() {
         {!chargement && erreur && (
           <div className="flex flex-col items-center gap-4 rounded-[32px] border border-border bg-card p-10 text-center">
             <p className="text-destructive">{erreur}</p>
-            <Button variant="outline" onClick={charger}>Réessayer</Button>
+            <Button variant="outline" onClick={charger}>{t('commun:actions.reessayer')}</Button>
           </div>
         )}
 
@@ -67,27 +64,27 @@ export default function MesCagnottes() {
         {!chargement && !erreur && cagnottes.length > 0 && (
           <>
             <div className="flex flex-wrap gap-2">
-              {FILTRES.map((f) => {
-                const actif = f.valeur === filtre;
-                const nombre = f.valeur ? cagnottes.filter((c) => c.statut === f.valeur).length : cagnottes.length;
+              {FILTRES.map((valeur) => {
+                const actif = valeur === filtre;
+                const nombre = valeur ? cagnottes.filter((c) => c.statut === valeur).length : cagnottes.length;
                 return (
                   <button
-                    key={f.valeur || 'toutes'}
+                    key={valeur || 'toutes'}
                     type="button"
-                    onClick={() => setFiltre(f.valeur)}
+                    onClick={() => setFiltre(valeur)}
                     aria-pressed={actif}
                     className={`inline-flex min-h-11 items-center rounded-full border px-5 py-2.5 font-sans text-sm font-bold transition-colors ${
                       actif ? 'border-encre bg-encre text-primary-foreground hover:bg-encre' : 'border-border bg-card text-foreground hover:bg-secondary'
                     }`}
                   >
-                    {f.libelle} ({nombre})
+                    {t('liste.filtre', { libelle: t(`liste.filtres.${valeur || 'toutes'}`), nombre })}
                   </button>
                 );
               })}
             </div>
 
             {affichees.length === 0 ? (
-              <p className="text-base text-muted-foreground">Aucune cagnotte dans cette catégorie.</p>
+              <p className="text-base text-muted-foreground">{t('liste.aucune')}</p>
             ) : (
               <div className="flex flex-col gap-4">
                 {affichees.map((c) => (

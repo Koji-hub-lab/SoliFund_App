@@ -4,20 +4,24 @@ import { Menu, X } from 'lucide-react';
 import Logo from '../Logo';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import SelecteurLangue from '../ui/SelecteurLangue';
 
 // href : ancres de la page d'accueil, préfixées par « / » pour fonctionner depuis les autres pages.
 // to : pages de l'application (lien React Router).
+// label : clé de traduction (zone « commun »).
 const navLinks = [
-  { label: 'Comment ça marche', href: '/#comment-ca-marche' },
-  { label: 'Parcourir les cagnottes', to: '/cagnottes' },
-  { label: 'Aide', href: '/#aide' },
+  { label: 'nav.commentCaMarche', href: '/#comment-ca-marche' },
+  { label: 'nav.parcourir', to: '/cagnottes' },
+  { label: 'nav.aide', href: '/#aide' },
 ];
 
 function LienNav({ lien, className, onClick }) {
+  const { t } = useTranslation('commun');
   if (lien.to) {
-    return <Link to={lien.to} className={className} onClick={onClick}>{lien.label}</Link>;
+    return <Link to={lien.to} className={className} onClick={onClick}>{t(lien.label)}</Link>;
   }
-  return <a href={lien.href} className={className} onClick={onClick}>{lien.label}</a>;
+  return <a href={lien.href} className={className} onClick={onClick}>{t(lien.label)}</a>;
 }
 
 const classeLienNav =
@@ -27,6 +31,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const { utilisateur, deconnecter } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation('commun');
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
@@ -42,6 +47,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-6 lg:flex">
+          <SelecteurLangue />
           {utilisateur ? (
             <>
               <button
@@ -49,16 +55,16 @@ export function SiteHeader() {
                 onClick={deconnecter}
                 className="inline-flex min-h-11 items-center bg-transparent p-0 font-sans text-base font-bold text-encre decoration-2 underline-offset-[5px] hover:underline"
               >
-                Déconnexion
+                {t('nav.deconnexion')}
               </button>
-              <Button to="/dashboard">Mon espace</Button>
+              <Button to="/dashboard">{t('nav.monEspace')}</Button>
             </>
           ) : (
             <>
               <Link to="/login" className="text-base font-bold text-encre decoration-2 underline-offset-[5px] hover:underline">
-                Se connecter
+                {t('nav.seConnecter')}
               </Link>
-              <Button to="/inscription">S'inscrire</Button>
+              <Button to="/inscription">{t('nav.sInscrire')}</Button>
             </>
           )}
         </div>
@@ -67,7 +73,7 @@ export function SiteHeader() {
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="inline-flex size-12 items-center justify-center rounded-full border border-border bg-card p-0 text-foreground hover:bg-secondary lg:hidden"
-          aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+          aria-label={open ? t('nav.fermerMenu') : t('nav.ouvrirMenu')}
           aria-expanded={open}
         >
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -85,16 +91,17 @@ export function SiteHeader() {
                 className="rounded-full px-4 py-3 text-base font-medium text-encre hover:bg-secondary "
               />
             ))}
+            <SelecteurLangue className="px-4" />
             <div className="mt-3 flex flex-col gap-3">
               {utilisateur ? (
                 <>
-                  <Button className="w-full" onClick={() => { setOpen(false); navigate('/dashboard'); }}>Mon espace</Button>
-                  <Button variant="outline" className="w-full" onClick={() => { setOpen(false); deconnecter(); }}>Déconnexion</Button>
+                  <Button className="w-full" onClick={() => { setOpen(false); navigate('/dashboard'); }}>{t('nav.monEspace')}</Button>
+                  <Button variant="outline" className="w-full" onClick={() => { setOpen(false); deconnecter(); }}>{t('nav.deconnexion')}</Button>
                 </>
               ) : (
                 <>
-                  <Button className="w-full" onClick={() => { setOpen(false); navigate('/inscription'); }}>S'inscrire</Button>
-                  <Button variant="outline" className="w-full" onClick={() => { setOpen(false); navigate('/login'); }}>Se connecter</Button>
+                  <Button className="w-full" onClick={() => { setOpen(false); navigate('/inscription'); }}>{t('nav.sInscrire')}</Button>
+                  <Button variant="outline" className="w-full" onClick={() => { setOpen(false); navigate('/login'); }}>{t('nav.seConnecter')}</Button>
                 </>
               )}
             </div>

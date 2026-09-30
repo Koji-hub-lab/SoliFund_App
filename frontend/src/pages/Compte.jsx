@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import { Button } from '../components/ui/Button';
@@ -10,16 +11,18 @@ import { formaterMontant } from '../utils/format';
 const MDP_VIDE = { actuel: '', nouveau: '', confirmation: '' };
 
 // avecActuel : faux pour un compte créé avec Google, qui n'a pas encore de mot de passe.
-function validerMotDePasse(mdp, avecActuel) {
+// t : fonction de traduction de la zone « tableau-de-bord ».
+function validerMotDePasse(mdp, avecActuel, t) {
   const erreurs = {};
-  if (avecActuel && !mdp.actuel) erreurs.actuel = 'Saisissez votre mot de passe actuel.';
-  if (mdp.nouveau.length < 8) erreurs.nouveau = 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
-  if (mdp.confirmation !== mdp.nouveau) erreurs.confirmation = 'Les deux mots de passe ne correspondent pas.';
+  if (avecActuel && !mdp.actuel) erreurs.actuel = t('profil.motDePasse.erreurActuel');
+  if (mdp.nouveau.length < 8) erreurs.nouveau = t('profil.motDePasse.erreurNouveau');
+  if (mdp.confirmation !== mdp.nouveau) erreurs.confirmation = t('profil.motDePasse.erreurConfirmation');
   return erreurs;
 }
 
 export default function Compte() {
   const { utilisateur, connecter, deconnecter, rafraichirUtilisateur } = useAuth();
+  const { t } = useTranslation('tableau-de-bord');
   const [mesCagnottes, setMesCagnottes] = useState([]);
   const [erreurCagnottes, setErreurCagnottes] = useState('');
   const [form, setForm] = useState({ nom: utilisateur.nom, prenom: utilisateur.prenom, telephone: utilisateur.telephone || '' });
@@ -61,7 +64,7 @@ export default function Compte() {
       const res = await api.patch('/utilisateurs/moi', { nom: form.nom, prenom: form.prenom, telephone: form.telephone });
       connecter(localStorage.getItem('token'), { ...utilisateur, ...res.data });
       setForm({ nom: res.data.nom, prenom: res.data.prenom, telephone: res.data.telephone || '' });
-      setMessage('Profil mis à jour avec succès.');
+      setMessage(t('profil.misAJour'));
     } catch (err) {
       setErreur(err.messageAffichable);
     } finally {
@@ -83,7 +86,7 @@ export default function Compte() {
     e.preventDefault();
     setErreurMdp('');
     setMessageMdp('');
-    const erreurs = validerMotDePasse(mdp, !sansMotDePasse);
+    const erreurs = validerMotDePasse(mdp, !sansMotDePasse, t);
     setErreursMdp(erreurs);
     if (Object.keys(erreurs).length > 0) return;
 
@@ -102,7 +105,7 @@ export default function Compte() {
       const res = await api.post('/auth/login', { email: utilisateur.email, mot_de_passe: mdp.nouveau });
       connecter(res.data.access_token, { ...utilisateur, ...res.data.utilisateur, a_mot_de_passe: true });
       setMdp(MDP_VIDE);
-      setMessageMdp(sansMotDePasse ? 'Votre mot de passe a été défini.' : 'Votre mot de passe a été modifié.');
+      setMessageMdp(sansMotDePasse ? t('profil.motDePasse.defini') : t('profil.motDePasse.modifie'));
     } catch {
       // Mot de passe changé mais reconnexion impossible : l'ancien jeton n'est plus valide.
       deconnecter();
@@ -119,9 +122,9 @@ export default function Compte() {
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <div>
           <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] text-foreground sm:text-[44px]">
-            Mon profil
+            {t('profil.titre')}
           </h1>
-          <p className="mt-2 text-lg text-muted-foreground">Gérez vos informations personnelles.</p>
+          <p className="mt-2 text-lg text-muted-foreground">{t('profil.sousTitre')}</p>
         </div>
 
         {/* Carte identité + chiffres */}
@@ -136,36 +139,36 @@ export default function Compte() {
           <div className="flex gap-3 sm:ml-auto">
             <div className="rounded-[18px] bg-background px-5 py-3 text-center">
               <p className="font-display text-xl font-bold text-foreground">{mesCagnottes.length}</p>
-              <p className="text-xs text-muted-foreground">Cagnotte{mesCagnottes.length > 1 ? 's' : ''}</p>
+              <p className="text-xs text-muted-foreground">{t('profil.cagnottes', { count: mesCagnottes.length })}</p>
             </div>
             <div className="rounded-[18px] bg-background px-5 py-3 text-center">
               <p className="font-display text-xl font-bold text-primary">{formaterMontant(totalCollecte)}</p>
-              <p className="text-xs text-muted-foreground">Collectés</p>
+              <p className="text-xs text-muted-foreground">{t('profil.collectes')}</p>
             </div>
           </div>
         </section>
         {erreurCagnottes && (
-          <p className="-mt-4 text-sm text-destructive">Vos chiffres n'ont pas pu être chargés. {erreurCagnottes}</p>
+          <p className="-mt-4 text-sm text-destructive">{t('profil.erreurChiffres', { detail: erreurCagnottes })}</p>
         )}
 
         {/* Formulaire de modification */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-[32px] border border-border bg-card p-6 sm:p-8">
-          <h2 className="font-display text-[26px] font-bold leading-tight text-foreground">Modifier mes informations</h2>
+          <h2 className="font-display text-[26px] font-bold leading-tight text-foreground">{t('profil.modifier')}</h2>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <Champ id="prenom" name="prenom" libelle="Prénom" value={form.prenom} onChange={handleChange} />
-            <Champ id="nom" name="nom" libelle="Nom" value={form.nom} onChange={handleChange} />
+            <Champ id="prenom" name="prenom" libelle={t('profil.prenom')} value={form.prenom} onChange={handleChange} />
+            <Champ id="nom" name="nom" libelle={t('profil.nom')} value={form.nom} onChange={handleChange} />
           </div>
 
-          <Champ id="email" libelle="Email" value={utilisateur.email} disabled aide="L'email ne peut pas être modifié pour l'instant." />
+          <Champ id="email" libelle={t('profil.email')} value={utilisateur.email} disabled aide={t('profil.emailAide')} />
 
-          <Champ id="telephone" name="telephone" libelle="Téléphone" value={form.telephone} onChange={handleChange} placeholder="+237 6 99 00 00 00" />
+          <Champ id="telephone" name="telephone" libelle={t('profil.telephone')} value={form.telephone} onChange={handleChange} placeholder="+237 6 99 00 00 00" />
 
           {message && <p className="text-sm text-primary">{message}</p>}
           {erreur && <p className="text-sm text-destructive">{erreur}</p>}
 
           <Button type="submit" disabled={envoiEnCours} className="sm:self-start">
-            {envoiEnCours ? 'Enregistrement...' : 'Enregistrer les modifications'}
+            {envoiEnCours ? t('commun:actions.enregistrement') : t('profil.enregistrer')}
           </Button>
         </form>
 
@@ -173,12 +176,12 @@ export default function Compte() {
         <form onSubmit={changerMotDePasse} noValidate className="flex flex-col gap-6 rounded-[32px] border border-border bg-card p-6 sm:p-8">
           <div>
             <h2 className="font-display text-[26px] font-bold leading-tight text-foreground">
-              {sansMotDePasse ? 'Définir un mot de passe' : 'Changer le mot de passe'}
+              {sansMotDePasse ? t('profil.motDePasse.definiTitre') : t('profil.motDePasse.changerTitre')}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {sansMotDePasse
-                ? 'Vous vous connectez avec Google. Définissez un mot de passe pour pouvoir aussi vous connecter avec votre adresse email.'
-                : 'Vos autres appareils seront déconnectés.'}
+                ? t('profil.motDePasse.definiTexte')
+                : t('profil.motDePasse.changerTexte')}
             </p>
           </div>
 
@@ -189,7 +192,7 @@ export default function Compte() {
             <ChampMotDePasse
               id="mdp-actuel"
               name="actuel"
-              libelle="Mot de passe actuel"
+              libelle={t('profil.motDePasse.actuel')}
               value={mdp.actuel}
               onChange={changerChampMdp}
               erreur={erreursMdp.actuel}
@@ -199,17 +202,17 @@ export default function Compte() {
           <ChampMotDePasse
             id="mdp-nouveau"
             name="nouveau"
-            libelle="Nouveau mot de passe"
+            libelle={t('profil.motDePasse.nouveau')}
             value={mdp.nouveau}
             onChange={changerChampMdp}
             erreur={erreursMdp.nouveau}
-            aide="8 caractères minimum."
+            aide={t('profil.motDePasse.aide')}
             autoComplete="new-password"
           />
           <ChampMotDePasse
             id="mdp-confirmation"
             name="confirmation"
-            libelle="Confirmer le nouveau mot de passe"
+            libelle={t('profil.motDePasse.confirmer')}
             value={mdp.confirmation}
             onChange={changerChampMdp}
             erreur={erreursMdp.confirmation}
@@ -220,7 +223,7 @@ export default function Compte() {
           {erreurMdp && <p className="text-sm text-destructive">{erreurMdp}</p>}
 
           <Button type="submit" disabled={mdpEnCours} className="sm:self-start">
-            {mdpEnCours ? 'Enregistrement...' : sansMotDePasse ? 'Définir le mot de passe' : 'Changer le mot de passe'}
+            {mdpEnCours ? t('commun:actions.enregistrement') : sansMotDePasse ? t('profil.motDePasse.definir') : t('profil.motDePasse.changer')}
           </Button>
         </form>
       </div>

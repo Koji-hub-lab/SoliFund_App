@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
@@ -15,6 +16,7 @@ const ONGLETS = ['apercu', 'retraits', 'actualites', 'photo'];
 // Page de gestion d'une cagnotte, réservée à son propriétaire.
 export default function GererCagnotte() {
   const { id } = useParams();
+  const { t } = useTranslation('tableau-de-bord');
   const [params, setParams] = useSearchParams();
   const onglet = ONGLETS.includes(params.get('onglet')) ? params.get('onglet') : 'apercu';
 
@@ -88,10 +90,10 @@ export default function GererCagnotte() {
 
   const propsActions = { executer, charger, enCours, erreurs };
   const onglets = [
-    { id: 'apercu', libelle: 'Aperçu' },
-    { id: 'retraits', libelle: 'Retraits', compteur: retraits.length },
-    { id: 'actualites', libelle: 'Actualités', compteur: actualites.length },
-    { id: 'photo', libelle: 'Photo et paramètres' },
+    { id: 'apercu', libelle: t('gestion.onglets.apercu') },
+    { id: 'retraits', libelle: t('gestion.onglets.retraits'), compteur: retraits.length },
+    { id: 'actualites', libelle: t('gestion.onglets.actualites'), compteur: actualites.length },
+    { id: 'photo', libelle: t('gestion.onglets.photo') },
   ];
 
   return (

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Button } from '../ui/Button';
 import api from '../../api/axios';
@@ -6,6 +7,7 @@ import { champPilule, champZone, erreurTexte, titreSection } from '../cagnotte/c
 
 export default function ActualitesGestion({ idCagnotte, actualites, executer, charger, enCours, erreurs }) {
   const [nouvelle, setNouvelle] = useState({ titre: '', contenu: '' });
+  const { t } = useTranslation('tableau-de-bord');
 
   function publier(e) {
     e.preventDefault();
@@ -19,20 +21,20 @@ export default function ActualitesGestion({ idCagnotte, actualites, executer, ch
   return (
     <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[420px_minmax(0,1fr)]">
       <section className="rounded-[28px] border border-border bg-card p-6 sm:p-7">
-        <h2 className="font-display text-[22px] font-bold leading-tight text-foreground">Publier une actualité</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Donnez des nouvelles à vos donateurs : elles s'affichent sur la page publique.</p>
+        <h2 className="font-display text-[22px] font-bold leading-tight text-foreground">{t('actualites.publierTitre')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('actualites.publierTexte')}</p>
         <form onSubmit={publier} className="mt-5 flex flex-col gap-3">
           <input
-            aria-label="Titre de l'actualité"
-            placeholder="Titre de l'actualité"
+            aria-label={t('actualites.titre')}
+            placeholder={t('actualites.titre')}
             value={nouvelle.titre}
             onChange={(e) => setNouvelle({ ...nouvelle, titre: e.target.value })}
             required
             className={champPilule}
           />
           <textarea
-            aria-label="Contenu de l'actualité"
-            placeholder="Contenu"
+            aria-label={t('actualites.contenu')}
+            placeholder={t('actualites.contenuPlaceholder')}
             rows={5}
             value={nouvelle.contenu}
             onChange={(e) => setNouvelle({ ...nouvelle, contenu: e.target.value })}
@@ -40,16 +42,16 @@ export default function ActualitesGestion({ idCagnotte, actualites, executer, ch
             className={champZone}
           />
           <Button type="submit" disabled={enCours.actualite} className="w-full">
-            {enCours.actualite ? 'Publication...' : 'Publier'}
+            {enCours.actualite ? t('actualites.publication') : t('actualites.publier')}
           </Button>
           {erreurs.actualite && <p className={erreurTexte}>{erreurs.actualite}</p>}
         </form>
       </section>
 
       <section>
-        <h2 className={titreSection}>Actualités publiées ({actualites.length})</h2>
+        <h2 className={titreSection}>{t('actualites.publiees', { total: actualites.length })}</h2>
         {actualites.length === 0 ? (
-          <p className="mt-4 text-base text-muted-foreground">Aucune actualité pour le moment.</p>
+          <p className="mt-4 text-base text-muted-foreground">{t('actualites.aucune')}</p>
         ) : (
           <div className="mt-5 flex flex-col gap-4">
             {actualites.map((a) => (

@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "badge": "100% secure fundraising in Cameroon",
+    "titreDebut": "Make your plans happen,",
+    "titreAccent": "stand by the people you love.",
+    "texte": "Safe, simple fundraising made for Cameroon. A wedding, a birthday, a bereavement or a community project — collect and share with total peace of mind.",
+    "lancer": "Start my fundraiser",
+    "parcourir": "Browse fundraisers",
+    "paiements": "We accept",
+    "altPhoto": "A group of friends and family gathered together, smiling",
+    "fondsProteges": "Your funds are protected",
+    "retraitMobileMoney": "Paid out to your Mobile Money"
+  },
+  "etapes": {
+    "surTitre": "Quick and easy",
+    "titre": "Three steps to bring your community together",
+    "creer": { "titre": "Create your fundraiser", "texte": "It takes about 2 minutes. Add a title, a photo and your goal. No technical skills needed." },
+    "partager": { "titre": "Share it with your people", "texte": "Send your fundraiser link on WhatsApp, Facebook and anywhere else in one tap." },
+    "recuperer": { "titre": "Collect the money", "texte": "Withdraw what you've raised straight to Orange Money or MTN Mobile Money." }
+  },
+  "populaires": {
+    "surTitre": "Happening now",
+    "titre": "Popular fundraisers",
+    "voirTout": "See all fundraisers",
+    "toutes": "All",
+    "vide": "No fundraisers yet.",
+    "videCategorie": "No fundraisers in this category yet."
+  },
+  "confiance": {
+    "organisateurs": { "titre": "Verified organisers", "texte": "Every organiser confirms their email address before they can create a fundraiser." },
+    "retraits": { "titre": "Checked withdrawals", "texte": "Our team reviews every withdrawal request before the money is paid out." },
+    "paiements": { "titre": "Local payments", "texte": "Give with MTN Mobile Money or Orange Money — no bank card needed." }
+  },
+  "appel": {
+    "debut": "Just like a njangi,",
+    "accent": "everyone chips in a little",
+    "fin": ", and we all move forward.",
+    "noteNjangi": "A njangi is a Cameroonian savings circle: friends and family pool their money and take turns benefiting.",
+    "lancer": "Start my fundraiser"
+  }
+}

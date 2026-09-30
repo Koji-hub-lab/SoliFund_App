@@ -1,0 +1,195 @@
+{
+  "nav": {
+    "etiquette": "Admin",
+    "tableauDeBord": "Dashboard",
+    "cagnottes": "Fundraisers",
+    "signalements": "Reports",
+    "retraits": "Withdrawals",
+    "revenus": "Revenue",
+    "utilisateurs": "Users",
+    "categories": "Categories",
+    "espaceOrganisateur": "Organiser space"
+  },
+  "tableau": {
+    "titre": "Dashboard",
+    "sousTitre": "An overview of what's happening on SoliFund.",
+    "montantCollecte": "Total raised",
+    "utilisateurs": "Users",
+    "montantRetire": "Total withdrawn",
+    "commissionsDuMois": "Fees this month",
+    "voirRevenus": "View revenue →",
+    "retraitsEnAttente": "Pending withdrawals",
+    "traiter": "Review →",
+    "parStatut": "Fundraisers by status",
+    "actives": "Active",
+    "suspendues": "Suspended",
+    "terminees": "Ended",
+    "annulees": "Cancelled"
+  },
+  "cagnottes": {
+    "titre": "Manage fundraisers",
+    "sousTitre": "Approve fundraisers awaiting review, and suspend or reinstate live ones.",
+    "rechercher": "Search fundraisers",
+    "rechercherPlaceholder": "Search fundraisers...",
+    "filtres": {
+      "EN_VERIFICATION": "To review",
+      "ACTIVE": "Active",
+      "SUSPENDUE": "Suspended",
+      "REFUSEE": "Declined",
+      "TERMINEE": "Ended",
+      "ANNULEE": "Cancelled",
+      "TOUTES": "All"
+    },
+    "vide": "No fundraisers in this category.",
+    "privee": "Private",
+    "organiseePar": "Organised by {{nom}} ({{email}})",
+    "aVerifier": "To check: {{raisons}}",
+    "raisonNonPrecisee": "no reason given",
+    "motifRefus": "Reason for declining: {{motif}}",
+    "resume": "<b>{{collecte}}</b> of {{objectif}} · {{categorie}} · {{debut}} to {{fin}}",
+    "sansCategorie": "No category",
+    "approuver": "Approve",
+    "identiteRequise": "The organiser's identity must be verified first.",
+    "refuser": "Decline",
+    "suspendre": "Suspend",
+    "reactiver": "Reinstate",
+    "motif": "Reason",
+    "confirmations": {
+      "suspendre": {
+        "titre": "Suspend this fundraiser?",
+        "message": "“{{titre}}” will stop taking gifts and will be hidden from the public. The organiser will be told why.",
+        "libelle": "Suspend fundraiser",
+        "motif": "Reason for suspension",
+        "placeholder": "E.g. missing supporting documents"
+      },
+      "refuser": {
+        "titre": "Decline this fundraiser?",
+        "message": "“{{titre}}” won't be published. The organiser will be told why and can edit it to submit it again.",
+        "libelle": "Decline fundraiser",
+        "motif": "Reason for declining",
+        "placeholder": "E.g. description too vague"
+      }
+    }
+  },
+  "retraits": {
+    "titre": "Manage withdrawals",
+    "sousTitre": "Send the net amount to the organiser's verified number, then mark the withdrawal as paid.",
+    "rechercher": "Search withdrawals",
+    "rechercherPlaceholder": "Search by fundraiser, organiser or email...",
+    "filtres": { "EN_ATTENTE": "Pending", "TRAITE": "Paid", "REJETE": "Rejected", "TOUS": "All" },
+    "vide": "No requests in this category.",
+    "aVerser": "To pay: {{montant}}",
+    "verse": "Paid: {{montant}}",
+    "net": "Net: {{montant}}",
+    "demande": "Requested: {{brut}} · fee ({{taux}}): {{commission}}",
+    "demandeSansCommission": "Requested: {{brut}} · fee: none",
+    "demandePar": "Requested by {{nom}} ({{email}})",
+    "motifRejet": "Reason for rejection: {{motif}}",
+    "marquer": "Mark as paid",
+    "rejeter": "Reject",
+    "traiterTitre": "Mark this withdrawal as paid?",
+    "traiterMessage": "Please confirm you have sent exactly {{net}} to {{numero}} ({{operateur}}). The organiser will be notified.",
+    "rejeterTitre": "Reject this withdrawal?",
+    "rejeterMessage": "The request for {{brut}} will be rejected and the amount will become available again. The organiser will be notified.",
+    "rejeterLibelle": "Reject withdrawal",
+    "motif": "Reason for rejection",
+    "motifPlaceholder": "E.g. wrong recipient number"
+  },
+  "utilisateurs": {
+    "titre": "Users",
+    "sousTitre_one": "{{count}} account registered on the platform.",
+    "sousTitre_other": "{{count}} accounts registered on the platform.",
+    "rechercher": "Search users",
+    "rechercherPlaceholder": "Search by name or email...",
+    "filtres": { "tous": "All", "ACTIF": "Active", "SUSPENDU": "Suspended", "BANNI": "Banned" },
+    "vide": "No user matches your search.",
+    "admin": "Admin",
+    "inscritLe": "{{email}} · joined on {{date}}",
+    "protege": "An administrator's status can't be changed.",
+    "reactiver": "Reinstate",
+    "suspendre": "Suspend",
+    "bannir": "Ban",
+    "confirmations": {
+      "SUSPENDU": {
+        "titre": "Suspend this account?",
+        "message": "{{nom}} won't be able to log in while the account is suspended.",
+        "libelle": "Suspend account"
+      },
+      "BANNI": {
+        "titre": "Ban this account?",
+        "message": "{{nom}} won't be able to log in any more, and their active fundraisers will be suspended.",
+        "libelle": "Ban account"
+      }
+    }
+  },
+  "categories": {
+    "titre": "Categories",
+    "sousTitre": "The categories organisers can choose from, also used as filters on the site.",
+    "couleur": "Colour",
+    "aucuneCouleur": "None",
+    "couleurs": { "#087F7A": "Lagoon", "#055955": "Dark lagoon", "#E9A23B": "Amber", "#17262A": "Ink" },
+    "nomObligatoire": "Please enter a name.",
+    "ajouterTitre": "Add a category",
+    "nom": "Name",
+    "nomPlaceholder": "Education",
+    "ajout": "Adding...",
+    "ajouter": "Add category",
+    "vide": "No categories yet.",
+    "aucuneCagnotte": "No fundraisers",
+    "cagnottes_one": "{{count}} fundraiser",
+    "cagnottes_other": "{{count}} fundraisers",
+    "modifier": "Edit",
+    "supprimer": "Delete",
+    "suppressionImpossible": "A category that fundraisers are using can't be deleted.",
+    "supprimerTitre": "Delete this category?",
+    "supprimerMessage": "“{{nom}}” will no longer be offered to organisers.",
+    "supprimerLibelle": "Delete category"
+  },
+  "signalements": {
+    "titre": "Reports",
+    "sousTitreChargement": "Fundraisers reported by visitors and users.",
+    "signalements_one": "{{count}} open report",
+    "signalements_other": "{{count}} open reports",
+    "surCagnottes_one": "on {{count}} fundraiser.",
+    "surCagnottes_other": "on {{count}} fundraisers.",
+    "vide": "No open reports.",
+    "nombre_one": "{{count}} report",
+    "nombre_other": "{{count}} reports",
+    "dernier": "latest on {{date}}",
+    "classer": "Dismiss",
+    "suspendre": "Suspend",
+    "reactiver": "Reinstate",
+    "confirmations": {
+      "classer": {
+        "titre": "Dismiss these reports?",
+        "message": "The reports on “{{titre}}” will be closed. The fundraiser keeps its current status.",
+        "libelle": "Dismiss reports"
+      },
+      "suspendre": {
+        "titre": "Suspend this fundraiser?",
+        "message": "“{{titre}}” will stop taking gifts and will be hidden from the public. The organiser will be told why.",
+        "libelle": "Suspend fundraiser",
+        "motif": "Reason for suspension",
+        "placeholder": "E.g. reports confirmed"
+      },
+      "reactiver": {
+        "titre": "Reinstate this fundraiser?",
+        "message": "“{{titre}}” will go back online, and its reports will be closed.",
+        "libelle": "Reinstate fundraiser"
+      }
+    }
+  },
+  "revenus": {
+    "titre": "Revenue",
+    "sousTitre": "Fees taken on withdrawals paid out to organisers.",
+    "total": "Total fees",
+    "mois": "Fees for {{mois}}",
+    "parMois": "By month",
+    "aucune": "No fees yet.",
+    "colMois": "Month",
+    "colRetraits": "Withdrawals paid",
+    "colCommissions": "Fees",
+    "detail": "Fee details",
+    "ligne": "{{date}} · withdrawal of {{brut}} by {{nom}} · paid {{net}}"
+  }
+}

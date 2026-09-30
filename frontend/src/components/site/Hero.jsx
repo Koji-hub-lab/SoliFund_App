@@ -1,37 +1,39 @@
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { MotifWax } from './LisereWax';
 
 export function Hero() {
+  const { t } = useTranslation('accueil');
   return (
     <section className="bg-background">
       <div className="mx-auto grid max-w-[1400px] items-center gap-16 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-[72px] lg:py-24">
         <div className="flex flex-col items-start text-left">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-4 py-2 text-sm font-bold text-primary">
             <ShieldCheck className="size-4" />
-            Cagnottes 100 % sécurisées au Cameroun
+            {t('hero.badge')}
           </span>
 
           <h1 className="mb-0 mt-6 font-display text-[44px] font-extrabold leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[56px] lg:text-[72px]">
-            Réalisez vos projets, <span className="text-primary">soutenez vos proches.</span>
+            {t('hero.titreDebut')} <span className="text-primary">{t('hero.titreAccent')}</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-[1.6] text-[#45524F] lg:text-xl">
-            La solution de cagnotte sécurisée au Cameroun. Mariage, anniversaire, deuil ou projet solidaire — collectez et partagez en toute confiance.
+            {t('hero.texte')}
           </p>
 
           <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
             <Button size="lg" to="/creer-cagnotte">
-              Lancer ma cagnotte
+              {t('hero.lancer')}
               <ArrowRight className="size-5" />
             </Button>
             <Button size="lg" variant="outline" href="#cagnottes">
-              Parcourir les cagnottes
+              {t('hero.parcourir')}
             </Button>
           </div>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">Paiements acceptés</span>
+            <span className="text-sm font-medium text-muted-foreground">{t('hero.paiements')}</span>
             <span className="rounded-full bg-[#FFCC00] px-3 py-1 text-xs font-bold text-encre">MTN MoMo</span>
             <span className="rounded-full bg-[#FF7900] px-3 py-1 text-xs font-bold text-encre">Orange Money</span>
           </div>
@@ -48,7 +50,7 @@ export function Hero() {
             <img
               src="/hero-solidarite.webp"
               fetchPriority="high"
-              alt="Un groupe de proches réunis et souriants célébrant leur solidarité"
+              alt={t('hero.altPhoto')}
               className="aspect-[5/4] w-full object-cover"
             />
           </div>
@@ -59,8 +61,8 @@ export function Hero() {
               <Lock className="size-5" />
             </span>
             <div>
-              <p className="font-display text-lg font-bold leading-tight text-foreground">Fonds protégés</p>
-              <p className="text-sm text-muted-foreground">Retrait sur votre Mobile Money</p>
+              <p className="font-display text-lg font-bold leading-tight text-foreground">{t('hero.fondsProteges')}</p>
+              <p className="text-sm text-muted-foreground">{t('hero.retraitMobileMoney')}</p>
             </div>
           </div>
         </div>

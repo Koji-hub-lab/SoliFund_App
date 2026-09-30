@@ -1,14 +1,16 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Link2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { urlPartageCagnotte } from '../../api/axios';
 
-// Bloc de partage : WhatsApp, Facebook et copie du lien. Le lien partagé est celui du backend
+// Boutons de partage : WhatsApp, Facebook et copie du lien. Le lien partagé est celui du backend
 // (/partage/cagnottes/:id), seul capable d'afficher un aperçu avec la photo et le titre.
-export default function PartageCagnotte({ idCagnotte, titre }) {
+export function BoutonsPartage({ idCagnotte, titre }) {
   const [etatCopie, setEtatCopie] = useState(''); // '' | 'copie' | 'erreur'
+  const { t } = useTranslation('cagnotte');
   const url = urlPartageCagnotte(idCagnotte);
-  const texteWhatsApp = `${titre} — Soutenez cette cagnotte : ${url}`;
+  const texteWhatsApp = t('partage.whatsapp', { titre, url });
 
   useEffect(() => {
     if (etatCopie !== 'copie') return undefined;
@@ -26,11 +28,8 @@ export default function PartageCagnotte({ idCagnotte, titre }) {
   }
 
   return (
-    <div className="rounded-[28px] bg-primary-soft p-6">
-      <h2 className="font-display text-xl font-bold text-foreground">Partagez, ça compte aussi</h2>
-      <p className="mt-1 text-sm text-[#45524F]">Chaque partage peut amener un nouveau donateur.</p>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+    <>
+      <div className="flex flex-wrap items-center gap-2">
         <Button href={`https://wa.me/?text=${encodeURIComponent(texteWhatsApp)}`} target="_blank" rel="noopener noreferrer">
           WhatsApp
         </Button>
@@ -45,18 +44,32 @@ export default function PartageCagnotte({ idCagnotte, titre }) {
         <button
           type="button"
           onClick={copierLien}
-          aria-label="Copier le lien"
+          aria-label={t('partage.copier')}
           className="inline-flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-transparent p-0 text-primary hover:bg-card"
         >
           <Link2 className="size-5" />
         </button>
         <span aria-live="polite" className="text-sm font-bold text-primary">
-          {etatCopie === 'copie' && 'Lien copié'}
+          {etatCopie === 'copie' && t('partage.copie')}
         </span>
       </div>
       {etatCopie === 'erreur' && (
-        <p className="mt-2 text-sm text-destructive">Copie impossible : copiez l'adresse depuis la barre du navigateur.</p>
+        <p className="mt-2 text-sm text-destructive">{t('partage.copieImpossible')}</p>
       )}
+    </>
+  );
+}
+
+// Bloc de partage de la page d'une cagnotte.
+export default function PartageCagnotte({ idCagnotte, titre }) {
+  const { t } = useTranslation('cagnotte');
+  return (
+    <div className="rounded-[28px] bg-primary-soft p-6">
+      <h2 className="font-display text-xl font-bold text-foreground">{t('partage.titre')}</h2>
+      <p className="mt-1 text-sm text-[#45524F]">{t('partage.texte')}</p>
+      <div className="mt-4">
+        <BoutonsPartage idCagnotte={idCagnotte} titre={titre} />
+      </div>
     </div>
   );
 }

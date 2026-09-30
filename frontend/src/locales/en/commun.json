@@ -1,0 +1,74 @@
+{
+  "titreSite": "SoliFund — Community fundraising in Cameroon",
+  "aLInstant": "just now",
+  "langue": { "libelle": "Language", "fr": "Français", "en": "English" },
+  "nav": {
+    "commentCaMarche": "How it works",
+    "parcourir": "Browse fundraisers",
+    "aide": "Help",
+    "deconnexion": "Log out",
+    "monEspace": "My space",
+    "seConnecter": "Log in",
+    "sInscrire": "Sign up",
+    "ouvrirMenu": "Open menu",
+    "fermerMenu": "Close menu",
+    "menu": "Menu",
+    "retourAuSite": "Back to site"
+  },
+  "pied": {
+    "slogan": "The secure online fundraising platform built for Cameroon.",
+    "decouvrir": "Discover",
+    "toutesLesCagnottes": "All fundraisers",
+    "lancer": "Start a fundraiser",
+    "aide": "Help",
+    "creerCompte": "Create an account",
+    "motDePasseOublie": "Forgot password",
+    "legal": "Legal",
+    "conditions": "Terms of use",
+    "confidentialite": "Privacy",
+    "droits": "© {{annee}} SoliFund. All rights reserved.",
+    "base": "Proudly based in Cameroon"
+  },
+  "actions": {
+    "annuler": "Cancel",
+    "confirmer": "Confirm",
+    "enCours": "Working...",
+    "envoiEnCours": "Sending...",
+    "enregistrement": "Saving...",
+    "enregistrer": "Save",
+    "reessayer": "Try again",
+    "voir": "View",
+    "precedent": "Previous",
+    "suivant": "Next",
+    "pagination": "Page {{page}} of {{pages}}",
+    "facultatif": "{{libelle}} (optional)"
+  },
+  "code": {
+    "libelle": "Verification code",
+    "chiffre": "Digit {{numero}} of {{total}}"
+  },
+  "chargement": "Loading",
+  "chargementPoints": "Loading...",
+  "nonTrouve": {
+    "titre": "This page has wandered off",
+    "texte": "The page you're looking for doesn't exist or has moved.",
+    "retour": "Back to home"
+  },
+  "statuts": {
+    "retrait": { "EN_ATTENTE": "Pending", "APPROUVE": "Approved", "TRAITE": "Paid", "REJETE": "Rejected" },
+    "cagnotte": {
+      "ACTIVE": "Active",
+      "TERMINEE": "Ended",
+      "SUSPENDUE": "Suspended",
+      "ANNULEE": "Cancelled",
+      "EN_VERIFICATION": "Under review",
+      "REFUSEE": "Declined"
+    },
+    "utilisateur": { "ACTIF": "Active", "SUSPENDU": "Suspended", "BANNI": "Banned", "INACTIF": "Inactive" }
+  },
+  "badges": {
+    "objectifAtteint": "Goal reached",
+    "dernierJour": "Last day",
+    "plusQueJours": "{{jours}} days left"
+  }
+}

@@ -3,6 +3,8 @@ import { randomUUID } from 'crypto';
 import { mkdir, unlink, writeFile } from 'fs/promises';
 import { basename, join } from 'path';
 import sharp from 'sharp';
+import { detecterTypeImage } from './signature-image';
+import { m } from '../i18n/messages';
 
 const DOSSIER_UPLOADS = join(process.cwd(), 'uploads');
 const PREFIXE_PUBLIC = '/uploads';
@@ -14,31 +16,6 @@ const QUALITE_WEBP = 80;
 
 // Chemins publics des deux versions d'une image (ex. /uploads/cagnottes/<uuid>.webp).
 export type ImagesEnregistrees = { image: string; image_miniature: string };
-
-// Vérifie à partir des premiers octets (signature) que le contenu est une image JPEG, PNG ou WEBP,
-// sans se fier au nom de fichier ni au type MIME déclaré par le client.
-function estImageAcceptee(contenu: Buffer): boolean {
-  if (
-    contenu.length >= 3 &&
-    contenu[0] === 0xff &&
-    contenu[1] === 0xd8 &&
-    contenu[2] === 0xff
-  ) {
-    return true;
-  }
-  const signaturePng = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-  if (
-    contenu.length >= 8 &&
-    signaturePng.every((octet, i) => contenu[i] === octet)
-  ) {
-    return true;
-  }
-  return (
-    contenu.length >= 12 &&
-    contenu.toString('ascii', 0, 4) === 'RIFF' &&
-    contenu.toString('ascii', 8, 12) === 'WEBP'
-  );
-}
 
 // Convertit en WebP à la largeur donnée (sans agrandir une image plus petite). rotate() applique
 // l'orientation de l'appareil photo ; les métadonnées (EXIF, position GPS...) ne sont pas recopiées.
@@ -60,9 +37,7 @@ export class ImagesService {
     sousDossier: string,
   ): Promise<ImagesEnregistrees> {
     if (!fichier || !fichier.buffer?.length) {
-      throw new BadRequestException(
-        'Aucun fichier envoyé (champ « image » attendu).',
-      );
+      throw new BadRequestException(m('images.aucunFichier'));
     }
     return this.enregistrerContenu(fichier.buffer, sousDossier);
   }
@@ -73,10 +48,8 @@ export class ImagesService {
     contenu: Buffer,
     sousDossier: string,
   ): Promise<ImagesEnregistrees> {
-    if (!estImageAcceptee(contenu)) {
-      throw new BadRequestException(
-        'Seules les images JPG, PNG ou WEBP sont acceptées.',
-      );
+    if (detecterTypeImage(contenu) === null) {
+      throw new BadRequestException(m('images.formatRefuse'));
     }
 
     let image: Buffer;
@@ -87,9 +60,7 @@ export class ImagesService {
         convertirEnWebp(contenu, LARGEUR_MINIATURE),
       ]);
     } catch {
-      throw new BadRequestException(
-        "L'image n'a pas pu être lue. Vérifiez le fichier ou choisissez-en un autre.",
-      );
+      throw new BadRequestException(m('images.illisible'));
     }
 
     const nom = randomUUID();

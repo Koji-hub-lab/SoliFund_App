@@ -10,12 +10,17 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { construirePage, lirePagination } from '../common/pagination';
 import { ListerCagnottesAdminDto } from './dto/lister-cagnottes-admin.dto';
 import { ChangerStatutCagnotteDto } from './dto/changer-statut-cagnotte.dto';
+import { SignalementsService } from '../signalements/signalements.service';
+import { RevenusService } from './revenus.service';
+import { m } from '../i18n/messages';
 
 const STATUTS_CAGNOTTE = [
   'ACTIVE',
   'TERMINEE',
   'SUSPENDUE',
   'ANNULEE',
+  'EN_VERIFICATION',
+  'REFUSEE',
 ] as const;
 
 @Injectable()
@@ -25,24 +30,37 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly signalementsService: SignalementsService,
+    private readonly revenusService: RevenusService,
   ) {}
 
   async statistiques() {
-    const [nbUtilisateurs, parStatut, collecte, retire, retraitsEnAttente] =
-      await this.prisma.$transaction([
-        this.prisma.utilisateur.count(),
-        this.prisma.cagnotte.groupBy({
-          by: ['statut'],
-          _count: { _all: true },
-          orderBy: { statut: 'asc' },
-        }),
-        this.prisma.cagnotte.aggregate({ _sum: { montant_collecte: true } }),
-        this.prisma.retrait.aggregate({
-          where: { statut: 'TRAITE' },
-          _sum: { montant: true },
-        }),
-        this.prisma.retrait.count({ where: { statut: 'EN_ATTENTE' } }),
-      ]);
+    const [
+      nbUtilisateurs,
+      parStatut,
+      collecte,
+      retire,
+      retraitsEnAttente,
+      identitesAVerifier,
+      signalementsOuverts,
+    ] = await this.prisma.$transaction([
+      this.prisma.utilisateur.count(),
+      this.prisma.cagnotte.groupBy({
+        by: ['statut'],
+        _count: { _all: true },
+        orderBy: { statut: 'asc' },
+      }),
+      this.prisma.cagnotte.aggregate({ _sum: { montant_collecte: true } }),
+      this.prisma.retrait.aggregate({
+        where: { statut: 'TRAITE' },
+        _sum: { montant_brut: true },
+      }),
+      this.prisma.retrait.count({ where: { statut: 'EN_ATTENTE' } }),
+      this.prisma.verificationIdentite.count({
+        where: { statut: 'EN_ATTENTE' },
+      }),
+      this.prisma.signalement.count({ where: { statut: 'OUVERT' } }),
+    ]);
 
     // Tous les statuts sont présents dans la réponse, même à 0.
     const cagnottesParStatut = Object.fromEntries(
@@ -58,8 +76,13 @@ export class AdminService {
       nb_utilisateurs: nbUtilisateurs,
       cagnottes_par_statut: cagnottesParStatut,
       montant_total_collecte: Number(collecte._sum.montant_collecte ?? 0),
-      montant_total_retire: Number(retire._sum.montant ?? 0),
+      montant_total_retire: Number(retire._sum.montant_brut ?? 0),
       nb_retraits_en_attente: retraitsEnAttente,
+      commissions_du_mois: await this.revenusService.totalMoisEnCours(),
+      // Ce qui attend une décision de modération.
+      nb_identites_a_verifier: identitesAVerifier,
+      nb_cagnottes_en_verification: cagnottesParStatut.EN_VERIFICATION,
+      nb_signalements_ouverts: signalementsOuverts,
     };
   }
 
@@ -77,7 +100,19 @@ export class AdminService {
         where,
         include: {
           categorie: { select: { nom: true, couleur: true } },
-          utilisateur: { select: { prenom: true, nom: true, email: true } },
+          utilisateur: {
+            select: {
+              prenom: true,
+              nom: true,
+              email: true,
+              // Dernière vérification d'identité de l'organisateur : c'est elle qui fait foi.
+              verifications_identite: {
+                orderBy: { id_verification: 'desc' },
+                take: 1,
+                select: { statut: true },
+              },
+            },
+          },
         },
         orderBy: [{ date_creation: 'desc' }, { id_cagnotte: 'desc' }],
         skip,
@@ -85,16 +120,29 @@ export class AdminService {
       }),
       this.prisma.cagnotte.count({ where }),
     ]);
-    return construirePage(donnees, total, page, limite);
+    // identite_statut : VALIDEE, EN_ATTENTE, REFUSEE ou NON_SOUMISE.
+    const lignes = donnees.map(({ utilisateur, ...cagnotte }) => {
+      const { verifications_identite, ...organisateur } = utilisateur;
+      return {
+        ...cagnotte,
+        utilisateur: organisateur,
+        identite_statut: verifications_identite[0]?.statut ?? 'NON_SOUMISE',
+      };
+    });
+    return construirePage(lignes, total, page, limite);
   }
 
   // Suspension (motif obligatoire) ou réactivation d'une cagnotte, avec notification à l'organisateur.
-  async changerStatutCagnotte(id: number, dto: ChangerStatutCagnotteDto) {
+  async changerStatutCagnotte(
+    id: number,
+    dto: ChangerStatutCagnotteDto,
+    idAdmin?: number,
+  ) {
     const cagnotte = await this.prisma.cagnotte.findUnique({
       where: { id_cagnotte: id },
     });
     if (!cagnotte) {
-      throw new NotFoundException('Cagnotte introuvable.');
+      throw new NotFoundException(m('cagnottes.introuvable'));
     }
 
     const statutAttendu = dto.statut === 'SUSPENDUE' ? 'ACTIVE' : 'SUSPENDUE';
@@ -106,22 +154,26 @@ export class AdminService {
     if (count === 0) {
       throw new BadRequestException(
         dto.statut === 'SUSPENDUE'
-          ? 'Seule une cagnotte active peut être suspendue.'
-          : 'Seule une cagnotte suspendue peut être réactivée.',
+          ? m('cagnottes.suspensionImpossible')
+          : m('cagnottes.reactivationImpossible'),
       );
     }
 
-    const message =
-      dto.statut === 'SUSPENDUE'
-        ? `Votre cagnotte « ${cagnotte.titre} » a été suspendue par l'équipe Solifund. Motif : ${dto.motif}`
-        : `Votre cagnotte « ${cagnotte.titre} » a été réactivée.`;
+    // Réactivation : les signalements ouverts sont classés, sinon le prochain signalement
+    // suspendrait de nouveau la cagnotte.
+    if (dto.statut === 'ACTIVE') {
+      await this.signalementsService.classerPourCagnotte(id, idAdmin);
+    }
+
     try {
       await this.notificationsService.envoyer(
         cagnotte.id_utilisateur,
         dto.statut === 'SUSPENDUE'
-          ? 'Cagnotte suspendue'
-          : 'Cagnotte réactivée',
-        message,
+          ? 'CAGNOTTE_SUSPENDUE'
+          : 'CAGNOTTE_REACTIVEE',
+        dto.statut === 'SUSPENDUE'
+          ? { titre: cagnotte.titre, motif: dto.motif ?? '' }
+          : { titre: cagnotte.titre },
         'SYSTEME',
         cagnotte.id_cagnotte,
       );

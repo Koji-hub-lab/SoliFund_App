@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
@@ -13,6 +14,7 @@ export default function Notifications() {
   // Action en cours ('tout' ou id de notification) et erreur associée ({ cible, message }).
   const [enCours, setEnCours] = useState(null);
   const [erreur, setErreur] = useState(null);
+  const { t } = useTranslation('tableau-de-bord');
 
   function charger() {
     return api.get('/notifications')
@@ -58,16 +60,16 @@ export default function Notifications() {
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
             <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] text-foreground sm:text-[44px]">
-              Notifications
+              {t('notifications.titre')}
             </h1>
             <p className="mt-2 text-lg text-muted-foreground">
-              {nbNonLues > 0 ? `${nbNonLues} notification${nbNonLues > 1 ? 's' : ''} non lue${nbNonLues > 1 ? 's' : ''}` : 'Vous êtes à jour.'}
+              {nbNonLues > 0 ? t('notifications.nonLues', { count: nbNonLues }) : t('notifications.aJour')}
             </p>
           </div>
           {nbNonLues > 0 && (
             <Button variant="outline" onClick={toutMarquerLu} disabled={enCours !== null} className="shrink-0">
               <CheckCheck className="size-5" />
-              {enCours === 'tout' ? 'Enregistrement...' : 'Tout marquer comme lu'}
+              {enCours === 'tout' ? t('commun:actions.enregistrement') : t('notifications.toutLu')}
             </Button>
           )}
         </div>
@@ -81,7 +83,7 @@ export default function Notifications() {
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
                 <Bell className="size-8 text-muted-foreground" />
-                <p className="text-base text-muted-foreground">Aucune notification pour le moment.</p>
+                <p className="text-base text-muted-foreground">{t('notifications.aucune')}</p>
               </div>
             ) : (
               <ul className="m-0 flex list-none flex-col divide-y divide-border p-0">
@@ -100,7 +102,7 @@ export default function Notifications() {
                                   : `/cagnottes/${idCagnotte}${versCommentaires ? '?onglet=commentaires' : ''}`}
                                 className={lien}
                               >
-                                {versGestion ? 'Gérer la cagnotte' : versCommentaires ? 'Voir le commentaire' : 'Voir la cagnotte'}
+                                {versGestion ? t('notifications.gerer') : versCommentaires ? t('notifications.voirCommentaire') : t('notifications.voirCagnotte')}
                               </Link>
                             )}
                             {r.statut === 'NON_LUE' && (
@@ -110,7 +112,7 @@ export default function Notifications() {
                                 disabled={enCours !== null}
                                 className="inline-flex min-h-11 items-center bg-transparent p-0 font-sans text-sm font-bold text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                Marquer comme lue
+                                {t('notifications.marquerLue')}
                               </button>
                             )}
                           </div>

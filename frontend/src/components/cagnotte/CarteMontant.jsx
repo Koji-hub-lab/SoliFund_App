@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import BarreProgression from '../BarreProgression';
 import { formaterMontant } from '../../utils/format';
 import { nbJoursRestants, pourcentageAtteint } from '../../utils/cagnotte';
+import { formaterTaux } from '../../utils/commission';
 
 function Case({ valeur, libelle, enAvant = false }) {
   return (
@@ -16,6 +18,7 @@ export default function CarteMontant({ cagnotte, children }) {
   const pourcentage = pourcentageAtteint(cagnotte);
   const jours = nbJoursRestants(cagnotte.date_fin);
   const nbDonateurs = cagnotte.nb_donateurs ?? 0;
+  const { t } = useTranslation('cagnotte');
 
   return (
     <div className="rounded-[32px] border border-border bg-card p-6 sm:p-7">
@@ -23,18 +26,18 @@ export default function CarteMontant({ cagnotte, children }) {
         {formaterMontant(cagnotte.montant_collecte, cagnotte.devise)}
       </p>
       <p className="mt-2 text-base text-muted-foreground">
-        collectés sur un objectif de {formaterMontant(cagnotte.objectif, cagnotte.devise)}
+        {t('montant.objectif', { objectif: formaterMontant(cagnotte.objectif, cagnotte.devise) })}
       </p>
 
       <BarreProgression pourcentage={pourcentage} hauteur="h-3" className="mt-5" />
 
       <div className="mt-5 grid grid-cols-3 gap-3">
-        <Case valeur={`${pourcentage} %`} libelle="atteint" enAvant />
-        <Case valeur={nbDonateurs} libelle={nbDonateurs > 1 ? 'donateurs' : 'donateur'} />
+        <Case valeur={formaterTaux(pourcentage)} libelle={t('montant.atteint')} enAvant />
+        <Case valeur={nbDonateurs} libelle={t('montant.donateur', { count: nbDonateurs })} />
         {jours < 0 ? (
-          <Case valeur="—" libelle="terminée" />
+          <Case valeur="—" libelle={t('montant.terminee')} />
         ) : (
-          <Case valeur={jours} libelle={jours > 1 ? 'jours restants' : 'jour restant'} />
+          <Case valeur={jours} libelle={t('montant.jourRestant', { count: jours })} />
         )}
       </div>
 

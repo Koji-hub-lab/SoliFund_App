@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -13,7 +14,8 @@ import CommentairesCagnotte from '../components/cagnotte/CommentairesCagnotte';
 import CarteMontant from '../components/cagnotte/CarteMontant';
 import FormulaireDon from '../components/cagnotte/FormulaireDon';
 import DerniersDons from '../components/cagnotte/DerniersDons';
-import PartageCagnotte from '../components/cagnotte/PartageCagnotte';
+import PartageCagnotte, { BoutonsPartage } from '../components/cagnotte/PartageCagnotte';
+import SignalerCagnotte from '../components/cagnotte/SignalerCagnotte';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { SqueletteCagnotte } from '../components/ui/Squelette';
@@ -36,6 +38,7 @@ export default function DetailCagnotte() {
   const [parametres] = useSearchParams();
   const ongletDemande = ONGLETS.includes(parametres.get('onglet')) ? parametres.get('onglet') : null;
   const [onglet, setOnglet] = useState(ongletDemande ?? 'histoire');
+  const { t } = useTranslation('cagnotte');
   const zoneOnglets = useRef(null);
 
   // Action en cours (désactive le bouton concerné) et erreur affichée sous chaque zone.
@@ -119,8 +122,8 @@ export default function DetailCagnotte() {
       <div className="flex min-h-screen flex-col bg-background">
         <SiteHeader />
         <div className="mx-auto flex max-w-2xl flex-1 flex-col items-center justify-center gap-5 px-5 text-center">
-          <p className="text-destructive">{erreur || 'Cagnotte introuvable.'}</p>
-          <Button to="/cagnottes">Retour aux cagnottes</Button>
+          <p className="text-destructive">{erreur || t('page.introuvable')}</p>
+          <Button to="/cagnottes">{t('page.retour')}</Button>
         </div>
       </div>
     );
@@ -130,9 +133,9 @@ export default function DetailCagnotte() {
   const propsActions = { executer, charger, enCours, erreurs };
 
   const onglets = [
-    { id: 'histoire', libelle: "L'histoire" },
-    { id: 'actualites', libelle: 'Actualités', compteur: actualites.length },
-    { id: 'commentaires', libelle: 'Commentaires', compteur: infosCommentaires.total },
+    { id: 'histoire', libelle: t('page.onglets.histoire') },
+    { id: 'actualites', libelle: t('page.onglets.actualites'), compteur: actualites.length },
+    { id: 'commentaires', libelle: t('page.onglets.commentaires'), compteur: infosCommentaires.total },
   ];
 
   return (
@@ -140,15 +143,31 @@ export default function DetailCagnotte() {
       <SiteHeader />
 
       <main className="flex-1 pb-20">
-        {estProprietaire && (
+        {/* Arrivée juste après la création (CreerCagnotte) : félicitations et partage. */}
+        {estProprietaire && parametres.get('creee') && cagnotte.statut === 'ACTIVE' && (
+          <div className="bg-primary-soft">
+            <div className={`${conteneur} py-8`}>
+              <h2 className="font-display text-[26px] font-bold leading-tight text-foreground">
+                {t('page.felicitationsTitre')}
+              </h2>
+              <p className="mt-1 max-w-2xl text-base leading-[1.6] text-[#45524F]">
+                {t('page.felicitationsTexte')}
+              </p>
+              <div className="mt-4">
+                <BoutonsPartage idCagnotte={cagnotte.id_cagnotte} titre={cagnotte.titre} />
+              </div>
+            </div>
+          </div>
+        )}
+        {estProprietaire && !(parametres.get('creee') && cagnotte.statut === 'ACTIVE') && (
           <div className="bg-primary-soft">
             <div className={`${conteneur} flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 text-sm`}>
-              <p className="font-medium text-foreground">Vous êtes l'organisateur de cette cagnotte</p>
+              <p className="font-medium text-foreground">{t('page.organisateur')}</p>
               <Link
                 to={`/mes-cagnottes/${cagnotte.id_cagnotte}`}
                 className="inline-flex min-h-11 items-center font-bold text-primary underline decoration-2 underline-offset-[5px]"
               >
-                Gérer la cagnotte →
+                {t('page.gerer')}
               </Link>
             </div>
           </div>
@@ -159,7 +178,7 @@ export default function DetailCagnotte() {
             className="inline-flex min-h-11 items-center gap-2 font-bold text-primary decoration-2 underline-offset-[5px] hover:underline"
           >
             <ArrowLeft className="size-4" />
-            Toutes les cagnottes
+            {t('page.toutes')}
           </Link>
 
           {/* Ordre du DOM = ordre mobile (photo et titre, carte de don, puis le reste) ;
@@ -182,6 +201,7 @@ export default function DetailCagnotte() {
                 enCours={enCours.listeDons}
                 erreur={erreurs.listeDons}
               />
+              {!estProprietaire && <SignalerCagnotte idCagnotte={cagnotte.id_cagnotte} />}
             </aside>
 
             <div ref={zoneOnglets} className="scroll-mt-[112px] lg:col-start-1 lg:row-start-2">

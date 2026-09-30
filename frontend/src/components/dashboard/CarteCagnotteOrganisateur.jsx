@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/Button';
 import BarreProgression from '../BarreProgression';
 import { SymboleNjangi } from '../Logo';
@@ -9,6 +10,7 @@ import { badgeStatutCagnotte, pourcentageAtteint } from '../../utils/cagnotte';
 export default function CarteCagnotteOrganisateur({ cagnotte: c }) {
   const badge = badgeStatutCagnotte(c);
   const nb = c.nb_donateurs ?? 0;
+  const { t } = useTranslation('tableau-de-bord');
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-[24px] border border-border bg-card p-4 sm:flex-nowrap">
       <div className="flex size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-primary-soft">
@@ -25,11 +27,12 @@ export default function CarteCagnotteOrganisateur({ cagnotte: c }) {
         </div>
         <BarreProgression pourcentage={pourcentageAtteint(c)} hauteur="h-2" className="mt-3" />
         <p className="mt-2 text-sm text-muted-foreground">
-          {formaterMontant(c.montant_collecte, c.devise)} sur {formaterMontant(c.objectif, c.devise)} · {nb} donateur{nb > 1 ? 's' : ''}
+          {t('liste.resume', { collecte: formaterMontant(c.montant_collecte, c.devise), objectif: formaterMontant(c.objectif, c.devise) })} ·{' '}
+          {t('liste.donateurs', { count: nb })}
         </p>
       </div>
       <Button variant="outline" to={`/mes-cagnottes/${c.id_cagnotte}`} className="w-full sm:w-auto">
-        Gérer
+        {t('liste.gerer')}
       </Button>
     </div>
   );

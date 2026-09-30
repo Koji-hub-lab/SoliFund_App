@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import type { UtilisateurConnecte } from './utilisateur-connecte';
+import { m } from '../i18n/messages';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -36,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
     if (!utilisateur || utilisateur.statut !== 'ACTIF') {
-      throw new UnauthorizedException('Session invalide. Reconnectez-vous.');
+      throw new UnauthorizedException(m('auth.sessionInvalide'));
     }
     // Jeton émis avant le dernier changement de mot de passe : refusé. iat est en secondes,
     // on arrondit la date à la seconde pour accepter le jeton obtenu juste après le changement.
@@ -45,9 +46,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       changement &&
       (payload.iat ?? 0) < Math.floor(changement.getTime() / 1000)
     ) {
-      throw new UnauthorizedException(
-        'Votre mot de passe a été modifié. Reconnectez-vous.',
-      );
+      throw new UnauthorizedException(m('auth.motDePasseModifie'));
     }
     return {
       id_utilisateur: utilisateur.id_utilisateur,

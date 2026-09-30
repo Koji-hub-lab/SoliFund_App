@@ -6,26 +6,36 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import {
+  NotificationsService,
+  type CodeNotification,
+  type ParametresNotification,
+} from '../notifications/notifications.service';
 import { CreateRetraitDto } from './dto/create-retrait.dto';
 import { RejectRetraitDto } from './dto/reject-retrait.dto';
 import { ListerRetraitsDto } from './dto/lister-retraits.dto';
 import { construirePage, lirePagination } from '../common/pagination';
 import { Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import { calculerCommission, tauxCommission } from './commission';
 
-function formaterMontant(montant: unknown): string {
-  return `${Number(montant).toLocaleString('fr-FR')} XAF`;
-}
-import { MethodePaiement } from '@prisma/client';
+import { derniereVerification } from '../verification-identite/identite';
+import { m } from '../i18n/messages';
 
 @Injectable()
 export class RetraitsService {
   private readonly logger = new Logger(RetraitsService.name);
 
+  // Taux de commission en vigueur : appliqué aux nouvelles demandes, puis figé dans chaque retrait.
+  private readonly tauxCommission: number;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+    config: ConfigService,
+  ) {
+    this.tauxCommission = tauxCommission(config);
+  }
 
   // Prévient l'organisateur. Appelée après la transaction : un échec d'envoi ne doit pas
   // faire croire à l'admin que le traitement a échoué.
@@ -35,14 +45,14 @@ export class RetraitsService {
       id_utilisateur: number;
       id_cagnotte: number;
     },
-    titre: string,
-    message: string,
+    code: CodeNotification,
+    parametres: ParametresNotification,
   ) {
     try {
       await this.notificationsService.envoyer(
         retrait.id_utilisateur,
-        titre,
-        message,
+        code,
+        parametres,
         'RETRAIT',
         retrait.id_cagnotte,
       );
@@ -53,7 +63,8 @@ export class RetraitsService {
     }
   }
 
-  // Montant déjà engagé en retraits (EN_ATTENTE, APPROUVE, TRAITE) pour chaque cagnotte demandée.
+  // Montant BRUT déjà engagé en retraits (EN_ATTENTE, APPROUVE, TRAITE) pour chaque cagnotte
+  // demandée : le disponible d'une cagnotte se calcule toujours sur le brut (commission comprise).
   // `client` permet d'appeler la méthode dans une transaction (voir demander()).
   // Renvoie une Map id_cagnotte -> montant ; une cagnotte sans retrait vaut 0.
   async montantsEngages(
@@ -68,16 +79,27 @@ export class RetraitsService {
         id_cagnotte: { in: idsCagnottes },
         statut: { in: ['EN_ATTENTE', 'APPROUVE', 'TRAITE'] },
       },
-      _sum: { montant: true },
+      _sum: { montant_brut: true },
     });
     for (const ligne of lignes) {
-      engages.set(ligne.id_cagnotte, Number(ligne._sum.montant ?? 0));
+      engages.set(ligne.id_cagnotte, Number(ligne._sum.montant_brut ?? 0));
     }
     return engages;
   }
 
+  // L'identité de l'organisateur doit être vérifiée. Le retrait est toujours versé sur le numéro
+  // et l'opérateur de cette vérification : ils ne se choisissent pas dans la demande.
   async demander(idUtilisateur: number, dto: CreateRetraitDto) {
     return this.prisma.$transaction(async (tx) => {
+      const identite = await derniereVerification(tx, idUtilisateur);
+      if (identite?.statut !== 'VALIDEE') {
+        throw new ForbiddenException(
+          identite?.statut === 'EN_ATTENTE'
+            ? m('retraits.identiteEnAttente')
+            : m('retraits.identiteRequise'),
+        );
+      }
+
       // Verrouille la ligne de la cagnotte : deux demandes simultanées sont sérialisées.
       const lignes = await tx.$queryRaw<
         {
@@ -90,17 +112,13 @@ export class RetraitsService {
         FROM slf_cagnotte WHERE id_cagnotte = ${dto.id_cagnotte} FOR UPDATE`;
       const cagnotte = lignes[0];
       if (!cagnotte) {
-        throw new NotFoundException('Cagnotte introuvable.');
+        throw new NotFoundException(m('cagnottes.introuvable'));
       }
       if (cagnotte.id_utilisateur !== idUtilisateur) {
-        throw new ForbiddenException(
-          "Vous n'êtes pas le propriétaire de cette cagnotte.",
-        );
+        throw new ForbiddenException(m('cagnottes.pasProprietaire'));
       }
       if (cagnotte.statut === 'SUSPENDUE' || cagnotte.statut === 'ANNULEE') {
-        throw new BadRequestException(
-          'Impossible de demander un retrait sur une cagnotte suspendue ou annulée.',
-        );
+        throw new BadRequestException(m('retraits.cagnotteFermee'));
       }
 
       const totalDejaEngage =
@@ -111,7 +129,10 @@ export class RetraitsService {
 
       if (dto.montant > disponible) {
         throw new BadRequestException(
-          `Montant disponible insuffisant (${disponible} ${cagnotte.devise}).`,
+          m('retraits.disponibleInsuffisant', {
+            disponible,
+            devise: cagnotte.devise,
+          }),
         );
       }
 
@@ -119,9 +140,12 @@ export class RetraitsService {
         data: {
           id_utilisateur: idUtilisateur,
           id_cagnotte: dto.id_cagnotte,
-          montant: dto.montant,
-          methode_retrait: dto.methode_retrait as MethodePaiement,
-          numero_beneficiaire: dto.numero_beneficiaire,
+          // Commission figée à la demande : l'historique reste juste si le taux change ensuite.
+          montant_brut: dto.montant,
+          taux_commission: this.tauxCommission,
+          ...calculerCommission(dto.montant, this.tauxCommission),
+          methode_retrait: identite.methode_retrait,
+          numero_beneficiaire: identite.telephone_retrait,
         },
       });
     });
@@ -133,7 +157,7 @@ export class RetraitsService {
         where: { id_retrait: idRetrait },
       });
       if (!retrait) {
-        throw new NotFoundException('Retrait introuvable.');
+        throw new NotFoundException(m('retraits.introuvable'));
       }
 
       // Mise à jour conditionnelle : si un autre appel l'a déjà traité, count vaut 0.
@@ -142,28 +166,42 @@ export class RetraitsService {
         data: { statut: 'TRAITE', date_traitement: new Date() },
       });
       if (count === 0) {
-        throw new BadRequestException('Ce retrait a déjà été traité.');
+        throw new BadRequestException(m('retraits.dejaTraite'));
       }
 
+      // Somme réellement versée à l'organisateur : le net.
       await tx.transaction.create({
         data: {
           id_retrait: idRetrait,
           type: 'RETRAIT',
-          montant: retrait.montant,
+          montant: retrait.montant_net,
           devise: 'XAF',
           statut: 'SUCCES',
         },
       });
+      // Registre des commissions : une ligne par retrait versé (sauf commission nulle).
+      if (Number(retrait.montant_commission) > 0) {
+        await tx.commission.create({
+          data: {
+            id_retrait: idRetrait,
+            id_cagnotte: retrait.id_cagnotte,
+            montant: retrait.montant_commission,
+            taux: retrait.taux_commission,
+          },
+        });
+      }
 
       return tx.retrait.findUnique({ where: { id_retrait: idRetrait } });
     });
 
     if (traite) {
-      await this.notifierOrganisateur(
-        traite,
-        'Retrait traité',
-        `Votre retrait de ${formaterMontant(traite.montant)} a été traité.`,
-      );
+      await this.notifierOrganisateur(traite, 'RETRAIT_TRAITE', {
+        brut: Number(traite.montant_brut),
+        net: Number(traite.montant_net),
+        commission: Number(traite.montant_commission),
+        devise: 'XAF',
+        numero: traite.numero_beneficiaire,
+      });
     }
     return traite;
   }
@@ -174,7 +212,7 @@ export class RetraitsService {
         where: { id_retrait: idRetrait },
       });
       if (!retrait) {
-        throw new NotFoundException('Retrait introuvable.');
+        throw new NotFoundException(m('retraits.introuvable'));
       }
 
       const { count } = await tx.retrait.updateMany({
@@ -186,21 +224,18 @@ export class RetraitsService {
         },
       });
       if (count === 0) {
-        throw new BadRequestException('Ce retrait a déjà été traité.');
+        throw new BadRequestException(m('retraits.dejaTraite'));
       }
 
       return tx.retrait.findUnique({ where: { id_retrait: idRetrait } });
     });
 
     if (rejete) {
-      const motif = rejete.motif_rejet?.trim()
-        ? `Motif : ${rejete.motif_rejet.trim()}`
-        : 'Aucun motif précisé.';
-      await this.notifierOrganisateur(
-        rejete,
-        'Retrait rejeté',
-        `Votre retrait de ${formaterMontant(rejete.montant)} a été rejeté. ${motif}`,
-      );
+      await this.notifierOrganisateur(rejete, 'RETRAIT_REJETE', {
+        brut: Number(rejete.montant_brut),
+        devise: 'XAF',
+        motif: rejete.motif_rejet?.trim() ?? '',
+      });
     }
     return rejete;
   }
@@ -216,12 +251,10 @@ export class RetraitsService {
       select: { id_utilisateur: true },
     });
     if (!cagnotte) {
-      throw new NotFoundException('Cagnotte introuvable.');
+      throw new NotFoundException(m('cagnottes.introuvable'));
     }
     if (cagnotte.id_utilisateur !== idUtilisateur && !estAdmin) {
-      throw new ForbiddenException(
-        "Vous n'êtes pas le propriétaire de cette cagnotte.",
-      );
+      throw new ForbiddenException(m('cagnottes.pasProprietaire'));
     }
 
     return this.prisma.retrait.findMany({

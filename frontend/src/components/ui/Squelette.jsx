@@ -1,14 +1,17 @@
 // Squelettes de chargement (même style que CarteCagnotteSquelette) : blocs #ECE4D8 arrondis qui
 // pulsent doucement, sans animation si l'utilisateur la réduit. Annoncés « Chargement » aux lecteurs d'écran.
 
+import { useTranslation } from 'react-i18next';
+
 export function Bloc({ className = '' }) {
   return <div className={`bg-border motion-safe:animate-pulse ${className}`} />;
 }
 
 function Zone({ children, className = '' }) {
+  const { t } = useTranslation('commun');
   return (
-    <div role="status" aria-label="Chargement" className={className}>
-      <span className="sr-only">Chargement...</span>
+    <div role="status" aria-label={t('chargement')} className={className}>
+      <span className="sr-only">{t('chargementPoints')}</span>
       <div aria-hidden="true">{children}</div>
     </div>
   );

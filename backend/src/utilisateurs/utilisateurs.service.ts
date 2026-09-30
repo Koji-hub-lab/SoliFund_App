@@ -18,6 +18,9 @@ import { UpdateUtilisateurDto } from './dto/update-utilisateur.dto';
 import { ChangeStatutDto } from './dto/change-statut.dto';
 import { ChangerMotDePasseDto } from './dto/changer-mot-de-passe.dto';
 import { JetonsService } from '../jetons/jetons.service';
+import { identiteVerifiee } from '../verification-identite/identite';
+import type { Langue } from '../i18n/langues';
+import { m } from '../i18n/messages';
 
 // Champs du profil renvoyés à l'utilisateur lui-même (GET et PATCH /utilisateurs/moi).
 // mot_de_passe n'est lu que pour calculer a_mot_de_passe (voir formaterProfil) : jamais renvoyé.
@@ -30,6 +33,7 @@ const SELECTION_PROFIL = {
   telephone: true,
   est_verifie: true,
   date_inscription: true,
+  langue_preferee: true,
   posseders: { select: { role: { select: { nom: true } } } },
 } satisfies Prisma.UtilisateurSelect;
 
@@ -53,12 +57,14 @@ export class UtilisateursService {
     private readonly jetonsService: JetonsService,
   ) {}
 
-  async inscrire(dto: CreateUtilisateurDto) {
+  // langue : celle de l'interface au moment de l'inscription (Accept-Language), enregistrée comme
+  // langue préférée ; l'email de vérification est envoyé dans cette langue.
+  async inscrire(dto: CreateUtilisateurDto, langue: Langue) {
     const emailExistant = await this.prisma.utilisateur.findUnique({
       where: { email: dto.email },
     });
     if (emailExistant) {
-      throw new ConflictException('Cet email est déjà utilisé.');
+      throw new ConflictException(m('utilisateurs.emailDejaUtilise'));
     }
 
     const mot_de_passe_hash = await bcrypt.hash(dto.mot_de_passe, 10);
@@ -70,6 +76,7 @@ export class UtilisateursService {
         email: dto.email,
         mot_de_passe: mot_de_passe_hash,
         telephone: dto.telephone,
+        langue_preferee: langue,
         posseders: {
           create: { role: { connect: { nom: 'ROLE_USER' } } },
         },
@@ -82,6 +89,7 @@ export class UtilisateursService {
         telephone: true,
         date_inscription: true,
         est_verifie: true,
+        langue_preferee: true,
       },
     });
 
@@ -102,9 +110,24 @@ export class UtilisateursService {
       select: SELECTION_PROFIL,
     });
     if (!utilisateur) {
-      throw new NotFoundException('Utilisateur introuvable.');
+      throw new NotFoundException(m('utilisateurs.introuvable'));
     }
-    return formaterProfil(utilisateur);
+    return this.profilComplet(utilisateur);
+  }
+
+  // Profil renvoyé au frontend, avec l'état de la vérification d'identité.
+  private async profilComplet(
+    utilisateur: Prisma.UtilisateurGetPayload<{
+      select: typeof SELECTION_PROFIL;
+    }>,
+  ) {
+    return {
+      ...formaterProfil(utilisateur),
+      identite_verifiee: await identiteVerifiee(
+        this.prisma,
+        utilisateur.id_utilisateur,
+      ),
+    };
   }
 
   async modifierProfil(idUtilisateur: number, dto: UpdateUtilisateurDto) {
@@ -112,19 +135,22 @@ export class UtilisateursService {
       const utilisateur = await this.prisma.utilisateur.update({
         where: { id_utilisateur: idUtilisateur },
         // undefined = champ non envoyé, laissé tel quel ; telephone null = numéro supprimé.
-        data: { nom: dto.nom, prenom: dto.prenom, telephone: dto.telephone },
+        data: {
+          nom: dto.nom,
+          prenom: dto.prenom,
+          telephone: dto.telephone,
+          langue_preferee: dto.langue_preferee,
+        },
         select: SELECTION_PROFIL,
       });
-      return formaterProfil(utilisateur);
+      return await this.profilComplet(utilisateur);
     } catch (e) {
       // telephone est unique en base.
       if (
         e instanceof Prisma.PrismaClientKnownRequestError &&
         e.code === 'P2002'
       ) {
-        throw new ConflictException(
-          'Ce numéro de téléphone est déjà utilisé par un autre compte.',
-        );
+        throw new ConflictException(m('base.doublonTelephone'));
       }
       throw e;
     }
@@ -139,11 +165,11 @@ export class UtilisateursService {
       select: { mot_de_passe: true },
     });
     if (!utilisateur) {
-      throw new NotFoundException('Utilisateur introuvable.');
+      throw new NotFoundException(m('utilisateurs.introuvable'));
     }
     if (utilisateur.mot_de_passe) {
       if (!dto.ancien_mot_de_passe) {
-        throw new BadRequestException('Saisissez votre mot de passe actuel.');
+        throw new BadRequestException(m('validation.motDePasseActuelRequis'));
       }
       // 400 et non 401 : un 401 déconnecterait l'utilisateur côté frontend.
       if (
@@ -152,12 +178,12 @@ export class UtilisateursService {
           utilisateur.mot_de_passe,
         ))
       ) {
-        throw new BadRequestException('Le mot de passe actuel est incorrect.');
+        throw new BadRequestException(
+          m('utilisateurs.motDePasseActuelIncorrect'),
+        );
       }
       if (dto.ancien_mot_de_passe === dto.nouveau_mot_de_passe) {
-        throw new BadRequestException(
-          "Le nouveau mot de passe doit être différent de l'actuel.",
-        );
+        throw new BadRequestException(m('utilisateurs.motDePasseIdentique'));
       }
     }
 
@@ -170,8 +196,8 @@ export class UtilisateursService {
     });
     return {
       message: utilisateur.mot_de_passe
-        ? 'Mot de passe modifié.'
-        : 'Mot de passe défini.',
+        ? m('utilisateurs.motDePasseModifie')
+        : m('utilisateurs.motDePasseDefini'),
     };
   }
 
@@ -215,21 +241,17 @@ export class UtilisateursService {
     idAdmin: number,
   ) {
     if (idUtilisateur === idAdmin) {
-      throw new ForbiddenException(
-        'Vous ne pouvez pas modifier votre propre statut.',
-      );
+      throw new ForbiddenException(m('utilisateurs.propreStatut'));
     }
     const cible = await this.prisma.utilisateur.findUnique({
       where: { id_utilisateur: idUtilisateur },
       select: { posseders: { select: { role: { select: { nom: true } } } } },
     });
     if (!cible) {
-      throw new NotFoundException('Utilisateur introuvable.');
+      throw new NotFoundException(m('utilisateurs.introuvable'));
     }
     if (cible.posseders.some((p) => p.role.nom === 'ROLE_ADMIN')) {
-      throw new ForbiddenException(
-        "Le statut d'un administrateur ne peut pas être modifié.",
-      );
+      throw new ForbiddenException(m('utilisateurs.statutAdmin'));
     }
 
     return this.prisma.$transaction(async (tx) => {

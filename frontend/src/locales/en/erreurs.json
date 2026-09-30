@@ -1,0 +1,6 @@
+{
+  "serveurInjoignable": "We can't reach the server. Please check your connection.",
+  "generique": "Something went wrong.",
+  "actionImpossible": "That didn't work. Please try again.",
+  "numeroInvalide": "Invalid number: enter 9 digits starting with 6 (e.g. 6XX XX XX XX)."
+}

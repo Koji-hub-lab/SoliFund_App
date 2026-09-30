@@ -6,6 +6,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import {
   creerApplication,
   creerCagnotte,
+  creerOrganisateur,
   creerUtilisateur,
   entete,
   viderBase,
@@ -29,16 +30,11 @@ describe('Retraits (e2e)', () => {
     return request(app.getHttpServer())
       .post('/retraits')
       .set(entete(jeton))
-      .send({
-        id_cagnotte: idCagnotte,
-        montant,
-        methode_retrait: 'MTN_MOBILE_MONEY',
-        numero_beneficiaire: '+237699112233',
-      });
+      .send({ id_cagnotte: idCagnotte, montant });
   }
 
   it('refuse un retrait supérieur au solde disponible', async () => {
-    const orga = await creerUtilisateur(prisma, jwt);
+    const orga = await creerOrganisateur(prisma, jwt);
     const cagnotte = await creerCagnotte(prisma, orga.id_utilisateur, {
       montant_collecte: 10000,
     });
@@ -48,7 +44,7 @@ describe('Retraits (e2e)', () => {
   });
 
   it('déduit les retraits en attente du solde disponible', async () => {
-    const orga = await creerUtilisateur(prisma, jwt);
+    const orga = await creerOrganisateur(prisma, jwt);
     const cagnotte = await creerCagnotte(prisma, orga.id_utilisateur, {
       montant_collecte: 10000,
     });
@@ -69,7 +65,7 @@ describe('Retraits (e2e)', () => {
   });
 
   it("n'accepte qu'une demande quand deux arrivent en même temps sur le même solde", async () => {
-    const orga = await creerUtilisateur(prisma, jwt);
+    const orga = await creerOrganisateur(prisma, jwt);
     const cagnotte = await creerCagnotte(prisma, orga.id_utilisateur, {
       montant_collecte: 10000,
     });
@@ -88,8 +84,8 @@ describe('Retraits (e2e)', () => {
   });
 
   it("refuse un retrait sur une cagnotte suspendue ou d'un autre utilisateur", async () => {
-    const orga = await creerUtilisateur(prisma, jwt);
-    const autre = await creerUtilisateur(prisma, jwt);
+    const orga = await creerOrganisateur(prisma, jwt);
+    const autre = await creerOrganisateur(prisma, jwt);
     const suspendue = await creerCagnotte(prisma, orga.id_utilisateur, {
       montant_collecte: 10000,
       statut: 'SUSPENDUE',
@@ -107,7 +103,7 @@ describe('Retraits (e2e)', () => {
   });
 
   it('ne traite un retrait qu’une seule fois, même en cas de double clic', async () => {
-    const orga = await creerUtilisateur(prisma, jwt);
+    const orga = await creerOrganisateur(prisma, jwt);
     const admin = await creerUtilisateur(prisma, jwt, { admin: true });
     const cagnotte = await creerCagnotte(prisma, orga.id_utilisateur, {
       montant_collecte: 10000,
@@ -134,7 +130,7 @@ describe('Retraits (e2e)', () => {
   });
 
   it('réserve le traitement aux administrateurs', async () => {
-    const orga = await creerUtilisateur(prisma, jwt);
+    const orga = await creerOrganisateur(prisma, jwt);
     const cagnotte = await creerCagnotte(prisma, orga.id_utilisateur, {
       montant_collecte: 10000,
     });

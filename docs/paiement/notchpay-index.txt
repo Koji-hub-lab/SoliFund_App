@@ -1,0 +1,99 @@
+# Notch Pay
+
+## Docs
+
+- [Introduction](https://developer.notchpay.co/index.md): Notch Pay is a payment platform designed for Africa, enabling businesses and developers to accept payments and make money transfers easily and securely.
+- [Documentation Update](https://developer.notchpay.co/transition.md): Information about the transition to our new and improved documentation
+- [Getting Started with Notch Pay](https://developer.notchpay.co/get-started/index.md): Learn how to get started with Notch Pay and integrate payment solutions into your business or application
+- [Quickstart Guide](https://developer.notchpay.co/get-started/quickstart.md): Get up and running with Notch Pay in minutes
+- [Authentication](https://developer.notchpay.co/get-started/authentication.md): Learn how to authenticate with the Notch Pay API and secure your integration
+- [API Response Format](https://developer.notchpay.co/get-started/responses.md): Understand the structure of Notch Pay API responses
+- [Error Handling](https://developer.notchpay.co/get-started/errors.md): Learn how to handle errors in the Notch Pay API
+- [Testing Your Integration](https://developer.notchpay.co/get-started/testing.md): Learn how to test your Notch Pay integration with Mobile Money test accounts
+- [Frequently Asked Questions](https://developer.notchpay.co/faq.md): Find answers to common questions about Notch Pay
+- [Webhook Setup](https://developer.notchpay.co/get-started/webhooks/index.md): Learn how to set up and configure webhooks for your Notch Pay account
+- [Verifying Webhooks](https://developer.notchpay.co/get-started/webhooks/verify.md): Learn how to verify webhook signatures to ensure they come from Notch Pay
+- [Security Overview](https://developer.notchpay.co/security/index.md): Learn about Notch Pay's security features and best practices for secure integration
+- [Fraud Detection System](https://developer.notchpay.co/security/fraud-detection.md): Understanding Notch Pay's fraud detection system and how to ensure your transactions comply with our security standards
+- [Compliance](https://developer.notchpay.co/security/compliance.md): Learn about Notch Pay's compliance measures and regulatory requirements
+- [Security Best Practices](https://developer.notchpay.co/security/best-practices.md): Learn about recommended security practices when using Notch Pay
+- [Dashboard Guide](https://developer.notchpay.co/dashboard/index.md): Learn how to use the Notch Pay dashboard to manage your payments, transfers, and account
+- [Dashboard Overview](https://developer.notchpay.co/dashboard/overview.md): Learn how to navigate and use the Notch Pay dashboard
+- [Managing Transactions](https://developer.notchpay.co/dashboard/transactions.md): Learn how to manage payments and transfers in the Notch Pay dashboard
+- [Reports and Analytics](https://developer.notchpay.co/dashboard/reports.md): Learn how to generate and analyze financial reports in the Notch Pay dashboard
+- [Dashboard Settings](https://developer.notchpay.co/dashboard/settings.md): Learn how to configure your Notch Pay account settings
+- [Accept Payments](https://developer.notchpay.co/accept-payments/index.md): Learn how to accept payments with Notch Pay through various methods
+- [Collect](https://developer.notchpay.co/accept-payments/collect.md): Accept payments with Notch Pay's hosted payment page
+- [Payment Links](https://developer.notchpay.co/accept-payments/payment-links.md): Create and share payment links without any coding required
+- [Direct Charge](https://developer.notchpay.co/accept-payments/charge.md): Integrate Notch Pay directly into your application using our RESTful API
+- [Invoices](https://developer.notchpay.co/accept-payments/invoices.md): Create and manage invoices with Notch Pay
+- [Mobile Money Payments](https://developer.notchpay.co/accept-payments/mobile-money.md): Accept payments via Mobile Money services across Africa with high success rates and reliable processing
+- [Other Payment Methods](https://developer.notchpay.co/accept-payments/other-methods.md): Accept payments through bank transfers and alternative payment methods
+- [Refunds](https://developer.notchpay.co/accept-payments/refunds.md): Process refunds for payments made through Notch Pay
+- [Disputes](https://developer.notchpay.co/accept-payments/disputes.md): Handle payment disputes and chargebacks with Notch Pay
+- [Manage Customers](https://developer.notchpay.co/customers/index.md): Learn how to create and manage customers in Notch Pay
+- [Sync](https://developer.notchpay.co/sync/index.md): Learn about Notch Pay Sync for managing multiple connected accounts
+- [Sync Integration](https://developer.notchpay.co/sync/integration.md): Learn how to integrate Notch Pay Sync into your platform or marketplace
+- [Account Management](https://developer.notchpay.co/sync/account-management.md): Learn how to manage connected accounts with Notch Pay Sync
+- [Send Money](https://developer.notchpay.co/send-money/index.md): Learn how to send money to beneficiaries using Notch Pay
+- [Transfers](https://developer.notchpay.co/send-money/transfers.md): Learn how to distribute funds to recipients using Notch Pay Transfers
+- [Beneficiaries](https://developer.notchpay.co/send-money/beneficiaries/index.md): Learn how to manage beneficiaries for money transfers with Notch Pay
+- [Managing Beneficiaries](https://developer.notchpay.co/send-money/beneficiaries/manage.md): Learn how to view, edit, and delete beneficiaries in Notch Pay
+- [SDKs & Libraries](https://developer.notchpay.co/sdks/index.md): Official Notch Pay libraries for various programming languages
+- [JavaScript SDK](https://developer.notchpay.co/sdks/javascript.md): Integrate Notch Pay into your JavaScript applications
+- [PHP SDK](https://developer.notchpay.co/sdks/php.md): Integrate Notch Pay into your PHP applications
+- [Python SDK](https://developer.notchpay.co/sdks/python.md): Integrate Notch Pay into your Python applications
+- [Mobile SDKs](https://developer.notchpay.co/sdks/mobile.md): Integrate Notch Pay into your mobile applications
+- [Laravel SDK](https://developer.notchpay.co/sdks/laravel.md): Integrate Notch Pay into your Laravel applications
+- [WordPress Plugin](https://developer.notchpay.co/sdks/wordpress.md): Accept payments on your WordPress site with the Notch Pay plugin
+- [WooCommerce Plugin](https://developer.notchpay.co/sdks/woocommerce.md): Accept payments on your WooCommerce store with Notch Pay
+- [Integrations](https://developer.notchpay.co/integrations/index.md): Explore pre-built integrations for Notch Pay
+- [API Reference](https://developer.notchpay.co/api-reference/index.md): Complete reference documentation for the Notch Pay API
+- [Authentication](https://developer.notchpay.co/api-reference/authentication.md): Learn how to authenticate with the Notch Pay API
+- [API Errors](https://developer.notchpay.co/api-reference/errors.md): Understand and troubleshoot common Notch Pay API errors
+- [Payments API](https://developer.notchpay.co/api-reference/payments.md): Create, retrieve, and manage payments with the Notch Pay API
+- [Transfers API](https://developer.notchpay.co/api-reference/transfers.md): Send money to beneficiaries with the Notch Pay Transfers API
+- [Customers API](https://developer.notchpay.co/api-reference/customers.md): Create, retrieve, and manage customer information with the Notch Pay API
+- [Beneficiaries API](https://developer.notchpay.co/api-reference/beneficiaries.md): Create, retrieve, and manage beneficiaries for money transfers with the Notch Pay API
+- [Webhooks API](https://developer.notchpay.co/api-reference/webhooks.md): Configure and manage webhook endpoints to receive real-time event notifications
+- [Balance API](https://developer.notchpay.co/api-reference/balance.md): Check your account balance and transaction history with the Notch Pay API
+- [Resources API](https://developer.notchpay.co/api-reference/resources.md): Get information about payment channels, countries, currencies, and banks supported by Notch Pay
+- [List all payments](https://developer.notchpay.co/api-reference/list-all-payments.md)
+- [Initialize a payment](https://developer.notchpay.co/api-reference/initialize-a-payment.md)
+- [Retrieve a payment](https://developer.notchpay.co/api-reference/retrieve-a-payment.md)
+- [Process a payment](https://developer.notchpay.co/api-reference/process-a-payment.md)
+- [Process a payment](https://developer.notchpay.co/api-reference/process-a-payment-1.md)
+- [Cancel a payment](https://developer.notchpay.co/api-reference/cancel-a-payment.md)
+- [List all transfers](https://developer.notchpay.co/api-reference/list-all-transfers.md)
+- [Initiate a transfer](https://developer.notchpay.co/api-reference/initiate-a-transfer.md)
+- [Retrieve a transfer](https://developer.notchpay.co/api-reference/retrieve-a-transfer.md)
+- [List all beneficiaries](https://developer.notchpay.co/api-reference/list-all-beneficiaries.md)
+- [Create a beneficiary](https://developer.notchpay.co/api-reference/create-a-beneficiary.md)
+- [Retrieve a beneficiary](https://developer.notchpay.co/api-reference/retrieve-a-beneficiary.md)
+- [Delete a beneficiary](https://developer.notchpay.co/api-reference/delete-a-beneficiary.md)
+- [List all customers](https://developer.notchpay.co/api-reference/list-all-customers.md)
+- [Create a customer](https://developer.notchpay.co/api-reference/create-a-customer.md)
+- [Retrieve a customer](https://developer.notchpay.co/api-reference/retrieve-a-customer.md)
+- [Update a customer](https://developer.notchpay.co/api-reference/update-a-customer.md)
+- [Delete a customer](https://developer.notchpay.co/api-reference/delete-a-customer.md)
+- [List customer's payment methods](https://developer.notchpay.co/api-reference/list-customers-payment-methods.md)
+- [List customer's payments](https://developer.notchpay.co/api-reference/list-customers-payments.md)
+- [Block a customer](https://developer.notchpay.co/api-reference/block-a-customer.md)
+- [Unblock a customer](https://developer.notchpay.co/api-reference/unblock-a-customer.md)
+- [List all webhooks](https://developer.notchpay.co/api-reference/list-all-webhooks.md)
+- [Create a webhook](https://developer.notchpay.co/api-reference/create-a-webhook.md)
+- [Retrieve a webhook](https://developer.notchpay.co/api-reference/retrieve-a-webhook.md)
+- [Update a webhook](https://developer.notchpay.co/api-reference/update-a-webhook.md)
+- [Delete a webhook](https://developer.notchpay.co/api-reference/delete-a-webhook.md)
+- [Retrieve account balance](https://developer.notchpay.co/api-reference/retrieve-account-balance.md)
+- [List all payment channels](https://developer.notchpay.co/api-reference/list-all-payment-channels.md)
+- [List all countries](https://developer.notchpay.co/api-reference/list-all-countries.md)
+- [List all currencies](https://developer.notchpay.co/api-reference/list-all-currencies.md)
+
+## OpenAPI Specs
+
+- [openapi](https://developer.notchpay.co/openapi.yaml)
+
+## Optional
+
+- [Website](https://notchpay.co)

@@ -6,3 +6,6 @@ node_modules
 
 # Fichiers envoyés par les utilisateurs
 /uploads/
+
+# Stockage privé (pièces d'identité) : jamais dans le dépôt
+/stockage-prive/

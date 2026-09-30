@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { CarteListe, EnTeteAdmin, FiltresPilules, RecherchePilule, classeLigne } from '../../components/admin/ElementsAdmin';
@@ -7,17 +8,16 @@ import { nomOperateur } from '../../components/cagnotte/ChoixOperateur';
 import api from '../../api/axios';
 import { chargerToutesLesPages } from '../../api/pagination';
 import { formaterMontant, formaterDateHeure } from '../../utils/format';
+import { formaterTaux } from '../../utils/commission';
 import { BadgeStatut, statutsRetrait } from '../../utils/statuts';
 import { SqueletteListe } from '../../components/ui/Squelette';
 
-const FILTRES = [
-  { valeur: 'EN_ATTENTE', libelle: 'En attente' },
-  { valeur: 'TRAITE', libelle: 'Traités' },
-  { valeur: 'REJETE', libelle: 'Rejetés' },
-  { valeur: 'TOUS', libelle: 'Tous' },
-];
+const FILTRES = ['EN_ATTENTE', 'TRAITE', 'REJETE', 'TOUS'];
+// Libellé du montant net selon le statut du retrait.
+const CLES_NET = { EN_ATTENTE: 'retraits.aVerser', TRAITE: 'retraits.verse' };
 
 export default function AdminRetraits() {
+  const { t } = useTranslation('admin');
   const [retraits, setRetraits] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [filtre, setFiltre] = useState('EN_ATTENTE');
@@ -55,48 +55,64 @@ export default function AdminRetraits() {
       )
     : retraits;
 
-  const montant = aConfirmer ? formaterMontant(aConfirmer.retrait.montant, aConfirmer.retrait.cagnotte.devise) : '';
+  // Dans les confirmations : le net (à verser) pour un traitement, le brut (demandé) pour un rejet.
+  const devise = aConfirmer?.retrait.cagnotte.devise;
+  const net = aConfirmer ? formaterMontant(aConfirmer.retrait.montant_net, devise) : '';
+  const brut = aConfirmer ? formaterMontant(aConfirmer.retrait.montant_brut, devise) : '';
+  const filtres = FILTRES.map((valeur) => ({ valeur, libelle: t(`retraits.filtres.${valeur}`) }));
 
   return (
     <AdminLayout>
       <div className="flex flex-col gap-8">
-        <EnTeteAdmin titre="Gestion des retraits" sousTitre="Approuvez ou rejetez les demandes de retrait des organisateurs." />
+        <EnTeteAdmin titre={t('retraits.titre')} sousTitre={t('retraits.sousTitre')} />
 
         <RecherchePilule
           valeur={recherche}
           onChange={setRecherche}
-          placeholder="Rechercher une cagnotte, un organisateur, un email..."
-          libelle="Rechercher un retrait"
+          placeholder={t('retraits.rechercherPlaceholder')}
+          libelle={t('retraits.rechercher')}
         />
-        <FiltresPilules filtres={FILTRES} actif={filtre} onChanger={setFiltre} />
+        <FiltresPilules filtres={filtres} actif={filtre} onChanger={setFiltre} />
 
         {erreur && <p className="text-sm text-destructive">{erreur}</p>}
         {chargement && retraits.length === 0 && <SqueletteListe lignes={4} />}
 
         {!(chargement && retraits.length === 0) && (
-          <CarteListe vide={affiches.length === 0} messageVide="Aucune demande dans cette catégorie.">
+          <CarteListe vide={affiches.length === 0} messageVide={t('retraits.vide')}>
             {affiches.map((r) => (
               <li key={r.id_retrait} className={classeLigne}>
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-display text-xl font-bold text-foreground">{formaterMontant(r.montant, r.cagnotte.devise)}</p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <p className="font-display text-[28px] font-extrabold leading-tight tracking-[-0.02em] text-foreground">
+                      {t(CLES_NET[r.statut] ?? 'retraits.net', { montant: formaterMontant(r.montant_net, r.cagnotte.devise) })}
+                    </p>
                     <BadgeStatut statuts={statutsRetrait} statut={r.statut} />
                   </div>
-                  <p className="mt-1 font-bold text-foreground">{r.cagnotte.titre}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Demandé par {r.utilisateur.prenom} {r.utilisateur.nom} ({r.utilisateur.email})
+                  <p className="font-bold text-foreground">
+                    {nomOperateur(r.methode_retrait)} · {r.numero_beneficiaire}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formaterDateHeure(r.date_creation)} · {nomOperateur(r.methode_retrait)} · {r.numero_beneficiaire}
+                  <p className="text-sm text-[#45524F]">
+                    {Number(r.montant_commission) > 0
+                      ? t('retraits.demande', {
+                          brut: formaterMontant(r.montant_brut, r.cagnotte.devise),
+                          taux: formaterTaux(r.taux_commission),
+                          commission: formaterMontant(r.montant_commission, r.cagnotte.devise),
+                        })
+                      : t('retraits.demandeSansCommission', { brut: formaterMontant(r.montant_brut, r.cagnotte.devise) })}
                   </p>
-                  {r.motif_rejet && <p className="mt-1 text-sm text-destructive">Motif du rejet : {r.motif_rejet}</p>}
+                  <p className="mt-2 font-bold text-foreground">{r.cagnotte.titre}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('retraits.demandePar', { nom: `${r.utilisateur.prenom} ${r.utilisateur.nom}`, email: r.utilisateur.email })}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{formaterDateHeure(r.date_creation)}</p>
+                  {r.motif_rejet && <p className="mt-1 text-sm text-destructive">{t('retraits.motifRejet', { motif: r.motif_rejet })}</p>}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  <Button size="sm" variant="outline" to={`/cagnottes/${r.id_cagnotte}`}>Voir</Button>
+                  <Button size="sm" variant="outline" to={`/cagnottes/${r.id_cagnotte}`}>{t('commun:actions.voir')}</Button>
                   {r.statut === 'EN_ATTENTE' && (
                     <>
-                      <Button size="sm" onClick={() => setAConfirmer({ type: 'traiter', retrait: r })}>Traiter</Button>
-                      <Button size="sm" variant="danger" onClick={() => setAConfirmer({ type: 'rejeter', retrait: r })}>Rejeter</Button>
+                      <Button size="sm" onClick={() => setAConfirmer({ type: 'traiter', retrait: r })}>{t('retraits.marquer')}</Button>
+                      <Button size="sm" variant="danger" onClick={() => setAConfirmer({ type: 'rejeter', retrait: r })}>{t('retraits.rejeter')}</Button>
                     </>
                   )}
                 </div>
@@ -108,15 +124,19 @@ export default function AdminRetraits() {
 
       <Confirmation
         ouvert={!!aConfirmer}
-        titre={aConfirmer?.type === 'traiter' ? 'Traiter ce retrait ?' : 'Rejeter ce retrait ?'}
+        titre={aConfirmer?.type === 'traiter' ? t('retraits.traiterTitre') : t('retraits.rejeterTitre')}
         message={
           aConfirmer?.type === 'traiter'
-            ? `Confirmez que ${montant} ont bien été versés au ${aConfirmer?.retrait.numero_beneficiaire}. L'organisateur sera prévenu.`
-            : `La demande de ${montant} sera rejetée et le montant redeviendra disponible. L'organisateur sera prévenu.`
+            ? t('retraits.traiterMessage', {
+                net,
+                numero: aConfirmer?.retrait.numero_beneficiaire,
+                operateur: nomOperateur(aConfirmer?.retrait.methode_retrait),
+              })
+            : t('retraits.rejeterMessage', { brut })
         }
-        libelleConfirmer={aConfirmer?.type === 'traiter' ? 'Traiter le retrait' : 'Rejeter le retrait'}
+        libelleConfirmer={aConfirmer?.type === 'traiter' ? t('retraits.marquer') : t('retraits.rejeterLibelle')}
         variante={aConfirmer?.type === 'traiter' ? 'default' : 'danger'}
-        motif={aConfirmer?.type === 'rejeter' ? { libelle: 'Motif du rejet', obligatoire: false, placeholder: 'Ex. numéro bénéficiaire incorrect' } : undefined}
+        motif={aConfirmer?.type === 'rejeter' ? { libelle: t('retraits.motif'), obligatoire: false, placeholder: t('retraits.motifPlaceholder') } : undefined}
         onConfirmer={confirmer}
         onAnnuler={() => setAConfirmer(null)}
       />

@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import RouteProtegee from './components/RouteProtegee';
@@ -29,6 +30,8 @@ const AdminCagnottes = lazy(() => import('./pages/admin/AdminCagnottes'));
 const AdminRetraits = lazy(() => import('./pages/admin/AdminRetraits'));
 const AdminUtilisateurs = lazy(() => import('./pages/admin/AdminUtilisateurs'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminSignalements = lazy(() => import('./pages/admin/AdminSignalements'));
+const AdminRevenus = lazy(() => import('./pages/admin/AdminRevenus'));
 
 function ContenuApp() {
   return (
@@ -56,6 +59,8 @@ function ContenuApp() {
         <Route path="/admin/retraits" element={<AdminRoute><AdminRetraits /></AdminRoute>} />
         <Route path="/admin/utilisateurs" element={<AdminRoute><AdminUtilisateurs /></AdminRoute>} />
         <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
+        <Route path="/admin/signalements" element={<AdminRoute><AdminSignalements /></AdminRoute>} />
+        <Route path="/admin/revenus" element={<AdminRoute><AdminRevenus /></AdminRoute>} />
         <Route path="*" element={<NonTrouve />} />
         <Route path="/dashboard" element={<RouteProtegee><Dashboard /></RouteProtegee>} />
       </Routes>
@@ -64,10 +69,13 @@ function ContenuApp() {
 }
 
 export default function App() {
+  // Au changement de langue, les pages sont remontées : tous les textes, montants et dates
+  // (y compris ceux calculés hors des composants) passent d'un coup dans la nouvelle langue.
+  const { i18n } = useTranslation();
   return (
     <AuthProvider>
       <BrowserRouter>
-        <ContenuApp />
+        <ContenuApp key={i18n.resolvedLanguage} />
       </BrowserRouter>
     </AuthProvider>
   );

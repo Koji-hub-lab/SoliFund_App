@@ -20,14 +20,16 @@ import { UpdateUtilisateurDto } from './dto/update-utilisateur.dto';
 import { ChangeStatutDto } from './dto/change-statut.dto';
 import { ChangerMotDePasseDto } from './dto/changer-mot-de-passe.dto';
 import type { RequeteAuthentifiee } from '../auth/utilisateur-connecte';
+import { LangueRequete } from '../i18n/langue-requete.decorator';
+import type { Langue } from '../i18n/langues';
 
 @Controller('utilisateurs')
 export class UtilisateursController {
   constructor(private readonly utilisateursService: UtilisateursService) {}
 
   @Post('inscription')
-  inscrire(@Body() dto: CreateUtilisateurDto) {
-    return this.utilisateursService.inscrire(dto);
+  inscrire(@Body() dto: CreateUtilisateurDto, @LangueRequete() langue: Langue) {
+    return this.utilisateursService.inscrire(dto, langue);
   }
 
   @UseGuards(JwtAuthGuard)

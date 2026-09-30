@@ -1,0 +1,74 @@
+{
+  "titreSite": "SoliFund — Cagnottes solidaires au Cameroun",
+  "aLInstant": "à l'instant",
+  "langue": { "libelle": "Langue", "fr": "Français", "en": "English" },
+  "nav": {
+    "commentCaMarche": "Comment ça marche",
+    "parcourir": "Parcourir les cagnottes",
+    "aide": "Aide",
+    "deconnexion": "Déconnexion",
+    "monEspace": "Mon espace",
+    "seConnecter": "Se connecter",
+    "sInscrire": "S'inscrire",
+    "ouvrirMenu": "Ouvrir le menu",
+    "fermerMenu": "Fermer le menu",
+    "menu": "Menu",
+    "retourAuSite": "Retour au site"
+  },
+  "pied": {
+    "slogan": "La plateforme de cagnotte en ligne sécurisée pensée pour le Cameroun.",
+    "decouvrir": "Découvrir",
+    "toutesLesCagnottes": "Toutes les cagnottes",
+    "lancer": "Lancer une cagnotte",
+    "aide": "Aide",
+    "creerCompte": "Créer un compte",
+    "motDePasseOublie": "Mot de passe oublié",
+    "legal": "Informations légales",
+    "conditions": "Conditions d'utilisation",
+    "confidentialite": "Confidentialité",
+    "droits": "© {{annee}} SoliFund. Tous droits réservés.",
+    "base": "Fièrement basé au Cameroun"
+  },
+  "actions": {
+    "annuler": "Annuler",
+    "confirmer": "Confirmer",
+    "enCours": "En cours...",
+    "envoiEnCours": "Envoi en cours...",
+    "enregistrement": "Enregistrement...",
+    "enregistrer": "Enregistrer",
+    "reessayer": "Réessayer",
+    "voir": "Voir",
+    "precedent": "Précédent",
+    "suivant": "Suivant",
+    "pagination": "Page {{page}} sur {{pages}}",
+    "facultatif": "{{libelle}} (facultatif)"
+  },
+  "code": {
+    "libelle": "Code de vérification",
+    "chiffre": "Chiffre {{numero}} sur {{total}}"
+  },
+  "chargement": "Chargement",
+  "chargementPoints": "Chargement...",
+  "nonTrouve": {
+    "titre": "Cette page s'est perdue en chemin",
+    "texte": "La page que vous cherchez n'existe pas ou a été déplacée.",
+    "retour": "Retour à l'accueil"
+  },
+  "statuts": {
+    "retrait": { "EN_ATTENTE": "En attente", "APPROUVE": "Approuvé", "TRAITE": "Traité", "REJETE": "Rejeté" },
+    "cagnotte": {
+      "ACTIVE": "Active",
+      "TERMINEE": "Terminée",
+      "SUSPENDUE": "Suspendue",
+      "ANNULEE": "Annulée",
+      "EN_VERIFICATION": "En vérification",
+      "REFUSEE": "Refusée"
+    },
+    "utilisateur": { "ACTIF": "Actif", "SUSPENDU": "Suspendu", "BANNI": "Banni", "INACTIF": "Inactif" }
+  },
+  "badges": {
+    "objectifAtteint": "Objectif atteint",
+    "dernierJour": "Dernier jour",
+    "plusQueJours": "Plus que {{jours}} jours"
+  }
+}

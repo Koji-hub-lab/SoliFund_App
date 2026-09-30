@@ -5,24 +5,25 @@ import {
   TexteFacultatif,
   TexteObligatoire,
 } from '../../common/validation';
+import { m } from '../../i18n/messages';
 
 export class CreateDonDto {
-  @Identifiant('La cagnotte')
+  @Identifiant('cagnotte')
   id_cagnotte!: number;
 
-  @Montant('Le montant du don', 100)
+  @Montant('montantDon', 100)
   montant!: number;
 
   @IsIn(['MTN_MOBILE_MONEY', 'ORANGE_MONEY'], {
-    message: 'Choisissez MTN Mobile Money ou Orange Money.',
+    message: m('validation.operateur'),
   })
   methode_paiement!: string;
 
-  @TexteObligatoire('Le numéro de téléphone', 20)
+  @TexteObligatoire('telephone', 20)
   numero_payeur!: string;
 
   @IsOptional()
-  @TexteFacultatif('Le message', 500)
+  @TexteFacultatif('message', 500)
   message?: string;
 
   @IsOptional()

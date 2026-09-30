@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Pencil } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -10,12 +11,13 @@ export default function EnTeteGestion({ cagnotte }) {
   const badge = badgeStatutCagnotte(cagnotte);
   const jours = nbJoursRestants(cagnotte.date_fin);
   const nb = cagnotte.nb_donateurs ?? 0;
-  const texteJours = jours < 0 ? 'terminée' : `${jours} jour${jours > 1 ? 's' : ''} restant${jours > 1 ? 's' : ''}`;
+  const { t } = useTranslation('tableau-de-bord');
+  const texteJours = jours < 0 ? t('gestion.terminee') : t('gestion.joursRestants', { count: jours });
 
   return (
     <div>
-      <nav aria-label="Fil d'Ariane" className="text-sm text-muted-foreground">
-        <Link to="/mes-cagnottes" className="inline-flex min-h-11 items-center font-bold text-primary hover:underline">Mes cagnottes</Link>
+      <nav aria-label={t('gestion.filAriane')} className="text-sm text-muted-foreground">
+        <Link to="/mes-cagnottes" className="inline-flex min-h-11 items-center font-bold text-primary hover:underline">{t('liste.titre')}</Link>
         <span className="mx-2" aria-hidden="true">/</span>
         <span aria-current="page">{cagnotte.titre}</span>
       </nav>
@@ -37,19 +39,24 @@ export default function EnTeteGestion({ cagnotte }) {
               <span className={`rounded-full px-3 py-1 text-sm font-bold ${badge.classes}`}>{badge.texte}</span>
             </div>
             <p className="mt-2 text-base text-muted-foreground">
-              <strong className="text-foreground">{formaterMontant(cagnotte.montant_collecte, cagnotte.devise)}</strong> collectés sur{' '}
-              {formaterMontant(cagnotte.objectif, cagnotte.devise)} · {nb} donateur{nb > 1 ? 's' : ''} · {texteJours}
+              <Trans
+                t={t}
+                i18nKey="gestion.collectesSur"
+                values={{ collecte: formaterMontant(cagnotte.montant_collecte, cagnotte.devise), objectif: formaterMontant(cagnotte.objectif, cagnotte.devise) }}
+                components={{ b: <strong className="text-foreground" /> }}
+              />{' '}
+              · {t('liste.donateurs', { count: nb })} · {texteJours}
             </p>
           </div>
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-3">
           <Button variant="outline" to={`/cagnottes/${cagnotte.id_cagnotte}`}>
-            Voir la page publique
+            {t('gestion.pagePublique')}
           </Button>
           <Button to={`/cagnottes/${cagnotte.id_cagnotte}/modifier`}>
             <Pencil className="size-4" />
-            Modifier
+            {t('gestion.modifier')}
           </Button>
         </div>
       </div>

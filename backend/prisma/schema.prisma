@@ -32,6 +32,10 @@ enum StatutCagnotte {
   TERMINEE
   SUSPENDUE
   ANNULEE
+  // En attente de publication (identité en cours de vérification ou règle de risque) et refusée
+  // par la modération : invisibles du public, comme une cagnotte privée.
+  EN_VERIFICATION
+  REFUSEE
 }
 
 enum MethodePaiement {
@@ -63,6 +67,12 @@ enum StatutTransaction {
   EN_ATTENTE
   SUCCES
   ECHEC
+}
+
+// Langue de l'interface et des emails.
+enum Langue {
+  fr
+  en
 }
 
 enum TypeNotification {
@@ -107,6 +117,8 @@ model Utilisateur {
   date_fin_suspension DateTime?
   // Dernier changement de mot de passe : les jetons JWT émis avant cette date sont refusés.
   date_changement_mdp DateTime?
+  // Langue choisie dans l'interface : utilisée pour les emails envoyés à l'utilisateur.
+  langue_preferee     Langue            @default(fr)
 
   posseders     Posseder[]
   jetons        Jeton[]
@@ -116,6 +128,12 @@ model Utilisateur {
   commentaires  Commentaire[]
   retraits      Retrait[]
   notifications Recevoir[]
+
+  verifications_identite VerificationIdentite[]        @relation("VerificationsUtilisateur")
+  decisions_identite     VerificationIdentite[]        @relation("DecisionsAdmin")
+  journal_identite       JournalVerificationIdentite[]
+  signalements           Signalement[]                 @relation("SignalementsAuteur")
+  signalements_classes   Signalement[]                 @relation("SignalementsAdmin")
 
   @@index([email])
   @@index([statut])
@@ -159,22 +177,27 @@ model Categorie {
 }
 
 model Cagnotte {
-  id_cagnotte       Int            @id @default(autoincrement())
-  titre             String         @db.VarChar(255)
-  slug              String         @unique @db.VarChar(255)
-  description       String?
-  objectif          Decimal        @db.Decimal(15, 2)
-  montant_collecte  Decimal        @default(0.00) @db.Decimal(15, 2)
-  date_debut        DateTime       @db.Date
-  date_fin          DateTime       @db.Date
-  statut            StatutCagnotte @default(ACTIVE)
-  est_publique      Boolean        @default(true)
-  date_creation     DateTime       @default(now())
-  date_modification DateTime?      @updatedAt
-  devise            String         @default("XAF") @db.VarChar(10)
+  id_cagnotte          Int            @id @default(autoincrement())
+  titre                String         @db.VarChar(255)
+  slug                 String         @unique @db.VarChar(255)
+  description          String?
+  objectif             Decimal        @db.Decimal(15, 2)
+  montant_collecte     Decimal        @default(0.00) @db.Decimal(15, 2)
+  date_debut           DateTime       @db.Date
+  date_fin             DateTime       @db.Date
+  statut               StatutCagnotte @default(ACTIVE)
+  est_publique         Boolean        @default(true)
+  date_creation        DateTime       @default(now())
+  date_modification    DateTime?      @updatedAt
+  devise               String         @default("XAF") @db.VarChar(10)
   // Photo de couverture en WebP : 1200 px de large (page de la cagnotte) et 400 px (cartes, miniatures).
-  image             String?        @db.VarChar(255)
-  image_miniature   String?        @db.VarChar(255)
+  image                String?        @db.VarChar(255)
+  image_miniature      String?        @db.VarChar(255)
+  // Pourquoi la cagnotte est EN_VERIFICATION (codes : IDENTITE_EN_ATTENTE, OBJECTIF_ELEVE,
+  // ANTECEDENT_ORGANISATEUR, REVISION_APRES_REFUS). Vide pour les autres statuts.
+  raisons_verification String[]
+  // Motif communiqué à l'organisateur quand la modération refuse la cagnotte.
+  motif_refus          String?
 
   id_utilisateur Int
   utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
@@ -187,6 +210,8 @@ model Cagnotte {
   retraits      Retrait[]
   notifications Notification[]
   actualites    Actualite[]
+  signalements  Signalement[]
+  commissions   Commission[]
 
   @@index([id_utilisateur])
   @@index([statut])
@@ -200,17 +225,15 @@ model Paiement {
   montant            Decimal         @db.Decimal(15, 2)
   devise             String          @default("XAF") @db.VarChar(10)
   methode_paiement   MethodePaiement
-  // Prestataire 3SPAY : identifiant de la transaction 3SPAY, référence SoliFund envoyée
-  // (partner_reference, unique) et clé d'idempotence, réutilisée si l'appel doit être rejoué.
-  transaction_id     String?         @unique @db.VarChar(255)
-  partner_reference  String?         @unique @db.VarChar(100)
-  cle_idempotence    String?         @unique @db.VarChar(36)
-  // Code opérateur 3SPAY (mtn, intouch...) et référence de la transaction chez l'opérateur.
-  operateur          String?         @db.VarChar(30)
-  operator_reference String?         @db.VarChar(255)
-  // Échec renvoyé par 3SPAY : catégorie normalisée (INSUFFICIENT_BALANCE...) et code brut.
-  error_type         String?         @db.VarChar(40)
-  error_code         String?         @db.VarChar(100)
+  // Notre référence (genererReference), envoyée à Notch Pay à la création du paiement.
+  reference          String          @unique @db.VarChar(100)
+  // Référence du paiement chez Notch Pay : sert à le traiter, le consulter et l'annuler.
+  reference_notchpay String?         @db.VarChar(255)
+  // Canal Notch Pay utilisé (« cm.mtn », « cm.orange »).
+  canal              String?         @db.VarChar(50)
+  // Raison de l'échec renvoyée par Notch Pay, quand le paiement a échoué.
+  code_erreur        String?         @db.VarChar(100)
+  message_erreur     String?
   statut             StatutPaiement  @default(EN_ATTENTE)
   date_creation      DateTime        @default(now())
   date_maj           DateTime?       @updatedAt
@@ -224,6 +247,7 @@ model Paiement {
 
   @@index([statut])
   @@index([id_utilisateur])
+  @@index([reference_notchpay])
   @@map("slf_paiement")
 }
 
@@ -266,7 +290,13 @@ model Commentaire {
 
 model Retrait {
   id_retrait          Int             @id @default(autoincrement())
-  montant             Decimal         @db.Decimal(15, 2)
+  // Montant demandé par l'organisateur (déduit du disponible de la cagnotte).
+  montant_brut        Decimal         @db.Decimal(15, 2)
+  // Commission SoliFund, figée à la demande : taux en vigueur ce jour-là (en %), montant arrondi
+  // à l'entier, et montant net à verser (brut - commission).
+  taux_commission     Decimal         @db.Decimal(5, 2)
+  montant_commission  Decimal         @db.Decimal(15, 2)
+  montant_net         Decimal         @db.Decimal(15, 2)
   methode_retrait     MethodePaiement
   numero_beneficiaire String          @db.VarChar(20)
   reference_retrait   String?         @unique @db.VarChar(255)
@@ -283,6 +313,7 @@ model Retrait {
   cagnotte    Cagnotte @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Restrict)
 
   transactions Transaction[]
+  commission   Commission?
 
   @@index([id_utilisateur])
   @@index([id_cagnotte])
@@ -311,8 +342,13 @@ model Transaction {
 
 model Notification {
   id_notification Int              @id @default(autoincrement())
-  titre           String           @db.VarChar(255)
-  message         String
+  // Code de la notification et ses paramètres : le frontend affiche le texte dans la langue
+  // active. Les notifications créées avant ce changement n'ont pas de code : leur texte
+  // (titre, message) est affiché tel quel.
+  code            String?          @db.VarChar(100)
+  parametres      Json?
+  titre           String?          @db.VarChar(255)
+  message         String?
   type            TypeNotification
   date_envoi      DateTime         @default(now())
 
@@ -353,4 +389,143 @@ model Actualite {
 
   @@index([id_cagnotte])
   @@map("slf_actualite")
+}
+
+enum TypePieceIdentite {
+  CNI
+  RECEPISSE_CNI
+  PASSEPORT
+}
+
+enum StatutVerificationIdentite {
+  EN_ATTENTE
+  VALIDEE
+  REFUSEE
+}
+
+enum ActionJournalIdentite {
+  CONSULTATION_FICHIER
+  VALIDATION
+  REFUS
+}
+
+// Vérification d'identité d'un organisateur. Une ligne par soumission : l'historique est conservé,
+// et la dernière soumission fait foi (identité vérifiée = dernière soumission VALIDEE).
+model VerificationIdentite {
+  id_verification Int               @id @default(autoincrement())
+  type_piece      TypePieceIdentite
+  // Tels qu'écrits sur la pièce.
+  nom             String            @db.VarChar(100)
+  prenoms         String            @db.VarChar(150)
+  date_naissance  DateTime          @db.Date
+  numero_piece    String            @db.VarChar(50)
+  // Facultative pour le récépissé de CNI.
+  date_expiration DateTime?         @db.Date
+
+  // Noms des fichiers dans le stockage privé (jamais servis en statique). Le verso est facultatif
+  // pour le passeport. Vidés quand les fichiers d'une soumission refusée sont supprimés (30 jours).
+  fichier_recto         String?   @db.VarChar(255)
+  fichier_verso         String?   @db.VarChar(255)
+  fichier_selfie        String?   @db.VarChar(255)
+  fichiers_supprimes_le DateTime?
+
+  // Numéro Mobile Money (9 chiffres) et opérateur sur lesquels les retraits sont versés.
+  telephone_retrait String          @db.VarChar(20)
+  methode_retrait   MethodePaiement
+
+  statut          StatutVerificationIdentite @default(EN_ATTENTE)
+  motif_refus     String?
+  date_soumission DateTime                   @default(now())
+  date_decision   DateTime?
+
+  id_utilisateur Int
+  utilisateur    Utilisateur @relation("VerificationsUtilisateur", fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
+
+  // Administrateur ayant validé ou refusé.
+  id_admin Int?
+  admin    Utilisateur? @relation("DecisionsAdmin", fields: [id_admin], references: [id_utilisateur], onDelete: Restrict)
+
+  journal JournalVerificationIdentite[]
+
+  @@index([id_utilisateur])
+  @@index([statut])
+  @@map("slf_verification_identite")
+}
+
+// Journal des accès aux pièces d'identité et des décisions : qui, quoi, quand.
+model JournalVerificationIdentite {
+  id_journal Int                   @id @default(autoincrement())
+  action     ActionJournalIdentite
+  // Fichier consulté (recto, verso, selfie) ou motif du refus.
+  detail     String?
+  date       DateTime              @default(now())
+
+  id_verification Int
+  verification    VerificationIdentite @relation(fields: [id_verification], references: [id_verification], onDelete: Cascade)
+
+  id_admin Int
+  admin    Utilisateur @relation(fields: [id_admin], references: [id_utilisateur], onDelete: Restrict)
+
+  @@index([id_verification])
+  @@map("slf_journal_verification_identite")
+}
+
+enum MotifSignalement {
+  ARNAQUE
+  CONTENU_INAPPROPRIE
+  FAUSSES_INFORMATIONS
+  AUTRE
+}
+
+enum StatutSignalement {
+  OUVERT
+  CLASSE
+}
+
+// Signalement d'une cagnotte par un utilisateur connecté ou un visiteur. Un seul par compte (ou,
+// pour un visiteur, par adresse IP) et par cagnotte.
+model Signalement {
+  id_signalement  Int               @id @default(autoincrement())
+  motif           MotifSignalement
+  commentaire     String?
+  date            DateTime          @default(now())
+  statut          StatutSignalement @default(OUVERT)
+  date_classement DateTime?
+
+  id_cagnotte Int
+  cagnotte    Cagnotte @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Cascade)
+
+  // Auteur s'il était connecté ; sinon empreinte (SHA-256 salé) de son adresse IP, jamais l'IP en clair.
+  id_utilisateur Int?
+  utilisateur    Utilisateur? @relation("SignalementsAuteur", fields: [id_utilisateur], references: [id_utilisateur], onDelete: SetNull)
+  empreinte_ip   String?      @db.VarChar(64)
+
+  // Administrateur ayant classé le signalement.
+  id_admin Int?
+  admin    Utilisateur? @relation("SignalementsAdmin", fields: [id_admin], references: [id_utilisateur], onDelete: SetNull)
+
+  @@unique([id_cagnotte, id_utilisateur])
+  @@unique([id_cagnotte, empreinte_ip])
+  @@index([statut])
+  @@map("slf_signalement")
+}
+
+// Registre des commissions : une ligne par retrait traité (versé) sur lequel une commission a
+// été prélevée. Sert au suivi des revenus de SoliFund.
+model Commission {
+  id_commission Int      @id @default(autoincrement())
+  montant       Decimal  @db.Decimal(15, 2)
+  // Taux appliqué, en %.
+  taux          Decimal  @db.Decimal(5, 2)
+  date          DateTime @default(now())
+
+  id_retrait Int     @unique
+  retrait    Retrait @relation(fields: [id_retrait], references: [id_retrait], onDelete: Restrict)
+
+  id_cagnotte Int
+  cagnotte    Cagnotte @relation(fields: [id_cagnotte], references: [id_cagnotte], onDelete: Restrict)
+
+  @@index([date])
+  @@index([id_cagnotte])
+  @@map("slf_commission")
 }

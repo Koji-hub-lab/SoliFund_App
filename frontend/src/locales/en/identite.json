@@ -1,0 +1,14 @@
+{
+  "statuts": {
+    "VALIDEE": "Identity verified",
+    "EN_ATTENTE": "Identity pending",
+    "REFUSEE": "Identity declined",
+    "NON_SOUMISE": "No identity submitted"
+  },
+  "raisons": {
+    "IDENTITE_EN_ATTENTE": "Organiser's identity still pending",
+    "OBJECTIF_ELEVE": "High goal",
+    "ANTECEDENT_ORGANISATEUR": "Organiser has a suspended or declined fundraiser",
+    "REVISION_APRES_REFUS": "Edited after being declined"
+  }
+}

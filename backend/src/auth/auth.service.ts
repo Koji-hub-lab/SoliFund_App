@@ -17,10 +17,11 @@ import { RenvoyerCodeDto } from './dto/renvoyer-code.dto';
 import { BrevoService } from '../jetons/brevo.service';
 import { DUREE_RESET_MDP_MS, JetonsService } from '../jetons/jetons.service';
 import type { ProfilGoogle } from './google.strategy';
+import type { Langue } from '../i18n/langues';
+import { m } from '../i18n/messages';
 
-const MESSAGE_ENVOI = 'Si ce compte existe, un code a été envoyé par email.';
-const MESSAGE_RENVOI_VERIF =
-  "Si ce compte existe et n'est pas encore vérifié, un nouveau code a été envoyé par email.";
+const MESSAGE_ENVOI = m('auth.codeEnvoye');
+const MESSAGE_RENVOI_VERIF = m('auth.codeRenvoye');
 
 // Échec de la connexion avec Google. Le code est transmis au frontend (/login?erreur=google&motif=...),
 // qui affiche un message fixe : jamais de texte libre dans l'adresse.
@@ -49,13 +50,11 @@ export class AuthService {
       dto.email,
     );
     if (!utilisateur) {
-      throw new UnauthorizedException('Identifiants invalides.');
+      throw new UnauthorizedException(m('auth.identifiantsInvalides'));
     }
     // Compte créé avec Google, sans mot de passe défini.
     if (!utilisateur.mot_de_passe) {
-      throw new UnauthorizedException(
-        'Ce compte utilise la connexion Google. Utilisez le bouton « Continuer avec Google », ou définissez un mot de passe avec « Mot de passe oublié ».',
-      );
+      throw new UnauthorizedException(m('auth.compteGoogle'));
     }
 
     const motDePasseValide = await bcrypt.compare(
@@ -63,7 +62,7 @@ export class AuthService {
       utilisateur.mot_de_passe,
     );
     if (!motDePasseValide) {
-      throw new UnauthorizedException('Identifiants invalides.');
+      throw new UnauthorizedException(m('auth.identifiantsInvalides'));
     }
 
     await this.verifierStatutConnexion(utilisateur);
@@ -128,6 +127,7 @@ export class AuthService {
     prenom: string;
     email: string;
     est_verifie: boolean;
+    langue_preferee: Langue;
   }) {
     const possessions = await this.prisma.posseder.findMany({
       where: { id_utilisateur: utilisateur.id_utilisateur },
@@ -149,6 +149,7 @@ export class AuthService {
         prenom: utilisateur.prenom,
         email: utilisateur.email,
         est_verifie: utilisateur.est_verifie,
+        langue_preferee: utilisateur.langue_preferee,
         roles,
       },
     };
@@ -174,16 +175,14 @@ export class AuthService {
       }
       throw new UnauthorizedException(
         fin
-          ? `Votre compte est suspendu jusqu'au ${fin.toLocaleDateString('fr-FR')}.`
-          : "Votre compte est suspendu. Contactez l'administrateur.",
+          ? m('auth.suspenduJusquAu', { fin: fin.toISOString() })
+          : m('auth.suspendu'),
       );
     }
     if (utilisateur.statut === 'BANNI') {
-      throw new UnauthorizedException('Votre compte a été banni.');
+      throw new UnauthorizedException(m('auth.banni'));
     }
-    throw new UnauthorizedException(
-      "Votre compte est désactivé. Contactez l'administrateur.",
-    );
+    throw new UnauthorizedException(m('auth.desactive'));
   }
 
   async demanderReinitialisation(dto: ForgotPasswordDto) {
@@ -202,11 +201,7 @@ export class AuthService {
     );
 
     try {
-      await this.brevoService.envoyerCodeReinitialisation(
-        utilisateur.email,
-        utilisateur.prenom,
-        code,
-      );
+      await this.brevoService.envoyerCodeReinitialisation(utilisateur, code);
     } catch (e) {
       // Pas d'erreur côté client : elle révélerait que le compte existe.
       this.logger.error(
@@ -225,7 +220,7 @@ export class AuthService {
       dto.code,
       true,
     );
-    return { message: 'Code valide.' };
+    return { message: m('auth.codeValide') };
   }
 
   async reinitialiserMotDePasse(dto: ResetPasswordDto) {
@@ -244,7 +239,7 @@ export class AuthService {
         data: { est_utilise: true },
       });
       if (count === 0) {
-        throw new BadRequestException('Code invalide ou expiré.');
+        throw new BadRequestException(m('auth.codeInvalide'));
       }
       await tx.utilisateur.update({
         where: { id_utilisateur: jeton.id_utilisateur },
@@ -256,7 +251,7 @@ export class AuthService {
       });
     });
 
-    return { message: 'Mot de passe réinitialisé avec succès.' };
+    return { message: m('auth.motDePasseReinitialise') };
   }
 
   async verifierEmail(dto: VerifierEmailDto) {
@@ -264,7 +259,7 @@ export class AuthService {
       dto.email,
     );
     if (utilisateur?.est_verifie) {
-      return { message: 'Votre adresse email est déjà vérifiée.' };
+      return { message: m('auth.emailDejaVerifie') };
     }
     const jeton = await this.jetonsService.verifierCode(
       utilisateur?.id_utilisateur ?? null,
@@ -279,7 +274,7 @@ export class AuthService {
         data: { est_utilise: true },
       });
       if (count === 0) {
-        throw new BadRequestException('Code invalide ou expiré.');
+        throw new BadRequestException(m('auth.codeInvalide'));
       }
       await tx.utilisateur.update({
         where: { id_utilisateur: jeton.id_utilisateur },
@@ -287,7 +282,7 @@ export class AuthService {
       });
     });
 
-    return { message: 'Adresse email vérifiée.' };
+    return { message: m('auth.emailVerifie') };
   }
 
   async renvoyerCodeVerification(dto: RenvoyerCodeDto) {

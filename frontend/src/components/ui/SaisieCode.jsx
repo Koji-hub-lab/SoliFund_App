@@ -1,11 +1,13 @@
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Saisie d'un code à N chiffres en cases séparées (vérification d'email, mot de passe oublié).
 // `valeur` : chaîne de chiffres ; `onChange(nouvelleValeur)`.
 // Passage automatique à la case suivante, retour arrière vers la précédente, flèches, collage d'un code complet.
 // Une case vide au milieu est notée par une espace, pour que les chiffres suivants restent à leur place :
 // le code est complet quand /^\d{N}$/ est vérifié.
-export default function SaisieCode({ valeur, onChange, longueur = 6, erreur = false, disabled = false, libelle = 'Code de vérification', autoFocus = false }) {
+export default function SaisieCode({ valeur, onChange, longueur = 6, erreur = false, disabled = false, libelle, autoFocus = false }) {
+  const { t } = useTranslation('commun');
   const cases = useRef([]);
   const chiffres = Array.from({ length: longueur }, (_, i) => (valeur[i] && valeur[i] !== ' ' ? valeur[i] : ''));
 
@@ -50,7 +52,7 @@ export default function SaisieCode({ valeur, onChange, longueur = 6, erreur = fa
   }
 
   return (
-    <div role="group" aria-label={libelle} className="grid gap-2 sm:gap-3" style={{ gridTemplateColumns: `repeat(${longueur}, minmax(0, 56px))` }}>
+    <div role="group" aria-label={libelle ?? t('code.libelle')} className="grid gap-2 sm:gap-3" style={{ gridTemplateColumns: `repeat(${longueur}, minmax(0, 56px))` }}>
       {chiffres.map((chiffre, index) => (
         <input
           key={index}
@@ -62,7 +64,7 @@ export default function SaisieCode({ valeur, onChange, longueur = 6, erreur = fa
           value={chiffre}
           disabled={disabled}
           autoFocus={autoFocus && index === 0}
-          aria-label={`Chiffre ${index + 1} sur ${longueur}`}
+          aria-label={t('code.chiffre', { numero: index + 1, total: longueur })}
           aria-invalid={erreur ? true : undefined}
           onChange={(e) => {
             const saisie = e.target.value;

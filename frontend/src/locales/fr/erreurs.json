@@ -1,0 +1,6 @@
+{
+  "serveurInjoignable": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+  "generique": "Une erreur est survenue.",
+  "actionImpossible": "L'action n'a pas pu être effectuée.",
+  "numeroInvalide": "Numéro invalide : saisissez 9 chiffres commençant par 6 (ex. 6XX XX XX XX)."
+}

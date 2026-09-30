@@ -1,5 +1,6 @@
 import { IsString, Length } from 'class-validator';
 import { Email, SansEspaces } from '../../common/validation';
+import { m } from '../../i18n/messages';
 
 export class VerifierEmailDto {
   @Email()
@@ -7,6 +8,6 @@ export class VerifierEmailDto {
 
   @SansEspaces()
   @IsString()
-  @Length(6, 6, { message: 'Le code doit contenir 6 chiffres.' })
+  @Length(6, 6, { message: m('validation.code6Chiffres') })
   code!: string;
 }

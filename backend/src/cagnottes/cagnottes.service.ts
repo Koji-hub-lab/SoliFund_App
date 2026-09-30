@@ -12,7 +12,9 @@ import { UpdateCagnotteDto } from './dto/update-cagnotte.dto';
 import { ListerCagnottesDto } from './dto/lister-cagnottes.dto';
 import { construirePage, lirePagination } from '../common/pagination';
 import { estEchue } from '../common/dates';
+import { PublicationCagnottesService } from './publication-cagnottes.service';
 import { Prisma } from '@prisma/client';
+import { m } from '../i18n/messages';
 
 function genererSlug(titre: string): string {
   return (
@@ -46,12 +48,10 @@ function aujourdhui(): Date {
 
 function verifierDates(dateDebut: Date, dateFin: Date) {
   if (Number.isNaN(dateDebut.getTime()) || Number.isNaN(dateFin.getTime())) {
-    throw new BadRequestException('Dates invalides.');
+    throw new BadRequestException(m('cagnottes.datesInvalides'));
   }
   if (dateFin <= dateDebut) {
-    throw new BadRequestException(
-      'La date de fin doit être après la date de début.',
-    );
+    throw new BadRequestException(m('cagnottes.dateFinAvantDebut'));
   }
 }
 
@@ -67,6 +67,7 @@ export class CagnottesService {
     private readonly prisma: PrismaService,
     private readonly imagesService: ImagesService,
     private readonly retraitsService: RetraitsService,
+    private readonly publication: PublicationCagnottesService,
   ) {}
 
   async creer(idUtilisateur: number, dto: CreateCagnotteDto) {
@@ -74,12 +75,18 @@ export class CagnottesService {
     const dateFin = new Date(dto.date_fin);
     verifierDates(dateDebut, dateFin);
     if (dateFin < aujourdhui()) {
-      throw new BadRequestException(
-        'La date de fin ne peut pas être dans le passé.',
-      );
+      throw new BadRequestException(m('cagnottes.dateFinPassee'));
     }
 
-    return this.prisma.cagnotte.create({
+    // Refusée si aucune vérification d'identité n'a été soumise. Publiée tout de suite (ACTIVE) si
+    // l'identité est validée et qu'aucune règle de risque ne s'applique ; sinon EN_VERIFICATION.
+    const decision = await this.publication.decider({
+      idUtilisateur,
+      objectif: dto.objectif,
+      exigerIdentiteSoumise: true,
+    });
+
+    const cagnotte = await this.prisma.cagnotte.create({
       data: {
         titre: dto.titre,
         slug: genererSlug(dto.titre),
@@ -90,9 +97,15 @@ export class CagnottesService {
         devise: dto.devise ?? 'XAF',
         id_utilisateur: idUtilisateur,
         id_categorie: dto.id_categorie,
+        statut: decision.statut,
+        raisons_verification: decision.raisons,
       },
       include: AVEC_CATEGORIE,
     });
+    if (cagnotte.statut === 'EN_VERIFICATION') {
+      await this.publication.alerterCagnotteEnVerification(cagnotte);
+    }
+    return cagnotte;
   }
 
   async listerPubliques(dto: ListerCagnottesDto) {
@@ -182,7 +195,7 @@ export class CagnottesService {
       },
     });
     if (!trouvee) {
-      throw new NotFoundException('Cagnotte introuvable.');
+      throw new NotFoundException(m('cagnottes.introuvable'));
     }
     const { utilisateur: organisateur, _count, ...cagnotte } = trouvee;
     const estVisible =
@@ -193,7 +206,7 @@ export class CagnottesService {
       (utilisateur.id_utilisateur === cagnotte.id_utilisateur ||
         !!utilisateur.roles?.includes('ROLE_ADMIN'));
     if (!estVisible && !aAcces) {
-      throw new NotFoundException('Cagnotte introuvable.');
+      throw new NotFoundException(m('cagnottes.introuvable'));
     }
     return {
       ...cagnotte,
@@ -214,7 +227,7 @@ export class CagnottesService {
       where: { id_cagnotte: id },
     });
     if (!cagnotte) {
-      throw new NotFoundException('Cagnotte introuvable.');
+      throw new NotFoundException(m('cagnottes.introuvable'));
     }
     return cagnotte;
   }
@@ -222,15 +235,13 @@ export class CagnottesService {
   async modifier(id: number, idUtilisateur: number, dto: UpdateCagnotteDto) {
     const cagnotte = await this.trouverParId(id);
     if (cagnotte.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException(
-        "Vous n'êtes pas le propriétaire de cette cagnotte.",
-      );
+      throw new ForbiddenException(m('cagnottes.pasProprietaire'));
     }
     if (cagnotte.statut === 'SUSPENDUE' || cagnotte.statut === 'ANNULEE') {
       throw new BadRequestException(
         cagnotte.statut === 'SUSPENDUE'
-          ? 'Cette cagnotte est suspendue par la modération : elle ne peut pas être modifiée.'
-          : 'Cette cagnotte est annulée : elle ne peut plus être modifiée.',
+          ? m('cagnottes.suspendueNonModifiable')
+          : m('cagnottes.annuleeNonModifiable'),
       );
     }
 
@@ -251,7 +262,10 @@ export class CagnottesService {
       dto.objectif < dejaCollecte
     ) {
       throw new BadRequestException(
-        `L'objectif ne peut pas être inférieur au montant déjà collecté (${dejaCollecte} ${cagnotte.devise}).`,
+        m('cagnottes.objectifInferieur', {
+          collecte: dejaCollecte,
+          devise: cagnotte.devise,
+        }),
       );
     }
 
@@ -259,8 +273,24 @@ export class CagnottesService {
     const reprend =
       cagnotte.statut === 'TERMINEE' && !!dto.date_fin && !estEchue(dateFin);
 
+    // Cagnotte en vérification ou refusée : elle reste modifiable. Les raisons sont réévaluées
+    // (l'objectif a pu changer) ; une cagnotte refusée repasse en vérification, et ne peut être
+    // publiée que par un administrateur.
+    const enModeration =
+      cagnotte.statut === 'EN_VERIFICATION' || cagnotte.statut === 'REFUSEE';
+    const decision = enModeration
+      ? await this.publication.decider({
+          idUtilisateur,
+          objectif: dto.objectif ?? Number(cagnotte.objectif),
+          idCagnotte: id,
+          apresRefus:
+            cagnotte.statut === 'REFUSEE' ||
+            cagnotte.raisons_verification.includes('REVISION_APRES_REFUS'),
+        })
+      : null;
+
     try {
-      return await this.prisma.cagnotte.update({
+      const modifiee = await this.prisma.cagnotte.update({
         // Statut lu plus haut : si la modération (ou la tâche nocturne) l'a changé entre-temps, on n'écrit rien.
         where: { id_cagnotte: id, statut: cagnotte.statut },
         data: {
@@ -270,18 +300,23 @@ export class CagnottesService {
           date_debut: dto.date_debut ? dateDebut : undefined,
           date_fin: dto.date_fin ? dateFin : undefined,
           id_categorie: dto.id_categorie,
-          statut: reprend ? 'ACTIVE' : undefined,
+          statut: decision?.statut ?? (reprend ? 'ACTIVE' : undefined),
+          raisons_verification: decision?.raisons,
+          motif_refus: cagnotte.statut === 'REFUSEE' ? null : undefined,
         },
         include: AVEC_CATEGORIE,
       });
+      // De nouveau soumise à la modération après un refus : les administrateurs sont prévenus.
+      if (cagnotte.statut === 'REFUSEE') {
+        await this.publication.alerterCagnotteEnVerification(modifiee);
+      }
+      return modifiee;
     } catch (e) {
       if (
         e instanceof Prisma.PrismaClientKnownRequestError &&
         e.code === 'P2025'
       ) {
-        throw new BadRequestException(
-          'Le statut de la cagnotte vient de changer. Rechargez la page puis réessayez.',
-        );
+        throw new BadRequestException(m('cagnottes.statutChangeReessayer'));
       }
       throw e;
     }
@@ -290,9 +325,7 @@ export class CagnottesService {
   async supprimer(id: number, idUtilisateur: number) {
     const cagnotte = await this.trouverParId(id);
     if (cagnotte.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException(
-        "Vous n'êtes pas le propriétaire de cette cagnotte.",
-      );
+      throw new ForbiddenException(m('cagnottes.pasProprietaire'));
     }
 
     // Des dons (ou retraits) sont liés à la cagnotte : on garde l'historique et on l'annule.
@@ -304,7 +337,7 @@ export class CagnottesService {
       if (cagnotte.statut === 'ANNULEE') {
         return {
           action: 'ANNULEE',
-          message: 'Cette cagnotte est déjà annulée.',
+          message: m('cagnottes.dejaAnnulee'),
         };
       }
       await this.prisma.cagnotte.update({
@@ -313,8 +346,7 @@ export class CagnottesService {
       });
       return {
         action: 'ANNULEE',
-        message:
-          "Cette cagnotte a déjà reçu des dons : elle a été annulée au lieu d'être supprimée.",
+        message: m('cagnottes.annuleeAuLieuDeSupprimee'),
       };
     }
 
@@ -324,7 +356,7 @@ export class CagnottesService {
       cagnotte.image,
       cagnotte.image_miniature,
     );
-    return { action: 'SUPPRIMEE', message: 'Cagnotte supprimée.' };
+    return { action: 'SUPPRIMEE', message: m('cagnottes.supprimee') };
   }
 
   async mettreAJourImage(
@@ -334,9 +366,7 @@ export class CagnottesService {
   ) {
     const cagnotte = await this.trouverParId(id);
     if (cagnotte.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException(
-        "Vous n'êtes pas le propriétaire de cette cagnotte.",
-      );
+      throw new ForbiddenException(m('cagnottes.pasProprietaire'));
     }
 
     // Deux versions WebP : image (1200 px) et image_miniature (400 px).

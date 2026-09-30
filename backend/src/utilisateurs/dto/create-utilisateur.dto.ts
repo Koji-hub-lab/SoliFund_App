@@ -5,12 +5,13 @@ import {
   TexteObligatoire,
   VideEnNull,
 } from '../../common/validation';
+import { m } from '../../i18n/messages';
 
 export class CreateUtilisateurDto {
-  @TexteObligatoire('Le nom', 100)
+  @TexteObligatoire('nom', 100)
   nom!: string;
 
-  @TexteObligatoire('Le prénom', 100)
+  @TexteObligatoire('prenom', 100)
   prenom!: string;
 
   @Email()
@@ -24,7 +25,7 @@ export class CreateUtilisateurDto {
   @VideEnNull()
   @IsString()
   @MaxLength(20, {
-    message: 'Le numéro de téléphone ne peut pas dépasser 20 caractères.',
+    message: m('validation.telephoneTropLong'),
   })
   telephone?: string | null;
 }

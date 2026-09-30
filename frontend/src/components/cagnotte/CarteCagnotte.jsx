@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
 import BarreProgression from '../BarreProgression';
@@ -6,25 +7,26 @@ import { formaterMontant } from '../../utils/format';
 import { nbJoursRestants } from '../../utils/cagnotte';
 
 // Carte publique d'une cagnotte (accueil, liste des cagnottes) : toute la carte est cliquable.
-function texteJoursRestants(jours) {
-  if (jours < 0) return 'Terminée';
-  if (jours === 0) return 'Dernier jour';
-  return `${jours} jour${jours > 1 ? 's' : ''} restant${jours > 1 ? 's' : ''}`;
+function texteJoursRestants(t, jours) {
+  if (jours < 0) return t('carte.terminee');
+  if (jours === 0) return t('carte.dernierJour');
+  return t('carte.joursRestants', { count: jours });
 }
 
 // Badge en haut à droite : objectif atteint en priorité, sinon urgence (7 jours ou moins).
-function badgeEtat(pourcentage, jours) {
-  if (pourcentage >= 100) return { texte: 'Objectif atteint', classes: 'bg-primary text-primary-foreground' };
+function badgeEtat(t, pourcentage, jours) {
+  if (pourcentage >= 100) return { texte: t('commun:badges.objectifAtteint'), classes: 'bg-primary text-primary-foreground' };
   if (jours >= 0 && jours <= 7) {
-    return { texte: jours <= 1 ? 'Dernier jour' : `Plus que ${jours} jours`, classes: 'bg-accent-soft text-[#7A5312]' };
+    return { texte: jours <= 1 ? t('commun:badges.dernierJour') : t('commun:badges.plusQueJours', { jours }), classes: 'bg-accent-soft text-[#7A5312]' };
   }
   return null;
 }
 
 export default function CarteCagnotte({ c }) {
+  const { t } = useTranslation('cagnotte');
   const pourcentage = Math.min(100, Math.round((c.montant_collecte / c.objectif) * 100));
   const jours = nbJoursRestants(c.date_fin);
-  const badge = badgeEtat(pourcentage, jours);
+  const badge = badgeEtat(t, pourcentage, jours);
   const nbDonateurs = c.nb_donateurs ?? 0;
 
   return (
@@ -55,11 +57,11 @@ export default function CarteCagnotte({ c }) {
           <BarreProgression pourcentage={pourcentage} />
           <div className="mt-3 flex items-baseline justify-between gap-3">
             <span className="text-base font-bold text-foreground">{formaterMontant(c.montant_collecte, c.devise)}</span>
-            <span className="text-sm text-muted-foreground">{texteJoursRestants(jours)}</span>
+            <span className="text-sm text-muted-foreground">{texteJoursRestants(t, jours)}</span>
           </div>
           <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
             <Users className="size-4" />
-            {nbDonateurs} donateur{nbDonateurs > 1 ? 's' : ''}
+            {t('carte.donateurs', { count: nbDonateurs })}
           </p>
         </div>
       </div>

@@ -1,0 +1,2487 @@
+openapi: 3.1.0
+info:
+  title: Notch Pay API
+  description: API for integrating payment and money transfer services into applications.
+  version: 2.1.0
+servers:
+  - url: https://api.notchpay.co
+    description: Production and Sandbox Environment
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    GrantAuth:
+      type: apiKey
+      in: header
+      name: X-Grant
+    SyncAuth:
+      type: apiKey
+      in: header
+      name: X-Sync
+  schemas:
+    General:
+      ErrorResponse:
+        type: object
+        properties:
+          code:
+            type: integer
+            example: 401
+          status:
+            type: string
+            example: Unauthorized
+          message:
+            type: string
+            example: Invalid API key
+          errors:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                type: string
+        required:
+          - code
+          - status
+          - message
+      Balance:
+        type: object
+        properties:
+          reserved:
+            type: number
+            example: 1000
+          total:
+            type: number
+            example: 50000
+          pending:
+            type: number
+            example: 2000
+          available:
+            type: number
+            example: 47000
+          currency:
+            type: string
+            example: XAF
+          environment:
+            type: string
+            example: live
+        required:
+          - total
+          - available
+          - currency
+          - environment
+    Resources:
+      Channel:
+        type: object
+        properties:
+          id:
+            type: string
+            example: ch_123456789
+          name:
+            type: string
+            example: MTN Mobile Money
+          slug:
+            type: string
+            example: cm.mtn
+          logo:
+            type: string
+            example: https://api.notchpay.co/assets/channels/mtn.png
+          countries:
+            type: array
+            items:
+              type: string
+              example: CM
+          currency:
+            type: string
+            example: XAF
+          type:
+            type: string
+            example: mobile_money
+          min_amount:
+            type: number
+            example: 100
+          max_amount:
+            type: number
+            example: 500000
+        required:
+          - id
+          - name
+          - slug
+          - countries
+          - currency
+          - type
+      Country:
+        type: object
+        properties:
+          name:
+            type: string
+            example: Cameroun
+          code:
+            type: string
+            example: CM
+        required:
+          - name
+          - code
+      Currency:
+        type: object
+        properties:
+          code:
+            type: string
+            example: XAF
+          name:
+            type: string
+            example: Franc CFA BEAC
+          symbol:
+            type: string
+            example: FCFA
+          decimal_places:
+            type: integer
+            example: 0
+        required:
+          - code
+          - name
+          - symbol
+          - decimal_places
+    Payments:
+      Payment:
+        type: object
+        properties:
+          id:
+            type: string
+            example: pay_123456789
+          reference:
+            type: string
+            example: ref_123456789
+          amount:
+            type: number
+            example: 5000
+          currency:
+            type: string
+            example: XAF
+          status:
+            type: string
+            example: complete
+          customer:
+            type: string
+            example: cus_123456789
+          created_at:
+            type: string
+            format: date-time
+            example: 2023-01-01T12:00:00Z
+          completed_at:
+            type: string
+            format: date-time
+            example: 2023-01-01T12:05:00Z
+          payment_method:
+            type: string
+            example: pm.ndzAfIh555VCPML1
+        required:
+          - id
+          - reference
+          - amount
+          - currency
+          - status
+          - customer
+          - created_at
+    Transfers:
+      Transfer:
+        type: object
+        properties:
+          id:
+            type: string
+            example: trf_123456789
+          reference:
+            type: string
+            example: ref_123456789
+          amount:
+            type: number
+            example: 5000
+          currency:
+            type: string
+            example: XAF
+          status:
+            type: string
+            example: complete
+          beneficiary:
+            type: string
+            example: ben_123456789
+          created_at:
+            type: string
+            format: date-time
+            example: 2023-01-01T12:00:00Z
+          completed_at:
+            type: string
+            format: date-time
+            example: 2023-01-01T12:05:00Z
+          payment_method:
+            type: string
+            example: pm.ndzAfIh555VCPML1
+        required:
+          - id
+          - reference
+          - amount
+          - currency
+          - status
+          - beneficiary
+          - created_at
+    Beneficiaries:
+      Beneficiary:
+        type: object
+        properties:
+          id:
+            type: string
+            example: ben_123456789
+          name:
+            type: string
+            example: John Doe
+          email:
+            type: string
+            example: john@example.com
+          phone:
+            type: string
+            example: +237600000000
+          country:
+            type: string
+            example: CM
+          payment_method:
+            type: string
+            example: pm.ndzAfIh555VCPML1
+          created_at:
+            type: string
+            format: date-time
+            example: 2023-01-01T12:00:00Z
+        required:
+          - id
+          - name
+          - country
+          - created_at
+    Customers:
+      Customer:
+        type: object
+        properties:
+          id:
+            type: string
+            example: cus_123456789
+          name:
+            type: string
+            example: John Doe
+          email:
+            type: string
+            example: john@example.com
+          phone:
+            type: string
+            example: +237600000000
+          company_name:
+            type: string
+            example: ACME Inc
+          address:
+            type: object
+            properties:
+              country:
+                type: string
+                example: CM
+              city:
+                type: string
+                example: Douala
+              address_line1:
+                type: string
+                example: 123 Main St
+          created_at:
+            type: string
+            format: date-time
+            example: 2023-01-01T12:00:00Z
+          updated_at:
+            type: string
+            format: date-time
+            example: 2023-01-02T12:00:00Z
+          blocked:
+            type: boolean
+            example: false
+        required:
+          - id
+          - created_at
+    Webhooks:
+      Webhook:
+        type: object
+        properties:
+          id:
+            type: string
+            example: wh_123456789
+          url:
+            type: string
+            example: https://example.com/webhooks
+          description:
+            type: string
+            example: Webhook principal
+          events:
+            type: array
+            items:
+              type: string
+              example: payment.complete
+          created_at:
+            type: string
+            format: date-time
+            example: 2023-01-01T12:00:00Z
+          updated_at:
+            type: string
+            format: date-time
+            example: 2023-01-02T12:00:00Z
+        required:
+          - id
+          - url
+          - events
+          - created_at
+paths:
+  # Payment-related endpoints
+  /payments:
+    get:
+      summary: List all payments
+      operationId: listPayments
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 30
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: search
+          in: query
+          description: Search by reference
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+        - name: channels
+          in: query
+          description: Filter by payment channels
+          schema:
+            type: string
+        - name: date_start
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: date_end
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Payments retrieved
+                  totals:
+                    type: integer
+                    example: 50
+                  last_page:
+                    type: integer
+                    example: 2
+                  current_page:
+                    type: integer
+                    example: 1
+                  selected:
+                    type: integer
+                    example: 30
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payments/Payment'
+                required:
+                  - code
+                  - status
+                  - message
+                  - items
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    post:
+      summary: Initialize a payment
+      operationId: initializePayment
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  example: 5000
+                currency:
+                  type: string
+                  example: XAF
+                email:
+                  type: string
+                  example: john@example.com
+                phone:
+                  type: string
+                  example: +237600000000
+                customer:
+                  oneOf:
+                    - type: string
+                      example: cus_123456789
+                    - type: object
+                      properties:
+                        name:
+                          type: string
+                          example: John Doe
+                        email:
+                          type: string
+                          example: john@example.com
+                        phone:
+                          type: string
+                          example: +237600000000
+                description:
+                  type: string
+                  example: Paiement pour commande #123
+                reference:
+                  type: string
+                  example: order_123
+                callback:
+                  type: string
+                  example: https://example.com/callback
+                locked_currency:
+                  type: string
+                  example: XAF
+                locked_channel:
+                  type: string
+                  example: cm.mtn
+                locked_country:
+                  type: string
+                  example: CM
+                items:
+                  type: array
+                  items:
+                    type: object
+                shipping:
+                  type: object
+                address:
+                  type: object
+                customer_meta:
+                  type: object
+              required:
+                - amount
+                - currency
+              oneOf:
+                - required: [email]
+                - required: [phone]
+                - required: [customer]
+      responses:
+        201:
+          description: Payment initialized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Payment initialized
+                  code:
+                    type: integer
+                    example: 201
+                  transaction:
+                    $ref: '#/components/schemas/Payments/Payment'
+                  authorization_url:
+                    type: string
+                    example: https://pay.notchpay.co/pay_123456789
+                required:
+                  - status
+                  - message
+                  - code
+                  - transaction
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /payments/{reference}:
+    get:
+      summary: Retrieve a payment
+      operationId: getPayment
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: reference
+          in: path
+          description: Reference of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Transaction retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Transaction retrieved
+                  code:
+                    type: integer
+                    example: 202
+                  transaction:
+                    $ref: '#/components/schemas/Payments/Payment'
+                required:
+                  - status
+                  - message
+                  - code
+                  - transaction
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    delete:
+      summary: Cancel a payment
+      operationId: cancelPayment
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: reference
+          in: path
+          description: Reference of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Payment canceled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 202
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Your payment has been canceled
+                required:
+                  - code
+                  - status
+                  - message
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    post:
+      summary: Process a payment
+      operationId: processPaymentPost
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: reference
+          in: path
+          description: Reference of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel:
+                  type: string
+                  example: cm.mtn
+                data:
+                  type: object
+                  properties:
+                    phone:
+                      type: string
+                      example: +237680000000
+                    account_number:
+                      type: string
+                    country:
+                      type: string
+                      example: CM
+                client_ip:
+                  type: string
+              required:
+                - channel
+      responses:
+        202:
+          description: Payment processing initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Payment processing initiated
+                  code:
+                    type: integer
+                    example: 202
+                  transaction:
+                    $ref: '#/components/schemas/Payments/Payment'
+                required:
+                  - status
+                  - message
+                  - code
+                  - transaction
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    put:
+      summary: Process a payment
+      operationId: processPaymentPut
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: reference
+          in: path
+          description: Reference of the transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel:
+                  type: string
+                  example: cm.mtn
+                data:
+                  type: object
+                  properties:
+                    phone:
+                      type: string
+                      example: +237680000000
+                    account_number:
+                      type: string
+                    country:
+                      type: string
+                      example: CM
+                client_ip:
+                  type: string
+              required:
+                - channel
+      responses:
+        202:
+          description: Payment processing initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Payment processing initiated
+                  code:
+                    type: integer
+                    example: 202
+                  transaction:
+                    $ref: '#/components/schemas/Payments/Payment'
+                required:
+                  - status
+                  - message
+                  - code
+                  - transaction
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  # Transfer-related endpoints
+  /transfers:
+    get:
+      summary: List all transfers
+      operationId: listTransfers
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 30
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: search
+          in: query
+          description: Search by reference
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+        - name: channels
+          in: query
+          description: Filter by transfer channels
+          schema:
+            type: string
+        - name: date_start
+          in: query
+          description: Start date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: date_end
+          in: query
+          description: End date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Transfers retrieved
+                  totals:
+                    type: integer
+                    example: 20
+                  last_page:
+                    type: integer
+                    example: 1
+                  current_page:
+                    type: integer
+                    example: 1
+                  selected:
+                    type: integer
+                    example: 20
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transfers/Transfer'
+                required:
+                  - code
+                  - status
+                  - message
+                  - items
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    post:
+      summary: Initiate a transfer
+      operationId: initiateTransfer
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  example: 5000
+                currency:
+                  type: string
+                  example: XAF
+                channel:
+                  type: string
+                  example: cm.mtn
+                beneficiary:
+                  type: string
+                  example: ben_123456789
+                recipient:
+                  type: string
+                  example: ben_123456789
+                description:
+                  type: string
+                  example: Paiement de salaire
+                reference:
+                  type: string
+                  example: ref_123456789
+              required:
+                - amount
+                - currency
+                - description
+              oneOf:
+                - required: [beneficiary]
+                - required: [recipient, channel]
+      responses:
+        201:
+          description: Transfer initialized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Transfer initialized
+                  code:
+                    type: integer
+                    example: 201
+                  transfer:
+                    $ref: '#/components/schemas/Transfers/Transfer'
+                required:
+                  - status
+                  - message
+                  - code
+                  - transfer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /transfers/{reference}:
+    get:
+      summary: Retrieve a transfer
+      operationId: getTransfer
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: reference
+          in: path
+          description: Reference of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Transfer retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Transfer retrieved
+                  code:
+                    type: integer
+                    example: 202
+                  transfer:
+                    $ref: '#/components/schemas/Transfers/Transfer'
+                required:
+                  - status
+                  - message
+                  - code
+                  - transfer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  # Beneficiary-related endpoints
+  /beneficiaries:
+    get:
+      summary: List all beneficiaries
+      operationId: listBeneficiaries
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 30
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: search
+          in: query
+          description: Search by name or email
+          schema:
+            type: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Beneficiaries retrieved
+                  totals:
+                    type: integer
+                    example: 15
+                  last_page:
+                    type: integer
+                    example: 1
+                  current_page:
+                    type: integer
+                    example: 1
+                  selected:
+                    type: integer
+                    example: 15
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Beneficiaries/Beneficiary'
+                required:
+                  - code
+                  - status
+                  - message
+                  - items
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    post:
+      summary: Create a beneficiary
+      operationId: createBeneficiary
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel:
+                  type: string
+                  example: cm.mtn
+                name:
+                  type: string
+                  example: John Doe
+                account_number:
+                  type: string
+                  example: +237680000000
+                email:
+                  type: string
+                  example: john@example.com
+                phone:
+                  type: string
+                  example: +237680000000
+                description:
+                  type: string
+                  example: Employé
+                country:
+                  type: string
+                  example: CM
+                reference:
+                  type: string
+                  example: ref_123456789
+              required:
+                - channel
+                - name
+                - account_number
+              oneOf:
+                - required: [email]
+                - required: [phone]
+      responses:
+        201:
+          description: Beneficiary created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 201
+                  status:
+                    type: string
+                    example: Created
+                  message:
+                    type: string
+                    example: Beneficiary created successfully
+                  beneficiary:
+                    $ref: '#/components/schemas/Beneficiaries/Beneficiary'
+                required:
+                  - code
+                  - status
+                  - message
+                  - beneficiary
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /beneficiaries/{id}:
+    get:
+      summary: Retrieve a beneficiary
+      operationId: getBeneficiary
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the beneficiary
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Beneficiary retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Beneficiary retrieved
+                  code:
+                    type: integer
+                    example: 202
+                  beneficiary:
+                    $ref: '#/components/schemas/Beneficiaries/Beneficiary'
+                required:
+                  - status
+                  - message
+                  - code
+                  - beneficiary
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    delete:
+      summary: Delete a beneficiary
+      operationId: deleteBeneficiary
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the beneficiary
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Beneficiary deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 202
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Beneficiary deleted successfully
+                  beneficiary:
+                    type: array
+                    items:
+                      type: object
+                required:
+                  - code
+                  - status
+                  - message
+                  - beneficiary
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  # Customer-related endpoints
+  /customers:
+    get:
+      summary: List all customers
+      operationId: listCustomers
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 30
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: search
+          in: query
+          description: Search by name, email, or phone
+          schema:
+            type: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Customers retrieved
+                  totals:
+                    type: integer
+                    example: 25
+                  last_page:
+                    type: integer
+                    example: 1
+                  current_page:
+                    type: integer
+                    example: 1
+                  selected:
+                    type: integer
+                    example: 25
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customers/Customer'
+                required:
+                  - code
+                  - status
+                  - message
+                  - items
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    post:
+      summary: Create a customer
+      operationId: createCustomer
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: john@example.com
+                phone:
+                  type: string
+                  example: +237600000000
+                name:
+                  type: string
+                  example: John Doe
+                company_name:
+                  type: string
+                  example: ACME Inc
+                metadata:
+                  type: object
+                address:
+                  type: object
+                  properties:
+                    country:
+                      type: string
+                      example: CM
+                    state:
+                      type: string
+                    city:
+                      type: string
+                      example: Douala
+                    postal_code:
+                      type: string
+                    address_line1:
+                      type: string
+                      example: 123 Main St
+                    address_line2:
+                      type: string
+                billing:
+                  type: object
+                  properties:
+                    country:
+                      type: string
+                      example: CM
+                    state:
+                      type: string
+                    city:
+                      type: string
+                      example: Douala
+                    postal_code:
+                      type: string
+                    address_line1:
+                      type: string
+                      example: 123 Main St
+                    address_line2:
+                      type: string
+              oneOf:
+                - required: [email]
+                - required: [phone]
+      responses:
+        201:
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 201
+                  status:
+                    type: string
+                    example: Created
+                  message:
+                    type: string
+                    example: Customer created successfully
+                  customer:
+                    $ref: '#/components/schemas/Customers/Customer'
+                required:
+                  - code
+                  - status
+                  - message
+                  - customer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /customers/{id}:
+    get:
+      summary: Retrieve a customer
+      operationId: getCustomer
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the customer
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Customer retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Customer retrieved
+                  code:
+                    type: integer
+                    example: 202
+                  customer:
+                    $ref: '#/components/schemas/Customers/Customer'
+                required:
+                  - status
+                  - message
+                  - code
+                  - customer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    post:
+      summary: Update a customer
+      operationId: updateCustomer
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the customer
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: john@example.com
+                phone:
+                  type: string
+                  example: +237600000000
+                name:
+                  type: string
+                  example: John Doe
+                company_name:
+                  type: string
+                  example: ACME Inc
+                metadata:
+                  type: object
+                address:
+                  type: object
+                  properties:
+                    country:
+                      type: string
+                      example: CM
+                    state:
+                      type: string
+                    city:
+                      type: string
+                      example: Douala
+                    postal_code:
+                      type: string
+                    address_line1:
+                      type: string
+                      example: 123 Main St
+                    address_line2:
+                      type: string
+                billing:
+                  type: object
+                  properties:
+                    country:
+                      type: string
+                      example: CM
+                    state:
+                      type: string
+                    city:
+                      type: string
+                      example: Douala
+                    postal_code:
+                      type: string
+                    address_line1:
+                      type: string
+                      example: 123 Main St
+                    address_line2:
+                      type: string
+              oneOf:
+                - required: [email]
+                - required: [phone]
+      responses:
+        202:
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 202
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Customer updated successfully
+                  customer:
+                    $ref: '#/components/schemas/Customers/Customer'
+                required:
+                  - code
+                  - status
+                  - message
+                  - customer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    delete:
+      summary: Delete a customer
+      operationId: deleteCustomer
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the customer
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Customer deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 202
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Customer deleted successfully
+                  customer:
+                    type: array
+                    items:
+                      type: object
+                required:
+                  - code
+                  - status
+                  - message
+                  - customer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /customers/{id}/payment_methods:
+    get:
+      summary: List customer's payment methods
+      operationId: listCustomerPaymentMethods
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the customer
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Payment methods retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Payment methods retrieved
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: pm_123456789
+                        type:
+                          type: string
+                          example: Mobile Money
+                        channel:
+                          type: string
+                          example: cm.mtn
+                        phone:
+                          type: string
+                          example: +237680000000
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: 2023-01-01T12:00:00Z
+                      required:
+                        - id
+                        - type
+                        - channel
+                        - created_at
+                required:
+                  - code
+                  - status
+                  - message
+                  - items
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /customers/{id}/payments:
+    get:
+      summary: List customer's payments
+      operationId: listCustomerPayments
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the customer
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 30
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+      responses:
+        200:
+          description: Customer payments retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Customer payments retrieved
+                  totals:
+                    type: integer
+                    example: 10
+                  last_page:
+                    type: integer
+                    example: 1
+                  current_page:
+                    type: integer
+                    example: 1
+                  selected:
+                    type: integer
+                    example: 10
+                  payments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payments/Payment'
+                required:
+                  - code
+                  - status
+                  - message
+                  - payments
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /customers/{id}/block:
+    post:
+      summary: Block a customer
+      operationId: blockCustomer
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the customer
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Customer blocked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 202
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Customer blocked successfully
+                  customer:
+                    $ref: '#/components/schemas/Customers/Customer'
+                required:
+                  - code
+                  - status
+                  - message
+                  - customer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /customers/{id}/unblock:
+    post:
+      summary: Unblock a customer
+      operationId: unblockCustomer
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Unique identifier of the customer
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Customer unblocked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 202
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Customer unblocked successfully
+                  customer:
+                    $ref: '#/components/schemas/Customers/Customer'
+                required:
+                  - code
+                  - status
+                  - message
+                  - customer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  # Webhook-related endpoints
+  /webhooks:
+    get:
+      summary: List all webhooks
+      operationId: listWebhooks
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 30
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+      responses:
+        200:
+          description: Webhook endpoints retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Webhook endpoints retrieved
+                  totals:
+                    type: integer
+                    example: 5
+                  last_page:
+                    type: integer
+                    example: 1
+                  current_page:
+                    type: integer
+                    example: 1
+                  selected:
+                    type: integer
+                    example: 5
+                  endpoints:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Webhooks/Webhook'
+                required:
+                  - code
+                  - status
+                  - message
+                  - endpoints
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    post:
+      summary: Create a webhook
+      operationId: createWebhook
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  example: https://example.com/webhooks
+                description:
+                  type: string
+                  example: Webhook principal
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - payment.created
+                      - payment.complete
+                      - payment.failed
+                      - payment.canceled
+                      - payment.expired
+                      - transfer.created
+                      - transfer.complete
+                      - transfer.failed
+                      - customer.created
+                      - customer.updated
+                      - customer.deleted
+                      - customer.blocked
+                      - customer.unblocked
+              required:
+                - url
+                - events
+      responses:
+        201:
+          description: Webhook endpoint created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 201
+                  status:
+                    type: string
+                    example: Created
+                  message:
+                    type: string
+                    example: Webhook endpoint created successfully
+                  endpoint:
+                    $ref: '#/components/schemas/Webhooks/Webhook'
+                required:
+                  - code
+                  - status
+                  - message
+                  - endpoint
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /webhooks/{endpoint}:
+    get:
+      summary: Retrieve a webhook
+      operationId: getWebhook
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: endpoint
+          in: path
+          description: Unique identifier of the webhook
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Webhook endpoint retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Webhook endpoint retrieved
+                  endpoint:
+                    $ref: '#/components/schemas/Webhooks/Webhook'
+                required:
+                  - code
+                  - status
+                  - message
+                  - endpoint
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    put:
+      summary: Update a webhook
+      operationId: updateWebhook
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: endpoint
+          in: path
+          description: Unique identifier of the webhook
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  example: https://example.com/webhooks
+                description:
+                  type: string
+                  example: Webhook principal mis à jour
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - payment.created
+                      - payment.complete
+                      - payment.failed
+                      - payment.canceled
+                      - payment.expired
+                      - transfer.created
+                      - transfer.complete
+                      - transfer.failed
+                      - customer.created
+                      - customer.updated
+                      - customer.deleted
+                      - customer.blocked
+                      - customer.unblocked
+      responses:
+        202:
+          description: Webhook endpoint updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 202
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Webhook endpoint updated successfully
+                  endpoint:
+                    $ref: '#/components/schemas/Webhooks/Webhook'
+                required:
+                  - code
+                  - status
+                  - message
+                  - endpoint
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        422:
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+    delete:
+      summary: Delete a webhook
+      operationId: deleteWebhook
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: endpoint
+          in: path
+          description: Unique identifier of the webhook
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Webhook endpoint deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 202
+                  status:
+                    type: string
+                    example: Accepted
+                  message:
+                    type: string
+                    example: Webhook endpoint deleted successfully
+                required:
+                  - code
+                  - status
+                  - message
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  # General endpoints
+  /balance:
+    get:
+      summary: Retrieve account balance
+      operationId: getBalance
+      security:
+        - ApiKeyAuth: []
+        - GrantAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: currency
+          in: query
+          description: Currency code
+          schema:
+            type: string
+            default: XAF
+      responses:
+        200:
+          description: Balance retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Balance retrieved
+                  balance:
+                    $ref: '#/components/schemas/General/Balance'
+                required:
+                  - code
+                  - status
+                  - message
+                  - balance
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /channels:
+    get:
+      summary: List all payment channels
+      operationId: listChannels
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      parameters:
+        - name: country
+          in: query
+          description: Country code to filter channels
+          schema:
+            type: string
+            example: CM
+        - name: amount
+          in: query
+          description: Minimum amount to filter channels
+          schema:
+            type: number
+            example: 500
+        - name: currency
+          in: query
+          description: Currency code for minimum amount
+          schema:
+            type: string
+            default: XAF
+      responses:
+        200:
+          description: Channels retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Channels retrieved
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resources/Channel'
+                required:
+                  - code
+                  - status
+                  - message
+                  - items
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /countries:
+    get:
+      summary: List all countries
+      operationId: listCountries
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      responses:
+        200:
+          description: Countries retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Countries retrieved
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resources/Country'
+                required:
+                  - code
+                  - status
+                  - message
+                  - items
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'
+  /currencies:
+    get:
+      summary: List all currencies
+      operationId: listCurrencies
+      security:
+        - ApiKeyAuth: []
+        - SyncAuth: []
+      responses:
+        200:
+          description: Currencies retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  status:
+                    type: string
+                    example: OK
+                  message:
+                    type: string
+                    example: Currencies retrieved
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resources/Currency'
+                required:
+                  - code
+                  - status
+                  - message
+                  - items
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General/ErrorResponse'

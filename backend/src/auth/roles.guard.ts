@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { RequeteOptionnelle } from './utilisateur-connecte';
+import { m } from '../i18n/messages';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -21,9 +22,7 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest<RequeteOptionnelle>();
     const aLeRole = rolesRequis.some((role) => user?.roles?.includes(role));
     if (!aLeRole) {
-      throw new ForbiddenException(
-        "Vous n'avez pas les droits pour effectuer cette action.",
-      );
+      throw new ForbiddenException(m('commun.interdit'));
     }
     return true;
   }

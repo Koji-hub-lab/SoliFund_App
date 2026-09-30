@@ -56,6 +56,22 @@ async function creerUtilisateur(suffixe: string, roles: number[]) {
     },
   });
   cree.utilisateurs.push(utilisateur.id_utilisateur);
+  // Les retraits exigent une identité vérifiée : le numéro bénéficiaire vient de cette vérification.
+  await prisma.verificationIdentite.create({
+    data: {
+      id_utilisateur: utilisateur.id_utilisateur,
+      type_piece: 'CNI',
+      nom: 'Test',
+      prenoms: `Retraits ${suffixe}`,
+      date_naissance: new Date('1990-01-01'),
+      numero_piece: `TEST-${Date.now()}`,
+      date_expiration: new Date('2099-12-31'),
+      telephone_retrait: '699112233',
+      methode_retrait: 'MTN_MOBILE_MONEY',
+      statut: 'VALIDEE',
+      date_decision: new Date(),
+    },
+  });
   for (const id_role of roles) {
     await prisma.posseder.create({ data: { id_utilisateur: utilisateur.id_utilisateur, id_role } });
   }
@@ -216,6 +232,7 @@ async function nettoyer() {
     await prisma.retrait.deleteMany({ where: { id_retrait: { in: idsRetraits } } });
     await prisma.cagnotte.deleteMany({ where: { id_cagnotte: { in: cagnottes } } });
     // Les liens de rôle (slf_posseder) et jetons partent en cascade.
+    await prisma.verificationIdentite.deleteMany({ where: { id_utilisateur: { in: utilisateurs } } });
     await prisma.utilisateur.deleteMany({ where: { id_utilisateur: { in: utilisateurs } } });
     console.log('\n🧹 Données de test supprimées.');
   } catch (e) {

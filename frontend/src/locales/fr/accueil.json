@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "badge": "Cagnottes 100 % sécurisées au Cameroun",
+    "titreDebut": "Réalisez vos projets,",
+    "titreAccent": "soutenez vos proches.",
+    "texte": "La solution de cagnotte sécurisée au Cameroun. Mariage, anniversaire, deuil ou projet solidaire — collectez et partagez en toute confiance.",
+    "lancer": "Lancer ma cagnotte",
+    "parcourir": "Parcourir les cagnottes",
+    "paiements": "Paiements acceptés",
+    "altPhoto": "Un groupe de proches réunis et souriants célébrant leur solidarité",
+    "fondsProteges": "Fonds protégés",
+    "retraitMobileMoney": "Retrait sur votre Mobile Money"
+  },
+  "etapes": {
+    "surTitre": "Simple et rapide",
+    "titre": "Trois étapes pour rassembler votre communauté",
+    "creer": { "titre": "Créez votre cagnotte", "texte": "En 2 minutes seulement. Ajoutez un titre, une photo et votre objectif. Aucune compétence technique requise." },
+    "partager": { "titre": "Partagez à vos proches", "texte": "Diffusez le lien de votre cagnotte sur WhatsApp, Facebook et vos autres réseaux en un seul clic." },
+    "recuperer": { "titre": "Récupérez les fonds", "texte": "Retirez l'argent collecté directement sur Orange Money ou MTN Mobile Money." }
+  },
+  "populaires": {
+    "surTitre": "En ce moment",
+    "titre": "Cagnottes populaires",
+    "voirTout": "Voir toutes les cagnottes",
+    "toutes": "Toutes",
+    "vide": "Aucune cagnotte pour le moment.",
+    "videCategorie": "Aucune cagnotte dans cette catégorie pour le moment."
+  },
+  "confiance": {
+    "organisateurs": { "titre": "Organisateurs vérifiés", "texte": "Chaque organisateur confirme son adresse email avant de pouvoir créer une cagnotte." },
+    "retraits": { "titre": "Retraits contrôlés", "texte": "Chaque demande de retrait est examinée par notre équipe avant d'être versée." },
+    "paiements": { "titre": "Paiements locaux", "texte": "Donnez avec MTN Mobile Money ou Orange Money, sans carte bancaire." }
+  },
+  "appel": {
+    "debut": "Comme au njangi,",
+    "accent": "chacun met un peu",
+    "fin": ", et tout le monde avance.",
+    "noteNjangi": "",
+    "lancer": "Lancer ma cagnotte"
+  }
+}

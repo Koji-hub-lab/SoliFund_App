@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -8,6 +9,7 @@ import { erreurTexte } from '../cagnotte/classes';
 export default function PhotoGestion({ cagnotte, executer, charger, enCours, erreurs }) {
   const [fichier, setFichier] = useState(null);
   const [apercu, setApercu] = useState(null);
+  const { t } = useTranslation('tableau-de-bord');
 
   // Aperçu local du fichier choisi, libéré quand il change.
   useEffect(() => {
@@ -37,17 +39,17 @@ export default function PhotoGestion({ cagnotte, executer, charger, enCours, err
 
   return (
     <section className="max-w-3xl rounded-[28px] border border-border bg-card p-6 sm:p-7">
-      <h2 className="font-display text-[22px] font-bold leading-tight text-foreground">Photo de couverture</h2>
-      <p className="mt-1 text-sm text-muted-foreground">JPG, PNG ou WEBP, 5 Mo maximum. {apercu && 'Aperçu de la nouvelle photo, pas encore enregistrée.'}</p>
+      <h2 className="font-display text-[22px] font-bold leading-tight text-foreground">{t('photo.titre')}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t('photo.formats')} {apercu && t('photo.apercu')}</p>
 
       <div className="mt-5 flex aspect-[16/9] items-center justify-center overflow-hidden rounded-[24px] bg-primary-soft">
-        {image ? <img src={image} alt="Photo de couverture" loading="lazy" className="h-full w-full object-cover" /> : <SymboleNjangi taille={80} />}
+        {image ? <img src={image} alt={t('photo.alt')} loading="lazy" className="h-full w-full object-cover" /> : <SymboleNjangi taille={80} />}
       </div>
 
       <form onSubmit={envoyer} className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-primary px-6 font-bold text-primary hover:bg-primary-soft">
           <ImagePlus className="size-5" />
-          Choisir une photo
+          {t('photo.choisir')}
           <input
             type="file"
             accept="image/png, image/jpeg, image/webp"
@@ -56,7 +58,7 @@ export default function PhotoGestion({ cagnotte, executer, charger, enCours, err
           />
         </label>
         <Button type="submit" disabled={enCours.image || !fichier}>
-          {enCours.image ? 'Envoi en cours...' : 'Enregistrer la photo'}
+          {enCours.image ? t('commun:actions.envoiEnCours') : t('photo.enregistrer')}
         </Button>
         {fichier && <span className="truncate text-sm text-muted-foreground">{fichier.name}</span>}
       </form>

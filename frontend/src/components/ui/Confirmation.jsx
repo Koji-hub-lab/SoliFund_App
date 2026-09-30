@@ -1,20 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from './Button';
 import Champ from './Champ';
+import { useTranslation } from 'react-i18next';
 
 // Fenêtre de confirmation de la charte, basée sur <dialog> (focus piégé, fermeture avec Échap).
 // motif : { libelle, obligatoire, placeholder } pour demander un motif ; onConfirmer(motif) peut
 // renvoyer une promesse ; l'erreur éventuelle (err.messageAffichable) s'affiche dans la fenêtre.
+// children : champs supplémentaires affichés avant le motif (ex. une liste de choix).
 export default function Confirmation({
   ouvert,
   titre,
   message,
-  libelleConfirmer = 'Confirmer',
+  libelleConfirmer,
   variante = 'danger',
   motif,
   onConfirmer,
   onAnnuler,
+  children,
 }) {
+  const { t } = useTranslation();
   const ref = useRef(null);
   const [texteMotif, setTexteMotif] = useState('');
   const [enCours, setEnCours] = useState(false);
@@ -42,7 +46,7 @@ export default function Confirmation({
     try {
       await onConfirmer(texteMotif.trim());
     } catch (err) {
-      setErreur(err?.messageAffichable ?? "L'action n'a pas pu être effectuée.");
+      setErreur(err?.messageAffichable ?? t('erreurs:actionImpossible'));
     } finally {
       setEnCours(false);
     }
@@ -64,17 +68,19 @@ export default function Confirmation({
           {message && <p className="mt-2 text-[15px] leading-[1.6] text-[#45524F]">{message}</p>}
         </div>
 
+        {children}
+
         {motif && (
           <Champ
             as="textarea"
             id="confirmation-motif"
-            libelle={motif.obligatoire ? motif.libelle : `${motif.libelle} (facultatif)`}
+            libelle={motif.obligatoire ? motif.libelle : t('commun:actions.facultatif', { libelle: motif.libelle })}
             placeholder={motif.placeholder}
             rows={3}
             maxLength={500}
             value={texteMotif}
             onChange={(e) => setTexteMotif(e.target.value)}
-            autoFocus
+            autoFocus={!children}
           />
         )}
 
@@ -82,10 +88,10 @@ export default function Confirmation({
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onAnnuler} disabled={enCours}>
-            Annuler
+            {t('commun:actions.annuler')}
           </Button>
           <Button type="submit" variant={variante} disabled={enCours || motifManquant} autoFocus={!motif}>
-            {enCours ? 'En cours...' : libelleConfirmer}
+            {enCours ? t('commun:actions.enCours') : (libelleConfirmer ?? t('commun:actions.confirmer'))}
           </Button>
         </div>
       </form>

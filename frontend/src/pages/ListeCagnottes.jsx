@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { SiteHeader } from '../components/site/SiteHeader';
@@ -9,15 +10,13 @@ import CarteCagnotteSquelette from '../components/cagnotte/CarteCagnotteSquelett
 import api from '../api/axios';
 
 const conteneur = 'mx-auto w-full max-w-[1400px] px-5 sm:px-8 lg:px-[72px]';
-const TRIS = [
-  { valeur: 'recentes', libelle: 'Plus récentes' },
-  { valeur: 'populaires', libelle: 'Plus populaires' },
-  { valeur: 'bientot_terminees', libelle: 'Bientôt terminées' },
-];
+// Valeurs du tri (paramètre de l'API) ; libellés dans la zone de traduction « cagnotte ».
+const TRIS = ['recentes', 'populaires', 'bientot_terminees'];
 
 export default function ListeCagnottes() {
   const [cagnottes, setCagnottes] = useState([]);
   const [categories, setCategories] = useState([]);
+  const { t } = useTranslation('cagnotte');
   const [recherche, setRecherche] = useState('');
   const [rechercheEnvoyee, setRechercheEnvoyee] = useState('');
   const [categorieChoisie, setCategorieChoisie] = useState('');
@@ -90,7 +89,7 @@ export default function ListeCagnottes() {
     setPage(1);
   }
 
-  const filtres = [{ id_categorie: '', nom: 'Toutes' }, ...categories];
+  const filtres = [{ id_categorie: '', nom: t('liste.toutes') }, ...categories];
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -99,9 +98,9 @@ export default function ListeCagnottes() {
       <main className="flex-1">
         <section className="bg-primary-soft">
           <div className={`${conteneur} py-12 lg:py-16`}>
-            <p className="text-sm font-bold uppercase tracking-[0.12em] text-primary">Découvrir</p>
+            <p className="text-sm font-bold uppercase tracking-[0.12em] text-primary">{t('liste.surTitre')}</p>
             <h1 className="mt-3 font-display text-[36px] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground lg:text-[52px]">
-              Toutes les cagnottes
+              {t('liste.titre')}
             </h1>
 
             <div className="mt-8 flex flex-col gap-3 md:flex-row">
@@ -109,21 +108,21 @@ export default function ListeCagnottes() {
                 <Search className="pointer-events-none absolute left-6 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="search"
-                  aria-label="Rechercher une cagnotte"
-                  placeholder="Rechercher une cagnotte..."
+                  aria-label={t('liste.rechercher')}
+                  placeholder={t('liste.rechercherPlaceholder')}
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   className="h-[60px] w-full rounded-full border-2 border-border bg-card pl-14 pr-6 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
                 />
               </div>
               <select
-                aria-label="Trier les cagnottes"
+                aria-label={t('liste.trier')}
                 value={tri}
                 onChange={(e) => { setTri(e.target.value); setPage(1); }}
                 className="h-[60px] rounded-full border-2 border-border bg-card px-6 font-sans text-base font-bold text-foreground outline-none transition-colors focus:border-primary md:w-60"
               >
-                {TRIS.map((t) => (
-                  <option key={t.valeur} value={t.valeur}>{t.libelle}</option>
+                {TRIS.map((valeur) => (
+                  <option key={valeur} value={valeur}>{t(`liste.tris.${valeur}`)}</option>
                 ))}
               </select>
             </div>
@@ -150,19 +149,19 @@ export default function ListeCagnottes() {
             })}
           </div>
           {erreurCategories && (
-            <p className="mt-3 text-sm text-destructive">Les catégories n'ont pas pu être chargées. {erreurCategories}</p>
+            <p className="mt-3 text-sm text-destructive">{t('liste.erreurCategories', { detail: erreurCategories })}</p>
           )}
 
           {!chargement && !erreur && (
             <p className="mt-6 text-base text-muted-foreground" aria-live="polite">
-              {total} cagnotte{total > 1 ? 's' : ''}
+              {t('liste.total', { count: total })}
             </p>
           )}
 
           {erreur && (
             <div className="mt-8 flex flex-col items-center gap-4 rounded-[32px] border border-border bg-card p-10 text-center">
               <p className="text-destructive">{erreur}</p>
-              <Button variant="outline" onClick={reessayer}>Réessayer</Button>
+              <Button variant="outline" onClick={reessayer}>{t('commun:actions.reessayer')}</Button>
             </div>
           )}
 
@@ -178,10 +177,10 @@ export default function ListeCagnottes() {
             <div className="mt-6 flex flex-col items-center rounded-[32px] border border-border bg-card px-6 py-14 text-center">
               <SymboleNjangi taille={64} />
               <p className="mt-6 font-display text-[26px] font-bold leading-tight text-foreground">
-                Aucune cagnotte ne correspond à votre recherche
+                {t('liste.aucunResultat')}
               </p>
               <Button variant="outline" onClick={effacerFiltres} className="mt-6">
-                Effacer les filtres
+                {t('liste.effacerFiltres')}
               </Button>
             </div>
           )}
@@ -197,11 +196,11 @@ export default function ListeCagnottes() {
           {!chargement && !erreur && pages > 1 && (
             <div className="mt-12 flex items-center justify-center gap-4">
               <Button variant="outline" disabled={page <= 1} onClick={() => changerPage(page - 1)}>
-                Précédent
+                {t('commun:actions.precedent')}
               </Button>
-              <p className="text-sm text-muted-foreground">Page {page} sur {pages}</p>
+              <p className="text-sm text-muted-foreground">{t('commun:actions.pagination', { page, pages })}</p>
               <Button variant="outline" disabled={page >= pages} onClick={() => changerPage(page + 1)}>
-                Suivant
+                {t('commun:actions.suivant')}
               </Button>
             </div>
           )}

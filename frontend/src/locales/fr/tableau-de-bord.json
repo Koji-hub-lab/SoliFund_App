@@ -1,0 +1,276 @@
+{
+  "nav": {
+    "tableauDeBord": "Tableau de bord",
+    "mesCagnottes": "Mes cagnottes",
+    "creer": "Créer une cagnotte",
+    "notifications": "Notifications",
+    "profil": "Mon profil",
+    "administration": "Administration",
+    "decouvrir": "Découvrir les cagnottes",
+    "erreurNotifications": "Vos notifications n'ont pas pu être vérifiées. {{detail}}"
+  },
+  "accueil": {
+    "bonjour": "Bonjour, {{prenom}}",
+    "sousTitre": "Voici où en sont vos cagnottes aujourd'hui.",
+    "creer": "Créer une cagnotte",
+    "totalCollecte": "Total collecté",
+    "actives": "Cagnottes actives",
+    "donateurs": "Donateurs",
+    "disponible": "Disponible au retrait",
+    "mesCagnottes": "Mes cagnottes",
+    "toutVoir": "Tout voir",
+    "activite": "Activité récente",
+    "aucuneActivite": "Aucune activité pour le moment.",
+    "nonLue": "Non lue"
+  },
+  "vide": {
+    "titre": "Lancez votre première cagnotte",
+    "texte": "Mariage, santé, projet solidaire : créez votre cagnotte en quelques minutes et partagez-la à vos proches."
+  },
+  "liste": {
+    "titre": "Mes cagnottes",
+    "sousTitre": "Gérez toutes les cagnottes que vous avez créées.",
+    "filtres": {
+      "toutes": "Toutes",
+      "ACTIVE": "Actives",
+      "TERMINEE": "Terminées",
+      "SUSPENDUE": "Suspendues",
+      "ANNULEE": "Annulées"
+    },
+    "filtre": "{{libelle}} ({{nombre}})",
+    "aucune": "Aucune cagnotte dans cette catégorie.",
+    "resume": "{{collecte}} sur {{objectif}}",
+    "donateurs_one": "{{count}} donateur",
+    "donateurs_other": "{{count}} donateurs",
+    "gerer": "Gérer"
+  },
+  "gestion": {
+    "filAriane": "Fil d'Ariane",
+    "collectesSur": "<b>{{collecte}}</b> collectés sur {{objectif}}",
+    "terminee": "terminée",
+    "joursRestants_one": "{{count}} jour restant",
+    "joursRestants_other": "{{count}} jours restants",
+    "pagePublique": "Voir la page publique",
+    "modifier": "Modifier",
+    "onglets": {
+      "apercu": "Aperçu",
+      "retraits": "Retraits",
+      "actualites": "Actualités",
+      "photo": "Photo et paramètres"
+    },
+    "collecte": "Collecté",
+    "donateur_one": "Donateur",
+    "donateur_other": "Donateurs",
+    "disponible": "Disponible au retrait",
+    "donsRecus": "Dons reçus ({{total}})",
+    "aucunDon": "Aucun don pour le moment. Partagez votre cagnotte pour recevoir les premiers.",
+    "anonyme": "Anonyme",
+    "voirPlusDons": "Voir plus de dons"
+  },
+  "retraits": {
+    "disponible": "Disponible au retrait",
+    "resume": "Collecté {{collecte}} · déjà retiré ou en attente {{engage}}",
+    "demander": "Demander un retrait",
+    "montant": "Montant (XAF)",
+    "montantMinimum": "Le montant minimum est de {{montant}}.",
+    "montantDepasse": "Le montant dépasse le disponible ({{disponible}}).",
+    "commission": "Commission SoliFund ({{taux}}) : {{montant}}",
+    "vousRecevrez": "Vous recevrez : {{montant}}",
+    "recevoirSur": "Recevoir sur",
+    "numero": "Numéro bénéficiaire",
+    "bouton": "Demander le retrait",
+    "verification": "Chaque demande est vérifiée par notre équipe avant d'être versée.",
+    "historique": "Historique des retraits",
+    "aucun": "Aucun retrait pour le moment.",
+    "ligneCommission": "Commission ({{taux}}) : {{montant}} · ",
+    "sansCommission": "Sans commission · ",
+    "netVerse": "Net versé : {{montant}}",
+    "motifRejet": "Motif du rejet : {{motif}}",
+    "annulerTitre": "Annuler la cagnotte",
+    "annulerTexte": "Si la cagnotte a déjà reçu des dons, elle est annulée : elle ne reçoit plus de dons et n'est plus visible publiquement, mais son historique est conservé. Sinon, elle est supprimée définitivement.",
+    "annulerConfirmation": "Annuler cette cagnotte ? Cette action est irréversible.",
+    "annulation": "Annulation...",
+    "dejaAnnulee": "Cagnotte déjà annulée"
+  },
+  "actualites": {
+    "publierTitre": "Publier une actualité",
+    "publierTexte": "Donnez des nouvelles à vos donateurs : elles s'affichent sur la page publique.",
+    "titre": "Titre de l'actualité",
+    "contenu": "Contenu de l'actualité",
+    "contenuPlaceholder": "Contenu",
+    "publier": "Publier",
+    "publication": "Publication...",
+    "publiees": "Actualités publiées ({{total}})",
+    "aucune": "Aucune actualité pour le moment."
+  },
+  "photo": {
+    "titre": "Photo de couverture",
+    "formats": "JPG, PNG ou WEBP, 5 Mo maximum.",
+    "apercu": "Aperçu de la nouvelle photo, pas encore enregistrée.",
+    "alt": "Photo de couverture",
+    "choisir": "Choisir une photo",
+    "enregistrer": "Enregistrer la photo"
+  },
+  "creation": {
+    "erreurs": {
+      "titre": "Le titre est requis.",
+      "objectif": "L'objectif doit être supérieur à 0.",
+      "dateDebut": "La date de début est requise.",
+      "dateFin": "La date de fin est requise.",
+      "ordreDates": "La date de fin doit être après la date de début."
+    },
+    "erreurCategories": "Les catégories n'ont pas pu être chargées : vous pouvez créer la cagnotte sans catégorie. {{detail}}",
+    "codeEnvoye": "Nouveau code envoyé.",
+    "enregistreeTitre": "Votre cagnotte est enregistrée",
+    "attenteIdentite": "Votre cagnotte sera publiée dès que votre identité aura été vérifiée (en général sous 24 h). Vous pouvez la compléter en attendant.",
+    "attenteEquipe": "Votre cagnotte sera publiée après vérification par notre équipe (en général sous 24 h). Vous pouvez la compléter en attendant.",
+    "gerer": "Gérer ma cagnotte",
+    "titre": "Créer une cagnotte",
+    "sousTitre": "Renseignez les informations de votre projet pour lancer votre collecte.",
+    "verifierEmail": "Pour créer une cagnotte, vérifiez d'abord votre adresse email : saisissez le code à 6 chiffres reçu à <b>{{email}}</b>.",
+    "verification": "Vérification...",
+    "verifierCode": "Vérifier le code",
+    "renvoyerCode": "Renvoyer le code",
+    "photo": "Photo de couverture",
+    "altApercu": "Aperçu de la photo choisie",
+    "ajouterPhoto": "Ajouter une photo (facultatif)",
+    "formats": "JPG, PNG ou WEBP, 5 Mo maximum",
+    "changerPhoto": "Cliquez sur la photo pour en choisir une autre.",
+    "champTitre": "Titre de la cagnotte",
+    "champTitrePlaceholder": "Ex : Aide pour l'opération de Marie",
+    "description": "Description",
+    "descriptionPlaceholder": "Expliquez le contexte de votre cagnotte...",
+    "objectif": "Objectif (XAF)",
+    "categorie": "Catégorie",
+    "aucuneCategorie": "Aucune catégorie",
+    "dateDebut": "Date de début",
+    "dateFin": "Date de fin",
+    "commission": "SoliFund prélève une commission de {{taux}} sur les retraits.",
+    "conditions": "Conditions d'utilisation",
+    "creer": "Créer ma cagnotte",
+    "creationEnCours": "Création en cours..."
+  },
+  "modification": {
+    "titre": "Modifier la cagnotte",
+    "sousTitre": "Mettez à jour les informations de votre collecte.",
+    "erreurChargement": "La cagnotte n'a pas pu être chargée. {{detail}}",
+    "retour": "Retour à mes cagnottes"
+  },
+  "notifications": {
+    "titre": "Notifications",
+    "nonLues_one": "{{count}} notification non lue",
+    "nonLues_other": "{{count}} notifications non lues",
+    "aJour": "Vous êtes à jour.",
+    "toutLu": "Tout marquer comme lu",
+    "aucune": "Aucune notification pour le moment.",
+    "gerer": "Gérer la cagnotte",
+    "voirCommentaire": "Voir le commentaire",
+    "voirCagnotte": "Voir la cagnotte",
+    "marquerLue": "Marquer comme lue"
+  },
+  "profil": {
+    "titre": "Mon profil",
+    "sousTitre": "Gérez vos informations personnelles.",
+    "cagnottes_one": "Cagnotte",
+    "cagnottes_other": "Cagnottes",
+    "collectes": "Collectés",
+    "erreurChiffres": "Vos chiffres n'ont pas pu être chargés. {{detail}}",
+    "modifier": "Modifier mes informations",
+    "prenom": "Prénom",
+    "nom": "Nom",
+    "email": "Email",
+    "emailAide": "L'email ne peut pas être modifié pour l'instant.",
+    "telephone": "Téléphone",
+    "misAJour": "Profil mis à jour avec succès.",
+    "enregistrer": "Enregistrer les modifications",
+    "motDePasse": {
+      "erreurActuel": "Saisissez votre mot de passe actuel.",
+      "erreurNouveau": "Le nouveau mot de passe doit contenir au moins 8 caractères.",
+      "erreurConfirmation": "Les deux mots de passe ne correspondent pas.",
+      "definiTitre": "Définir un mot de passe",
+      "changerTitre": "Changer le mot de passe",
+      "definiTexte": "Vous vous connectez avec Google. Définissez un mot de passe pour pouvoir aussi vous connecter avec votre adresse email.",
+      "changerTexte": "Vos autres appareils seront déconnectés.",
+      "actuel": "Mot de passe actuel",
+      "nouveau": "Nouveau mot de passe",
+      "aide": "8 caractères minimum.",
+      "confirmer": "Confirmer le nouveau mot de passe",
+      "defini": "Votre mot de passe a été défini.",
+      "modifie": "Votre mot de passe a été modifié.",
+      "definir": "Définir le mot de passe",
+      "changer": "Changer le mot de passe"
+    }
+  },
+  "codesNotification": {
+    "inconnue": {
+      "titre": "Nouvelle notification",
+      "message": ""
+    },
+    "DON_RECU": {
+      "titre": "Nouveau don reçu",
+      "message": "Vous avez reçu un don de {{montant}} sur « {{titre}} »."
+    },
+    "COMMENTAIRE_RECU": {
+      "titre": "Nouveau commentaire",
+      "message": "{{prenom}} a commenté votre cagnotte « {{titre}} »."
+    },
+    "CAGNOTTE_PUBLIEE": {
+      "titre": "Cagnotte publiée",
+      "message": "Votre cagnotte « {{titre}} » a été vérifiée : elle est maintenant en ligne."
+    },
+    "CAGNOTTE_PUBLIEE_IDENTITE": {
+      "titre": "Cagnotte publiée",
+      "message": "Votre identité est vérifiée : votre cagnotte « {{titre}} » est maintenant en ligne."
+    },
+    "CAGNOTTE_REFUSEE": {
+      "titre": "Cagnotte refusée",
+      "message": "Votre cagnotte « {{titre}} » n'a pas été publiée. Motif : {{motif}} Vous pouvez la modifier pour la soumettre à nouveau."
+    },
+    "CAGNOTTE_SUSPENDUE": {
+      "titre": "Cagnotte suspendue",
+      "message": "Votre cagnotte « {{titre}} » a été suspendue par l'équipe SoliFund. Motif : {{motif}}"
+    },
+    "CAGNOTTE_SUSPENDUE_SIGNALEMENTS": {
+      "titre": "Cagnotte suspendue",
+      "message": "Votre cagnotte « {{titre}} » a été suspendue à la suite de plusieurs signalements. Notre équipe l'examine."
+    },
+    "CAGNOTTE_REACTIVEE": {
+      "titre": "Cagnotte réactivée",
+      "message": "Votre cagnotte « {{titre}} » a été réactivée."
+    },
+    "CAGNOTTE_TERMINEE": {
+      "titre": "Cagnotte terminée",
+      "message": "Votre cagnotte « {{titre}} » est terminée. Montant collecté : {{montant}}."
+    },
+    "IDENTITE_VERIFIEE": {
+      "titre": "Identité vérifiée",
+      "message": "Votre identité a été vérifiée. Vous pouvez demander des retraits : ils seront versés sur le {{telephone}}."
+    },
+    "IDENTITE_REFUSEE": {
+      "titre": "Vérification d'identité refusée",
+      "message": "Votre vérification d'identité a été refusée. Motif : {{motif}} Vous pouvez soumettre une nouvelle demande."
+    },
+    "RETRAIT_TRAITE": {
+      "titre": "Retrait traité",
+      "message": "Votre retrait de {{brut}} a été traité : {{net}} ont été versés sur le {{numero}} (commission SoliFund : {{commission}}).",
+      "messageSansCommission": "Votre retrait de {{brut}} a été traité : la somme a été versée sur le {{numero}}."
+    },
+    "RETRAIT_REJETE": {
+      "titre": "Retrait rejeté",
+      "message": "Votre retrait de {{brut}} a été rejeté. Motif : {{motif}}",
+      "messageSansMotif": "Votre retrait de {{brut}} a été rejeté. Aucun motif précisé."
+    },
+    "IDENTITE_A_VERIFIER": {
+      "titre": "Identité à vérifier",
+      "message": "{{prenoms}} {{nom}} a soumis une vérification d'identité."
+    },
+    "CAGNOTTE_EN_VERIFICATION": {
+      "titre": "Cagnotte en vérification",
+      "message": "La cagnotte « {{titre}} » attend une vérification ({{raisons}})."
+    },
+    "SUSPENSION_AUTOMATIQUE": {
+      "titre": "Suspension automatique",
+      "message": "La cagnotte « {{titre}} » a été suspendue automatiquement après {{nombre}} signalements."
+    }
+  }
+}

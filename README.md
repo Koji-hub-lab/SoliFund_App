@@ -10,8 +10,9 @@ Plateforme de cagnottes solidaires pour le Cameroun : un organisateur crée une 
 | `frontend/` | Site React 19 + Vite + Tailwind 4 (charte graphique : `frontend/DESIGN.md`) |
 | `docs/` | Audit (`AUDIT.md`) et ancien schéma SQL conservé pour mémoire |
 
-> Paiements Mobile Money : prestataire 3SPAY (client dans `backend/src/paiement-3spay/`,
-> spécification dans `docs/paiement/3spay-openapi.json`). Les dons y seront branchés prochainement.
+> Paiements Mobile Money : prestataire Notch Pay (client de l'API dans `backend/src/payment/`,
+> documentation dans `docs/paiement/`). Les dons ne sont pas encore branchés sur ce client : en
+> attendant, la création d'un don répond « indisponible » (503).
 
 ## Prérequis
 
@@ -55,11 +56,15 @@ L'API vérifie ces variables au démarrage et refuse de démarrer si une variabl
 | `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` | oui | Envoi des emails |
 | `FRONTEND_URL` | oui | Adresse du site : origine autorisée (CORS) et redirection des liens de partage |
 | `PUBLIC_API_URL` | non | Adresse publique de l'API, pour les liens de partage et les aperçus WhatsApp / Facebook (par défaut `http://localhost:<PORT>`) |
+| `COMMISSION_TAUX_POURCENT` | non | Commission SoliFund sur les retraits, en % (3 par défaut). Le taux est figé dans chaque retrait à la demande |
+| `SEUIL_OBJECTIF_VERIFICATION`, `SEUIL_SIGNALEMENTS` | non | Modération : objectif (XAF) au-dessus duquel une cagnotte est vérifiée avant publication (1 000 000 par défaut), et nombre de signalements qui suspend une cagnotte (3 par défaut) |
+| `STOCKAGE_PRIVE_DIR` | non | Dossier des pièces d'identité des organisateurs (par défaut `backend/stockage-prive`, jamais servi publiquement) ; en production, un volume persistant et sauvegardé |
 | `BREVO_SENDER_NOM` | non | Nom de l'expéditeur des emails |
 | `PORT` | non | Port HTTP (3000 par défaut) |
 | `NODE_ENV` | non | `development`, `production` ou `test` ; en production, la documentation `/docs` est désactivée |
-| `TROISPAY_API_URL`, `TROISPAY_API_KEY`, `TROISPAY_PARTNER_ID`, `TROISPAY_WEBHOOK_SECRET` | oui | Prestataire de paiement 3SPAY : adresse de l'API (HTTPS), identifiants partenaire et secret de signature des webhooks |
-| `TROISPAY_OPERATEUR_MTN`, `TROISPAY_OPERATEUR_ORANGE` | non | Code opérateur 3SPAY utilisé pour MTN et Orange (par défaut `mtn` et `intouch`) |
+| `NOTCHPAY_PUBLIC_KEY`, `NOTCHPAY_PRIVATE_KEY` | oui | Clés Notch Pay (clé publique : toutes les requêtes ; clé privée : versements et solde). Clés de test en développement : un avertissement est écrit au démarrage si une clé « live » est utilisée hors production, et inversement |
+| `NOTCHPAY_WEBHOOK_HASH` | en production | Hash de signature des webhooks Notch Pay |
+| `NOTCHPAY_API_URL` | non | URL de l'API Notch Pay (par défaut `https://api.notchpay.co`) |
 | `DATABASE_URL_TEST` | non | Base des tests e2e (par défaut : la base de `DATABASE_URL` suffixée par `_test`) |
 
 ### Frontend (`frontend/.env`, modèle dans `frontend/.env.example`)

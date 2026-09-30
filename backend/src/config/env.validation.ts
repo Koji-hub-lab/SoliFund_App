@@ -4,15 +4,16 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUrl,
   Max,
   Min,
   MinLength,
+  ValidateIf,
   validateSync,
 } from 'class-validator';
-import { CODES_OPERATEURS_3SPAY } from '../paiement-3spay/configuration-3spay';
 
 // Variables d'environnement lues au démarrage (voir .env.example).
 class VariablesEnvironnement {
@@ -74,43 +75,63 @@ class VariablesEnvironnement {
   )
   GOOGLE_CALLBACK_URL?: string;
 
-  // Prestataire de paiement 3SPAY (voir docs/paiement/3spay-openapi.json).
+  // Paiement Mobile Money par Notch Pay (voir src/payment). Clé publique : toutes les requêtes ;
+  // clé privée : versements et solde ; hash : signature des webhooks (exigé en production).
+  @IsOptional()
   @IsUrl(
-    { require_tld: false, protocols: ['https'], require_protocol: true },
+    { require_tld: false, require_protocol: true },
     {
       message:
-        'TROISPAY_API_URL doit être une URL HTTPS (ex. https://api.africawallets.fr).',
+        'NOTCHPAY_API_URL doit être une URL complète (ex. https://api.notchpay.co).',
     },
   )
-  TROISPAY_API_URL!: string;
+  NOTCHPAY_API_URL?: string;
 
   @IsString()
   @IsNotEmpty()
-  TROISPAY_API_KEY!: string;
+  NOTCHPAY_PUBLIC_KEY!: string;
 
   @IsString()
   @IsNotEmpty()
-  TROISPAY_PARTNER_ID!: string;
+  NOTCHPAY_PRIVATE_KEY!: string;
 
-  // Correspondance facultative des moyens de paiement vers les codes opérateurs 3SPAY (voir
-  // src/paiement-3spay/configuration-3spay.ts). 3SPAY ne refuse pas un code inconnu (le dépôt reste
-  // en attente pour toujours) : seuls les codes connus sont acceptés.
+  @ValidateIf(
+    (variables: VariablesEnvironnement) =>
+      variables.NODE_ENV === 'production' ||
+      variables.NOTCHPAY_WEBHOOK_HASH !== undefined,
+  )
+  @IsString()
+  @IsNotEmpty()
+  NOTCHPAY_WEBHOOK_HASH?: string;
+
+  // Commission SoliFund sur les retraits, en % (3 par défaut). Deux décimales au plus.
   @IsOptional()
-  @IsIn(CODES_OPERATEURS_3SPAY, {
-    message: `TROISPAY_OPERATEUR_MTN doit valoir ${CODES_OPERATEURS_3SPAY.join(', ')}.`,
-  })
-  TROISPAY_OPERATEUR_MTN?: string;
+  @Type(() => Number)
+  @IsNumber(
+    { maxDecimalPlaces: 2 },
+    { message: 'COMMISSION_TAUX_POURCENT doit être un nombre (ex. 3 ou 2.5).' },
+  )
+  @Min(0)
+  @Max(100)
+  COMMISSION_TAUX_POURCENT?: number;
+
+  // Seuils de modération (voir src/config/seuils.ts pour les valeurs par défaut).
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  SEUIL_OBJECTIF_VERIFICATION?: number;
 
   @IsOptional()
-  @IsIn(CODES_OPERATEURS_3SPAY, {
-    message: `TROISPAY_OPERATEUR_ORANGE doit valoir ${CODES_OPERATEURS_3SPAY.join(', ')}.`,
-  })
-  TROISPAY_OPERATEUR_ORANGE?: string;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  SEUIL_SIGNALEMENTS?: number;
 
-  // Secret de signature des notifications (webhooks) envoyées par 3SPAY.
+  // Dossier du stockage privé (pièces d'identité). Par défaut : backend/stockage-prive.
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  TROISPAY_WEBHOOK_SECRET!: string;
+  STOCKAGE_PRIVE_DIR?: string;
 
   @IsOptional()
   @Type(() => Number)
@@ -134,6 +155,10 @@ export function validerEnvironnement(config: Record<string, unknown>) {
     'GOOGLE_CALLBACK_URL',
   ];
   const aVerifier = { ...config };
+  // Facultatives laissées vides : considérées comme absentes.
+  for (const nom of ['NOTCHPAY_API_URL', 'NOTCHPAY_WEBHOOK_HASH']) {
+    if (aVerifier[nom] === '') delete aVerifier[nom];
+  }
   for (const nom of google) {
     if (aVerifier[nom] === '') delete aVerifier[nom];
   }

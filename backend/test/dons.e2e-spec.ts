@@ -65,24 +65,5 @@ describe('Validation des dons (e2e)', () => {
     ).toBe(1);
   });
 
-  // Webhook et échec de paiement : testés avec le client 3SPAY simulé lors du branchement des dons.
-  it('en attendant le branchement de 3SPAY, un nouveau don est refusé (503) sans rien créer', async () => {
-    const orga = await creerUtilisateur(prisma, jwt);
-    const donateur = await creerUtilisateur(prisma, jwt);
-    const cagnotte = await creerCagnotte(prisma, orga.id_utilisateur);
-    const avant = await prisma.don.count();
-
-    const reponse = await request(app.getHttpServer())
-      .post('/dons')
-      .set(entete(donateur.jeton))
-      .send({
-        id_cagnotte: cagnotte.id_cagnotte,
-        montant: 1000,
-        methode_paiement: 'MTN_MOBILE_MONEY',
-        numero_payeur: '699000000',
-      });
-
-    expect(reponse.status).toBe(503);
-    expect(await prisma.don.count()).toBe(avant);
-  });
+  // Le paiement par Notch Pay (création, vérification, réconciliation) : dons-notchpay.e2e-spec.ts.
 });

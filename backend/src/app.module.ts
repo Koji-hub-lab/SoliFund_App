@@ -18,6 +18,8 @@ import { AdminModule } from './admin/admin.module';
 import { validerEnvironnement } from './config/env.validation';
 import { PartageModule } from './partage/partage.module';
 import { SanteController } from './sante/sante.controller';
+import { VerificationIdentiteModule } from './verification-identite/verification-identite.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { SanteController } from './sante/sante.controller';
     TachesModule,
     AdminModule,
     PartageModule,
+    VerificationIdentiteModule,
+    PaymentModule,
   ],
   controllers: [SanteController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SymboleNjangi } from '../components/Logo';
@@ -10,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 export default function RetourGoogle() {
   const navigate = useNavigate();
   const { connecter } = useAuth();
+  const { t } = useTranslation('auth');
   // En développement, React exécute l'effet deux fois : le jeton n'est lu qu'une seule fois.
   const dejaTraite = useRef(false);
 
@@ -41,7 +43,7 @@ export default function RetourGoogle() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-5 text-center">
       <SymboleNjangi taille={96} />
       <p className="font-display text-2xl font-bold text-foreground" role="status">
-        Connexion en cours…
+        {t('google.enCours')}
       </p>
     </main>
   );

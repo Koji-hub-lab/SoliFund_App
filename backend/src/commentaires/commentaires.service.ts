@@ -17,6 +17,7 @@ import {
 } from '../cagnottes/cagnottes.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateCommentaireDto } from './dto/create-commentaire.dto';
+import { m } from '../i18n/messages';
 
 @Injectable()
 export class CommentairesService {
@@ -38,9 +39,7 @@ export class CommentairesService {
       utilisateur,
     );
     if (cagnotte.statut === 'SUSPENDUE' || cagnotte.statut === 'ANNULEE') {
-      throw new BadRequestException(
-        'Les commentaires sont fermés sur une cagnotte suspendue ou annulée.',
-      );
+      throw new BadRequestException(m('commentaires.fermes'));
     }
 
     const commentaire = await this.prisma.commentaire.create({
@@ -58,8 +57,8 @@ export class CommentairesService {
       try {
         await this.notificationsService.envoyer(
           cagnotte.id_utilisateur,
-          'Nouveau commentaire',
-          `${commentaire.utilisateur.prenom} a commenté votre cagnotte « ${cagnotte.titre} ».`,
+          'COMMENTAIRE_RECU',
+          { prenom: commentaire.utilisateur.prenom, titre: cagnotte.titre },
           'COMMENTAIRE',
           cagnotte.id_cagnotte,
         );
@@ -99,16 +98,14 @@ export class CommentairesService {
       where: { id_commentaire: idCommentaire },
     });
     if (!commentaire) {
-      throw new NotFoundException('Commentaire introuvable.');
+      throw new NotFoundException(m('commentaires.introuvable'));
     }
     if (commentaire.id_utilisateur !== idUtilisateur) {
-      throw new ForbiddenException(
-        'Vous ne pouvez pas supprimer ce commentaire.',
-      );
+      throw new ForbiddenException(m('commentaires.suppressionInterdite'));
     }
     await this.prisma.commentaire.delete({
       where: { id_commentaire: idCommentaire },
     });
-    return { message: 'Commentaire supprimé.' };
+    return { message: m('commentaires.supprime') };
   }
 }

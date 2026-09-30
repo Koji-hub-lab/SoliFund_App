@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -12,6 +13,7 @@ const lienCharte = 'inline-flex min-h-11 items-center bg-transparent p-0 font-sa
 
 export default function MotDePasseOublie() {
   const navigate = useNavigate();
+  const { t } = useTranslation('auth');
   const [etape, setEtape] = useState('email'); // 'email' | 'code' | 'nouveau-mdp'
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -44,7 +46,7 @@ export default function MotDePasseOublie() {
     setEnvoiEnCours(true);
     try {
       await api.post('/auth/mot-de-passe-oublie', { email });
-      setMessage('Nouveau code envoyé.');
+      setMessage(t('verification.codeEnvoye'));
     } catch (err) {
       setErreur(err.messageAffichable);
     } finally {
@@ -71,8 +73,8 @@ export default function MotDePasseOublie() {
     e.preventDefault();
     setErreur('');
     const erreurs = {};
-    if (motDePasse.length < 8) erreurs.motDePasse = 'Le mot de passe doit contenir au moins 8 caractères.';
-    else if (motDePasse !== confirmation) erreurs.confirmation = 'Les mots de passe ne correspondent pas.';
+    if (motDePasse.length < 8) erreurs.motDePasse = t('inscription.erreurs.motDePasse');
+    else if (motDePasse !== confirmation) erreurs.confirmation = t('inscription.erreurs.confirmation');
     setErreursMdp(erreurs);
     if (Object.keys(erreurs).length > 0) return;
 
@@ -91,15 +93,15 @@ export default function MotDePasseOublie() {
     <MiseEnPageAuth>
       {etape === 'email' && (
         <>
-          <h1 className={titre}>Mot de passe oublié</h1>
-          <p className="mt-2 text-base text-muted-foreground">Entrez votre email, on vous envoie un code de vérification.</p>
+          <h1 className={titre}>{t('oubli.titre')}</h1>
+          <p className="mt-2 text-base text-muted-foreground">{t('oubli.sousTitre')}</p>
 
           <form onSubmit={envoyerCode} className="mt-8 flex flex-col gap-5">
             <Champ
               id="oubli-email"
               type="email"
-              libelle="Email"
-              placeholder="vous@exemple.com"
+              libelle={t('champs.email')}
+              placeholder={t('champs.emailPlaceholder')}
               autoComplete="email"
               required
               value={email}
@@ -107,7 +109,7 @@ export default function MotDePasseOublie() {
               erreur={erreur}
             />
             <Button type="submit" size="lg" disabled={envoiEnCours} className="w-full">
-              {envoiEnCours ? 'Envoi en cours...' : 'Envoyer le code'}
+              {envoiEnCours ? t('commun:actions.envoiEnCours') : t('oubli.envoyer')}
             </Button>
           </form>
         </>
@@ -115,9 +117,9 @@ export default function MotDePasseOublie() {
 
       {etape === 'code' && (
         <>
-          <h1 className={titre}>Vérification</h1>
+          <h1 className={titre}>{t('oubli.codeTitre')}</h1>
           <p className="mt-2 text-base leading-[1.6] text-muted-foreground">
-            On a envoyé un code à 6 chiffres à <strong className="text-foreground">{email}</strong>. Vérifiez aussi vos spams.
+            <Trans t={t} i18nKey="verification.texte" values={{ email }} components={{ b: <strong className="text-foreground" /> }} />
           </p>
 
           <form onSubmit={verifierCode} className="mt-8 flex flex-col gap-5">
@@ -127,18 +129,18 @@ export default function MotDePasseOublie() {
               {message && <p className="mt-2 text-sm text-primary">{message}</p>}
             </div>
             <Button type="submit" size="lg" disabled={envoiEnCours || !/^\d{6}$/.test(code)} className="w-full">
-              {envoiEnCours ? 'Vérification...' : 'Vérifier le code'}
+              {envoiEnCours ? t('verification.enCours') : t('verification.verifier')}
             </Button>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <button type="button" onClick={renvoyerCode} disabled={envoiEnCours} className={lienCharte}>
-                Renvoyer le code
+                {t('verification.renvoyer')}
               </button>
               <button
                 type="button"
                 onClick={() => { setErreur(''); setMessage(''); setCode(''); setEtape('email'); }}
                 className="inline-flex min-h-11 items-center bg-transparent p-0 font-sans text-sm font-bold text-muted-foreground hover:text-foreground"
               >
-                Mauvais email ? Recommencer
+                {t('oubli.recommencer')}
               </button>
             </div>
           </form>
@@ -147,14 +149,14 @@ export default function MotDePasseOublie() {
 
       {etape === 'nouveau-mdp' && (
         <>
-          <h1 className={titre}>Nouveau mot de passe</h1>
-          <p className="mt-2 text-base text-muted-foreground">Code vérifié. Choisissez votre nouveau mot de passe.</p>
+          <h1 className={titre}>{t('oubli.nouveauTitre')}</h1>
+          <p className="mt-2 text-base text-muted-foreground">{t('oubli.nouveauSousTitre')}</p>
 
           <form onSubmit={reinitialiser} noValidate className="mt-8 flex flex-col gap-5">
             <ChampMotDePasse
               id="nouveau-mdp"
-              libelle="Nouveau mot de passe"
-              placeholder="8 caractères minimum"
+              libelle={t('champs.nouveauMotDePasse')}
+              placeholder={t('champs.motDePassePlaceholder')}
               autoComplete="new-password"
               required
               value={motDePasse}
@@ -163,7 +165,7 @@ export default function MotDePasseOublie() {
             />
             <ChampMotDePasse
               id="confirmation-mdp"
-              libelle="Confirmer le mot de passe"
+              libelle={t('champs.confirmer')}
               placeholder="••••••••"
               autoComplete="new-password"
               required
@@ -173,7 +175,7 @@ export default function MotDePasseOublie() {
             />
             {erreur && <p className="text-sm text-destructive">{erreur}</p>}
             <Button type="submit" size="lg" disabled={envoiEnCours} className="w-full">
-              {envoiEnCours ? 'Enregistrement...' : 'Réinitialiser le mot de passe'}
+              {envoiEnCours ? t('commun:actions.enregistrement') : t('oubli.reinitialiser')}
             </Button>
           </form>
         </>
@@ -181,7 +183,7 @@ export default function MotDePasseOublie() {
 
       <p className="mt-8 text-center">
         <Link to="/login" className="inline-flex min-h-11 items-center text-sm font-bold text-primary underline decoration-2 underline-offset-[5px]">
-          Retour à la connexion
+          {t('oubli.retour')}
         </Link>
       </p>
     </MiseEnPageAuth>

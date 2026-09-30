@@ -1,0 +1,124 @@
+{
+  "carte": {
+    "terminee": "Ended",
+    "dernierJour": "Last day",
+    "joursRestants_one": "{{count}} day left",
+    "joursRestants_other": "{{count}} days left",
+    "donateurs_one": "{{count}} donor",
+    "donateurs_other": "{{count}} donors"
+  },
+  "liste": {
+    "surTitre": "Discover",
+    "titre": "All fundraisers",
+    "rechercher": "Search fundraisers",
+    "rechercherPlaceholder": "Search fundraisers...",
+    "trier": "Sort fundraisers",
+    "tris": { "recentes": "Newest", "populaires": "Most popular", "bientot_terminees": "Ending soon" },
+    "toutes": "All",
+    "erreurCategories": "We couldn't load the categories. {{detail}}",
+    "total_one": "{{count}} fundraiser",
+    "total_other": "{{count}} fundraisers",
+    "aucunResultat": "No fundraiser matches your search",
+    "effacerFiltres": "Clear filters"
+  },
+  "page": {
+    "introuvable": "We couldn't find this fundraiser.",
+    "retour": "Back to fundraisers",
+    "toutes": "All fundraisers",
+    "felicitationsTitre": "Congratulations, your fundraiser is live",
+    "felicitationsTexte": "Share it with your friends and family right away — the first gifts almost always come from them.",
+    "organisateur": "You're the organiser of this fundraiser",
+    "gerer": "Manage fundraiser →",
+    "onglets": { "histoire": "The story", "actualites": "Updates", "commentaires": "Comments" },
+    "organiseePar": "Organised by {{nom}}",
+    "membreDepuis": "Member since {{date}}",
+    "emailVerifie": "Email verified",
+    "dates": "{{debut}} to {{fin}}",
+    "sansHistoire": "The organiser hasn't told this fundraiser's story yet.",
+    "sansActualite": "No updates yet."
+  },
+  "montant": {
+    "objectif": "raised of a {{objectif}} goal",
+    "atteint": "reached",
+    "donateur_one": "donor",
+    "donateur_other": "donors",
+    "jourRestant_one": "day left",
+    "jourRestant_other": "days left",
+    "terminee": "ended"
+  },
+  "don": {
+    "montantMinimum": "The minimum amount is {{montant}}.",
+    "connexion": "Log in to support this fundraiser.",
+    "seConnecter": "Log in",
+    "attente": {
+      "titre": "Confirm on your phone",
+      "texte": "We've sent a payment request for <b>{{montant}}</b> to <b>{{numero}}</b>. Approve it with your {{operateur}} PIN, then check the payment here.",
+      "verifier": "Check payment",
+      "verification": "Checking...",
+      "toujours": "The payment is still waiting for your confirmation."
+    },
+    "succes": {
+      "titre": "Thank you, {{prenom}}!",
+      "texte": "We've received your gift of <b>{{montant}}</b>. Just like in a njangi, every contribution moves everyone forward.",
+      "autre": "Give again"
+    },
+    "echec": {
+      "titre": "The payment didn't go through",
+      "texte": "The payment was declined or cancelled on your phone. You can try again."
+    },
+    "titre": "Make a gift",
+    "montant": "Amount (XAF)",
+    "montantPlaceholder": "E.g. 2,000",
+    "payerAvec": "Pay with",
+    "numero": "Phone number",
+    "message": "A few words (optional)",
+    "messagePlaceholder": "A word of encouragement for the organiser...",
+    "anonyme": "Give anonymously",
+    "donner": "Give",
+    "donnerMontant": "Give {{montant}}",
+    "confirmation": "You'll confirm the payment on your phone"
+  },
+  "dons": {
+    "titre": "Latest gifts",
+    "vide": "No gifts yet.",
+    "anonyme": "Anonymous",
+    "voirPlus": "See more gifts",
+    "moins": "Show less",
+    "tous": "See all gifts ({{total}})"
+  },
+  "commentaires": {
+    "titre": "Words of encouragement",
+    "confirmerSuppression": "Delete this comment?",
+    "champ": "Your word of encouragement",
+    "placeholder": "Write a word of encouragement...",
+    "publier": "Post",
+    "connexion": "Log in to leave a message",
+    "supprimer": "Delete",
+    "vide": "No comments yet.",
+    "voirPlus": "See more comments"
+  },
+  "partage": {
+    "titre": "Sharing helps too",
+    "texte": "Every share can bring in a new donor.",
+    "whatsapp": "{{titre}} — Support this fundraiser: {{url}}",
+    "copier": "Copy link",
+    "copie": "Link copied",
+    "copieImpossible": "We couldn't copy the link: copy the address from your browser bar instead."
+  },
+  "signalement": {
+    "lien": "Report this fundraiser",
+    "merci": "Thank you, our team will look into this fundraiser.",
+    "titre": "Report this fundraiser",
+    "texte": "Tell us what seems wrong. Your report goes straight to our moderation team.",
+    "envoyer": "Send report",
+    "motif": "Reason",
+    "commentaire": "Comment",
+    "commentairePlaceholder": "Add details if you'd like",
+    "motifs": {
+      "ARNAQUE": "Scam",
+      "CONTENU_INAPPROPRIE": "Inappropriate content",
+      "FAUSSES_INFORMATIONS": "False information",
+      "AUTRE": "Other"
+    }
+  }
+}

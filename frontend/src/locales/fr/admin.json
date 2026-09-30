@@ -1,0 +1,195 @@
+{
+  "nav": {
+    "etiquette": "Administration",
+    "tableauDeBord": "Tableau de bord",
+    "cagnottes": "Cagnottes",
+    "signalements": "Signalements",
+    "retraits": "Retraits",
+    "revenus": "Revenus",
+    "utilisateurs": "Utilisateurs",
+    "categories": "Catégories",
+    "espaceOrganisateur": "Espace organisateur"
+  },
+  "tableau": {
+    "titre": "Tableau de bord",
+    "sousTitre": "Vue d'ensemble de l'activité sur SoliFund.",
+    "montantCollecte": "Montant collecté",
+    "utilisateurs": "Utilisateurs",
+    "montantRetire": "Montant retiré",
+    "commissionsDuMois": "Commissions du mois",
+    "voirRevenus": "Voir les revenus →",
+    "retraitsEnAttente": "Retraits en attente",
+    "traiter": "Traiter →",
+    "parStatut": "Cagnottes par statut",
+    "actives": "Actives",
+    "suspendues": "Suspendues",
+    "terminees": "Terminées",
+    "annulees": "Annulées"
+  },
+  "cagnottes": {
+    "titre": "Gestion des cagnottes",
+    "sousTitre": "Validez les cagnottes en attente, suspendez ou réactivez celles qui sont en ligne.",
+    "rechercher": "Rechercher une cagnotte",
+    "rechercherPlaceholder": "Rechercher une cagnotte...",
+    "filtres": {
+      "EN_VERIFICATION": "À valider",
+      "ACTIVE": "Actives",
+      "SUSPENDUE": "Suspendues",
+      "REFUSEE": "Refusées",
+      "TERMINEE": "Terminées",
+      "ANNULEE": "Annulées",
+      "TOUTES": "Toutes"
+    },
+    "vide": "Aucune cagnotte dans cette catégorie.",
+    "privee": "Privée",
+    "organiseePar": "Organisée par {{nom}} ({{email}})",
+    "aVerifier": "À vérifier : {{raisons}}",
+    "raisonNonPrecisee": "raison non précisée",
+    "motifRefus": "Motif du refus : {{motif}}",
+    "resume": "<b>{{collecte}}</b> sur {{objectif}} · {{categorie}} · du {{debut}} au {{fin}}",
+    "sansCategorie": "Sans catégorie",
+    "approuver": "Approuver",
+    "identiteRequise": "L'identité de l'organisateur doit d'abord être validée.",
+    "refuser": "Refuser",
+    "suspendre": "Suspendre",
+    "reactiver": "Réactiver",
+    "motif": "Motif",
+    "confirmations": {
+      "suspendre": {
+        "titre": "Suspendre cette cagnotte ?",
+        "message": "« {{titre}} » ne pourra plus recevoir de dons et ne sera plus visible publiquement. L'organisateur recevra le motif.",
+        "libelle": "Suspendre la cagnotte",
+        "motif": "Motif de la suspension",
+        "placeholder": "Ex. justificatifs manquants"
+      },
+      "refuser": {
+        "titre": "Refuser cette cagnotte ?",
+        "message": "« {{titre}} » ne sera pas publiée. L'organisateur recevra le motif et pourra la modifier pour la soumettre à nouveau.",
+        "libelle": "Refuser la cagnotte",
+        "motif": "Motif du refus",
+        "placeholder": "Ex. description trop vague"
+      }
+    }
+  },
+  "retraits": {
+    "titre": "Gestion des retraits",
+    "sousTitre": "Versez le montant net sur le numéro vérifié de l'organisateur, puis marquez le retrait comme versé.",
+    "rechercher": "Rechercher un retrait",
+    "rechercherPlaceholder": "Rechercher une cagnotte, un organisateur, un email...",
+    "filtres": { "EN_ATTENTE": "En attente", "TRAITE": "Traités", "REJETE": "Rejetés", "TOUS": "Tous" },
+    "vide": "Aucune demande dans cette catégorie.",
+    "aVerser": "À verser : {{montant}}",
+    "verse": "Versé : {{montant}}",
+    "net": "Net : {{montant}}",
+    "demande": "Demandé : {{brut}} · commission ({{taux}}) : {{commission}}",
+    "demandeSansCommission": "Demandé : {{brut}} · commission : aucune",
+    "demandePar": "Demandé par {{nom}} ({{email}})",
+    "motifRejet": "Motif du rejet : {{motif}}",
+    "marquer": "Marquer comme versé",
+    "rejeter": "Rejeter",
+    "traiterTitre": "Marquer ce retrait comme versé ?",
+    "traiterMessage": "Confirmez que vous avez versé exactement {{net}} au {{numero}} ({{operateur}}). L'organisateur sera prévenu.",
+    "rejeterTitre": "Rejeter ce retrait ?",
+    "rejeterMessage": "La demande de {{brut}} sera rejetée et le montant redeviendra disponible. L'organisateur sera prévenu.",
+    "rejeterLibelle": "Rejeter le retrait",
+    "motif": "Motif du rejet",
+    "motifPlaceholder": "Ex. numéro bénéficiaire incorrect"
+  },
+  "utilisateurs": {
+    "titre": "Utilisateurs",
+    "sousTitre_one": "{{count}} compte inscrit sur la plateforme.",
+    "sousTitre_other": "{{count}} comptes inscrits sur la plateforme.",
+    "rechercher": "Rechercher un utilisateur",
+    "rechercherPlaceholder": "Rechercher un nom ou un email...",
+    "filtres": { "tous": "Tous", "ACTIF": "Actifs", "SUSPENDU": "Suspendus", "BANNI": "Bannis" },
+    "vide": "Aucun utilisateur ne correspond à votre recherche.",
+    "admin": "Admin",
+    "inscritLe": "{{email}} · inscrit le {{date}}",
+    "protege": "Le statut d'un administrateur ne peut pas être modifié.",
+    "reactiver": "Réactiver",
+    "suspendre": "Suspendre",
+    "bannir": "Bannir",
+    "confirmations": {
+      "SUSPENDU": {
+        "titre": "Suspendre ce compte ?",
+        "message": "{{nom}} ne pourra plus se connecter tant que son compte sera suspendu.",
+        "libelle": "Suspendre le compte"
+      },
+      "BANNI": {
+        "titre": "Bannir ce compte ?",
+        "message": "{{nom}} ne pourra plus se connecter, et ses cagnottes actives seront suspendues.",
+        "libelle": "Bannir le compte"
+      }
+    }
+  },
+  "categories": {
+    "titre": "Catégories",
+    "sousTitre": "Les catégories proposées aux organisateurs et utilisées comme filtres sur le site.",
+    "couleur": "Couleur",
+    "aucuneCouleur": "Aucune",
+    "couleurs": { "#087F7A": "Lagune", "#055955": "Lagune foncée", "#E9A23B": "Ambre", "#17262A": "Encre" },
+    "nomObligatoire": "Le nom est obligatoire.",
+    "ajouterTitre": "Ajouter une catégorie",
+    "nom": "Nom",
+    "nomPlaceholder": "Éducation",
+    "ajout": "Ajout en cours...",
+    "ajouter": "Ajouter la catégorie",
+    "vide": "Aucune catégorie pour le moment.",
+    "aucuneCagnotte": "Aucune cagnotte",
+    "cagnottes_one": "{{count}} cagnotte",
+    "cagnottes_other": "{{count}} cagnottes",
+    "modifier": "Modifier",
+    "supprimer": "Supprimer",
+    "suppressionImpossible": "Une catégorie utilisée par des cagnottes ne peut pas être supprimée.",
+    "supprimerTitre": "Supprimer cette catégorie ?",
+    "supprimerMessage": "« {{nom}} » ne sera plus proposée aux organisateurs.",
+    "supprimerLibelle": "Supprimer la catégorie"
+  },
+  "signalements": {
+    "titre": "Signalements",
+    "sousTitreChargement": "Cagnottes signalées par les visiteurs et les utilisateurs.",
+    "signalements_one": "{{count}} signalement ouvert",
+    "signalements_other": "{{count}} signalements ouverts",
+    "surCagnottes_one": "sur {{count}} cagnotte.",
+    "surCagnottes_other": "sur {{count}} cagnottes.",
+    "vide": "Aucun signalement ouvert.",
+    "nombre_one": "{{count}} signalement",
+    "nombre_other": "{{count}} signalements",
+    "dernier": "dernier le {{date}}",
+    "classer": "Classer sans suite",
+    "suspendre": "Suspendre",
+    "reactiver": "Réactiver",
+    "confirmations": {
+      "classer": {
+        "titre": "Classer ces signalements sans suite ?",
+        "message": "Les signalements de « {{titre}} » seront classés. La cagnotte garde son statut actuel.",
+        "libelle": "Classer sans suite"
+      },
+      "suspendre": {
+        "titre": "Suspendre cette cagnotte ?",
+        "message": "« {{titre}} » ne pourra plus recevoir de dons et ne sera plus visible publiquement. L'organisateur recevra le motif.",
+        "libelle": "Suspendre la cagnotte",
+        "motif": "Motif de la suspension",
+        "placeholder": "Ex. signalements confirmés"
+      },
+      "reactiver": {
+        "titre": "Réactiver cette cagnotte ?",
+        "message": "« {{titre}} » sera de nouveau en ligne, et ses signalements seront classés.",
+        "libelle": "Réactiver la cagnotte"
+      }
+    }
+  },
+  "revenus": {
+    "titre": "Revenus",
+    "sousTitre": "Commissions prélevées sur les retraits versés aux organisateurs.",
+    "total": "Total des commissions",
+    "mois": "Commissions de {{mois}}",
+    "parMois": "Par mois",
+    "aucune": "Aucune commission pour le moment.",
+    "colMois": "Mois",
+    "colRetraits": "Retraits versés",
+    "colCommissions": "Commissions",
+    "detail": "Détail des commissions",
+    "ligne": "{{date}} · retrait de {{brut}} par {{nom}} · versé {{net}}"
+  }
+}

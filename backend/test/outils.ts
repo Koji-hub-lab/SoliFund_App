@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { Prisma, StatutCagnotte, StatutUtilisateur } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -7,20 +8,57 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { configurerApplication } from '../src/configuration-application';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { BrevoService } from '../src/jetons/brevo.service';
+import { NotchPayClient } from '../src/payment/notchpay.client';
+import { FauxNotchPay } from './faux-notchpay';
 
 export const MOT_DE_PASSE = 'motdepasse-test-1';
 
+// Email d'alerte aux administrateurs capturé par le faux service Brevo des tests.
+export interface EmailAlerte {
+  destinataires: string[];
+  sujet: string;
+  lignes: string[];
+}
+
 // Application complète (mêmes modules et réglages que l'API), branchée sur la base de test.
+// Aucun email réel n'est envoyé : BrevoService est remplacé, et les alertes sont gardées dans
+// `emails`. Aucun paiement réel non plus : NotchPayClient est remplacé par FauxNotchPay. « trust proxy » permet aux tests de simuler des adresses IP avec X-Forwarded-For.
 export async function creerApplication() {
-  const module = await Test.createTestingModule({
-    imports: [AppModule],
-  }).compile();
-  const app: INestApplication<App> = module.createNestApplication({
+  const emails: EmailAlerte[] = [];
+  const notchPay = new FauxNotchPay();
+  const fauxBrevo = {
+    envoyerCodeReinitialisation: () => Promise.resolve(),
+    envoyerCodeVerification: () => Promise.resolve(),
+    // Un email par administrateur, écrit dans sa langue.
+    envoyerAlerteAdmin: (
+      destinataire: { email: string },
+      sujet: string,
+      lignes: string[],
+    ) => {
+      emails.push({ destinataires: [destinataire.email], sujet, lignes });
+      return Promise.resolve();
+    },
+  };
+  const module = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(BrevoService)
+    .useValue(fauxBrevo)
+    .overrideProvider(NotchPayClient)
+    .useValue(notchPay)
+    .compile();
+  const app: NestExpressApplication = module.createNestApplication({
     logger: false,
   });
+  app.set('trust proxy', true);
   configurerApplication(app);
   await app.init();
-  return { app, prisma: app.get(PrismaService), jwt: app.get(JwtService) };
+  return {
+    app: app as INestApplication<App>,
+    prisma: app.get(PrismaService),
+    jwt: app.get(JwtService),
+    emails,
+    notchPay,
+  };
 }
 
 // Vide toutes les tables (sauf les rôles et l'historique des migrations) entre deux fichiers de test.
@@ -118,7 +156,7 @@ export async function creerDon(
       methode_paiement: 'MTN_MOBILE_MONEY',
       numero_payeur: '+237699000000',
       id_utilisateur: idDonateur,
-      transaction_id: `test-${compteur}-${Date.now()}`,
+      reference: `SLF-DON-TEST-${compteur}-${Date.now()}`,
       statut,
     },
   });
@@ -137,4 +175,38 @@ export async function creerDon(
     });
   }
   return { don, paiement };
+}
+
+// Vérification d'identité créée directement en base (sans fichiers), VALIDEE par défaut.
+export async function validerIdentite(
+  prisma: PrismaService,
+  idUtilisateur: number,
+  telephone = '699112233',
+  statut: 'VALIDEE' | 'EN_ATTENTE' | 'REFUSEE' = 'VALIDEE',
+) {
+  return prisma.verificationIdentite.create({
+    data: {
+      id_utilisateur: idUtilisateur,
+      type_piece: 'CNI',
+      nom: 'Test',
+      prenoms: 'Organisateur',
+      date_naissance: new Date('1990-01-01'),
+      numero_piece: `CNI-${idUtilisateur}-${Date.now()}`,
+      date_expiration: new Date('2099-12-31'),
+      telephone_retrait: telephone,
+      methode_retrait: 'ORANGE_MONEY',
+      statut,
+      date_decision: statut === 'EN_ATTENTE' ? null : new Date(),
+    },
+  });
+}
+
+// Utilisateur dont l'identité est vérifiée : il peut demander des retraits.
+export async function creerOrganisateur(
+  prisma: PrismaService,
+  jwt: JwtService,
+) {
+  const utilisateur = await creerUtilisateur(prisma, jwt);
+  await validerIdentite(prisma, utilisateur.id_utilisateur);
+  return utilisateur;
 }

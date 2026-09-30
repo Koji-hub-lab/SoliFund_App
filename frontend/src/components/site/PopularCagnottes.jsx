@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -9,6 +10,7 @@ export function PopularCagnottes() {
   const [categories, setCategories] = useState([]);
   const [categorie, setCategorie] = useState('');
   const [erreur, setErreur] = useState('');
+  const { t } = useTranslation('accueil');
 
   useEffect(() => {
     api.get('/categories').then((res) => setCategories(res.data)).catch(() => setCategories([]));
@@ -27,23 +29,23 @@ export function PopularCagnottes() {
     };
   }, [categorie]);
 
-  const filtres = [{ id_categorie: '', nom: 'Toutes' }, ...categories];
+  const filtres = [{ id_categorie: '', nom: t('populaires.toutes') }, ...categories];
 
   return (
     <section id="cagnottes" className="scroll-mt-[88px] bg-background">
       <div className="mx-auto max-w-[1400px] px-5 py-16 sm:px-8 lg:px-[72px] lg:py-24">
         <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.12em] text-primary">En ce moment</p>
+            <p className="text-sm font-bold uppercase tracking-[0.12em] text-primary">{t('populaires.surTitre')}</p>
             <h2 className="mb-0 mt-3 font-display text-[36px] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground lg:text-[52px]">
-              Cagnottes populaires
+              {t('populaires.titre')}
             </h2>
           </div>
           <Link
             to="/cagnottes"
             className="inline-flex min-h-11 items-center gap-1.5 text-base font-bold text-primary underline decoration-2 underline-offset-[5px]"
           >
-            Voir toutes les cagnottes
+            {t('populaires.voirTout')}
             <ArrowRight className="size-4" />
           </Link>
         </div>
@@ -76,7 +78,7 @@ export function PopularCagnottes() {
         </div>
         {!erreur && cagnottes.length === 0 && (
           <p className="mt-8 text-muted-foreground">
-            {categorie ? 'Aucune cagnotte dans cette catégorie pour le moment.' : 'Aucune cagnotte pour le moment.'}
+            {categorie ? t('populaires.videCategorie') : t('populaires.vide')}
           </p>
         )}
       </div>

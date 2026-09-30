@@ -1,3 +1,5 @@
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { urlBaseTest } from './base-test';
 
 // Chargé avant chaque fichier de test (setupFiles) : l'application pointe sur la base de test.
@@ -12,8 +14,18 @@ process.env.GOOGLE_CLIENT_ID = '';
 process.env.GOOGLE_CLIENT_SECRET = '';
 process.env.GOOGLE_CALLBACK_URL = '';
 
-// 3SPAY : valeurs factices si le .env n'en fournit pas (aucun appel réel n'est fait dans les tests).
-process.env.TROISPAY_API_URL ??= 'https://3spay.test';
-process.env.TROISPAY_API_KEY ??= 'cle-api-de-test';
-process.env.TROISPAY_PARTNER_ID ??= 'PARTENAIRE-TEST';
-process.env.TROISPAY_WEBHOOK_SECRET ??= 'secret-webhook-de-test';
+// Pièces d'identité des tests : dans un dossier temporaire, jamais dans backend/stockage-prive.
+process.env.STOCKAGE_PRIVE_DIR = join(
+  tmpdir(),
+  'solifund-tests-stockage-prive',
+);
+
+// Notch Pay : clés factices du mode test, quel que soit le .env. Aucun test n'appelle la vraie API.
+process.env.NOTCHPAY_PUBLIC_KEY = 'pk_test_factice';
+process.env.NOTCHPAY_PRIVATE_KEY = 'sk_test_factice';
+process.env.NOTCHPAY_WEBHOOK_HASH = '';
+process.env.NOTCHPAY_API_URL = 'http://127.0.0.1:9';
+
+// Taux de commission fixe dans les tests, quel que soit le .env (commission.e2e-spec.ts le change
+// pour vérifier que l'historique est conservé).
+process.env.COMMISSION_TAUX_POURCENT = '3';

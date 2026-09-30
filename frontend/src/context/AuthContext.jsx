@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import api from '../api/axios';
+import i18n, { langueActive } from '../i18n';
 
 const AuthContext = createContext(null);
 
@@ -49,6 +50,33 @@ export function AuthProvider({ children }) {
       });
     }
   }, [rafraichirUtilisateur]);
+
+  // La langue de l'interface est enregistrée dans le compte (langue_preferee) : les emails sont
+  // envoyés dans cette langue. Vérifié à la connexion et à chaque changement de langue.
+  const idUtilisateur = utilisateur?.id_utilisateur;
+  const langueDuCompte = utilisateur?.langue_preferee;
+  useEffect(() => {
+    // Copie locale sans langue (ancienne session) : on attend le profil rechargé du serveur.
+    if (!idUtilisateur || !langueDuCompte) return undefined;
+    function enregistrer(langue) {
+      if (langue === langueDuCompte) return;
+      api.patch('/utilisateurs/moi', { langue_preferee: langue })
+        .then((res) => {
+          setUtilisateur((actuel) => {
+            if (!actuel) return actuel;
+            const aJour = { ...actuel, langue_preferee: res.data.langue_preferee };
+            localStorage.setItem('utilisateur', JSON.stringify(aJour));
+            return aJour;
+          });
+        })
+        .catch(() => {
+          // Sans gravité : le choix reste mémorisé dans le navigateur et sera renvoyé plus tard.
+        });
+    }
+    enregistrer(langueActive());
+    i18n.on('languageChanged', enregistrer);
+    return () => i18n.off('languageChanged', enregistrer);
+  }, [idUtilisateur, langueDuCompte]);
 
   return (
     <AuthContext.Provider value={{ utilisateur, connecter, deconnecter, rafraichirUtilisateur }}>

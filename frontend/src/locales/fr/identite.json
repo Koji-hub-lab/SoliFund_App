@@ -1,0 +1,14 @@
+{
+  "statuts": {
+    "VALIDEE": "Identité validée",
+    "EN_ATTENTE": "Identité en attente",
+    "REFUSEE": "Identité refusée",
+    "NON_SOUMISE": "Identité non soumise"
+  },
+  "raisons": {
+    "IDENTITE_EN_ATTENTE": "Identité de l'organisateur en attente",
+    "OBJECTIF_ELEVE": "Objectif élevé",
+    "ANTECEDENT_ORGANISATEUR": "Organisateur ayant une cagnotte suspendue ou refusée",
+    "REVISION_APRES_REFUS": "Modifiée après un refus"
+  }
+}

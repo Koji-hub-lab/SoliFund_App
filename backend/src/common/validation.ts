@@ -5,13 +5,22 @@ import {
   IsInt,
   IsNotEmpty,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
+import { m, type CleMessage } from '../i18n/messages';
 
 // Décorateurs de validation communs aux DTO. Les tailles suivent le schéma Prisma (VarChar).
+// Les messages sont des clés traduites à la sortie (src/i18n) ; `champ` désigne le nom du champ
+// dans les dictionnaires (« champs.titre » → « Le titre », « The title »).
+
+type CleChamp<C = CleMessage> = C extends `champs.${infer Nom}` ? Nom : never;
+export type Champ = CleChamp;
+
+const champ = (nom: Champ) => ({ champ: { cle: `champs.${nom}` as const } });
 
 // Montant maximal accepté (colonnes Decimal(15, 2) : 13 chiffres avant la virgule).
 export const MONTANT_MAX = 1_000_000_000_000;
@@ -29,44 +38,44 @@ export const VideEnNull = () =>
   );
 
 // Texte obligatoire : sans espaces autour, non vide, longueur maximale.
-export function TexteObligatoire(libelle: string, max: number) {
+export function TexteObligatoire(nom: Champ, max: number) {
   return applyDecorators(
     SansEspaces(),
-    IsString({ message: `${libelle} doit être un texte.` }),
-    IsNotEmpty({ message: `${libelle} est obligatoire.` }),
+    IsString({ message: m('validation.texte', champ(nom)) }),
+    IsNotEmpty({ message: m('validation.obligatoire', champ(nom)) }),
     MaxLength(max, {
-      message: `${libelle} ne peut pas dépasser ${max} caractères.`,
+      message: m('validation.longueurMax', { ...champ(nom), max }),
     }),
   );
 }
 
 // Texte facultatif (à combiner avec @IsOptional()) : sans espaces autour, longueur maximale.
-export function TexteFacultatif(libelle: string, max: number) {
+export function TexteFacultatif(nom: Champ, max: number) {
   return applyDecorators(
     SansEspaces(),
-    IsString({ message: `${libelle} doit être un texte.` }),
+    IsString({ message: m('validation.texte', champ(nom)) }),
     MaxLength(max, {
-      message: `${libelle} ne peut pas dépasser ${max} caractères.`,
+      message: m('validation.longueurMax', { ...champ(nom), max }),
     }),
   );
 }
 
 // Identifiant d'une ligne en base (id_cagnotte, id_categorie...).
-export function Identifiant(libelle: string) {
+export function Identifiant(nom: Champ) {
   return applyDecorators(
-    IsInt({ message: `${libelle} doit être un nombre entier.` }),
-    Min(1, { message: `${libelle} est invalide.` }),
+    IsInt({ message: m('validation.entier', champ(nom)) }),
+    Min(1, { message: m('validation.invalide', champ(nom)) }),
   );
 }
 
 // Montant en XAF : entier (pas de centimes), entre min et MONTANT_MAX.
-export function Montant(libelle: string, min: number) {
+export function Montant(nom: Champ, min: number) {
   return applyDecorators(
     IsInt({
-      message: `${libelle} doit être un nombre entier de francs CFA (pas de centimes).`,
+      message: m('validation.montantEntier', champ(nom)),
     }),
-    Min(min, { message: `${libelle} doit être d'au moins ${min} XAF.` }),
-    Max(MONTANT_MAX, { message: `${libelle} est trop élevé.` }),
+    Min(min, { message: m('validation.montantMin', { ...champ(nom), min }) }),
+    Max(MONTANT_MAX, { message: m('validation.montantTropEleve', champ(nom)) }),
   );
 }
 
@@ -74,9 +83,9 @@ export function Montant(libelle: string, min: number) {
 export function Email() {
   return applyDecorators(
     SansEspaces(),
-    IsEmail({}, { message: "L'adresse email n'est pas valide." }),
+    IsEmail({}, { message: m('validation.emailInvalide') }),
     MaxLength(255, {
-      message: "L'adresse email ne peut pas dépasser 255 caractères.",
+      message: m('validation.emailTropLong'),
     }),
   );
 }
@@ -88,7 +97,7 @@ export function MotDePasseSaisi(message: string) {
     IsString({ message }),
     IsNotEmpty({ message }),
     MaxLength(128, {
-      message: 'Le mot de passe ne peut pas dépasser 128 caractères.',
+      message: m('validation.motDePasseMax'),
     }),
   );
 }
@@ -96,12 +105,28 @@ export function MotDePasseSaisi(message: string) {
 // Nouveau mot de passe (inscription, réinitialisation, changement) : 8 à 128 caractères.
 export function NouveauMotDePasse() {
   return applyDecorators(
-    IsString({ message: 'Le mot de passe doit être un texte.' }),
+    IsString({ message: m('validation.motDePasseTexte') }),
     MinLength(8, {
-      message: 'Le mot de passe doit contenir au moins 8 caractères.',
+      message: m('validation.motDePasseMin'),
     }),
     MaxLength(128, {
-      message: 'Le mot de passe ne peut pas dépasser 128 caractères.',
+      message: m('validation.motDePasseMax'),
+    }),
+  );
+}
+
+// Numéro Mobile Money camerounais : 9 chiffres commençant par 6. Les espaces, points, tirets et le
+// préfixe +237 (ou 237) sont tolérés à la saisie ; la valeur gardée est la forme à 9 chiffres
+// (même règle que le frontend, utils/telephone.js).
+export function NumeroMobileMoney(nom: Champ) {
+  return applyDecorators(
+    Transform(({ value }: { value: unknown }) =>
+      typeof value === 'string'
+        ? value.replace(/[\s.-]/g, '').replace(/^\+?237(?=6\d{8}$)/, '')
+        : value,
+    ),
+    Matches(/^6\d{8}$/, {
+      message: m('validation.numeroMobileMoney', champ(nom)),
     }),
   );
 }

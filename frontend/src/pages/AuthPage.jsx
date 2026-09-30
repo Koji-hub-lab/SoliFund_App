@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
@@ -20,27 +21,25 @@ function GoogleIcon(props) {
 }
 
 function Diviseur() {
+  const { t } = useTranslation('auth');
   return (
     <div className="flex items-center gap-3">
       <span className="h-px flex-1 bg-border" />
-      <span className="text-sm font-bold text-muted-foreground">ou</span>
+      <span className="text-sm font-bold text-muted-foreground">{t('ou')}</span>
       <span className="h-px flex-1 bg-border" />
     </div>
   );
 }
 
-// Messages affichés au retour d'une connexion Google refusée (/login?erreur=google&motif=...).
+// Message affiché au retour d'une connexion Google refusée (/login?erreur=google&motif=...).
 // Le motif est un code : aucun texte libre venant de l'adresse n'est affiché.
-const MESSAGES_GOOGLE = {
-  banni: 'Votre compte a été banni.',
-  suspendu: "Votre compte est suspendu. Contactez l'administrateur.",
-  'deja-lie': 'Ce compte SoliFund est déjà lié à un autre compte Google.',
-  'email-non-verifie': "La connexion avec Google n'a pas abouti : votre adresse Google n'est pas vérifiée.",
-};
-const MESSAGE_GOOGLE = "La connexion avec Google n'a pas abouti. Réessayez.";
+function messageGoogle(t, motif) {
+  return t(`google.motifs.${motif}`, { defaultValue: t('google.echec') });
+}
 
 // Navigation complète vers le backend (proxy « /api » en développement), qui redirige vers Google.
 function BoutonGoogle() {
+  const { t } = useTranslation('auth');
   return (
     <Button
       variant="outline"
@@ -49,12 +48,13 @@ function BoutonGoogle() {
       href={`${API_URL}/auth/google`}
     >
       <GoogleIcon className="size-5" />
-      Continuer avec Google
+      {t('google.continuer')}
     </Button>
   );
 }
 
 export default function AuthPage({ defaultTab = 'login' }) {
+  const { t } = useTranslation('auth');
   const [tab, setTab] = useState(defaultTab);
   const navigate = useNavigate();
   const { connecter } = useAuth();
@@ -64,7 +64,7 @@ export default function AuthPage({ defaultTab = 'login' }) {
   const [mdpLogin, setMdpLogin] = useState('');
   const [parametres] = useSearchParams();
   const [erreurLogin, setErreurLogin] = useState(() =>
-    parametres.get('erreur') === 'google' ? MESSAGES_GOOGLE[parametres.get('motif')] ?? MESSAGE_GOOGLE : '',
+    parametres.get('erreur') === 'google' ? messageGoogle(t, parametres.get('motif')) : '',
   );
 
   async function soumettreLogin(e) {
@@ -112,7 +112,7 @@ export default function AuthPage({ defaultTab = 'login' }) {
     setEnvoiVerif(true);
     try {
       await api.post('/auth/renvoyer-code-verification', { email: emailAVerifier });
-      setMessageVerif('Nouveau code envoyé.');
+      setMessageVerif(t('verification.codeEnvoye'));
     } catch (err) {
       setErreurVerif(err.messageAffichable);
     } finally {
@@ -126,11 +126,11 @@ export default function AuthPage({ defaultTab = 'login' }) {
 
   function validerSignup() {
     const erreurs = {};
-    if (!form.nom.trim()) erreurs.nom = 'Le nom est requis.';
-    if (!form.prenom.trim()) erreurs.prenom = 'Le prénom est requis.';
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) erreurs.email = 'Email invalide.';
-    if (form.mot_de_passe.length < 8) erreurs.mot_de_passe = 'Le mot de passe doit contenir au moins 8 caractères.';
-    if (form.confirmation !== form.mot_de_passe) erreurs.confirmation = 'Les mots de passe ne correspondent pas.';
+    if (!form.nom.trim()) erreurs.nom = t('inscription.erreurs.nom');
+    if (!form.prenom.trim()) erreurs.prenom = t('inscription.erreurs.prenom');
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) erreurs.email = t('inscription.erreurs.email');
+    if (form.mot_de_passe.length < 8) erreurs.mot_de_passe = t('inscription.erreurs.motDePasse');
+    if (form.confirmation !== form.mot_de_passe) erreurs.confirmation = t('inscription.erreurs.confirmation');
     return erreurs;
   }
 
@@ -162,9 +162,9 @@ export default function AuthPage({ defaultTab = 'login' }) {
   if (emailAVerifier) {
     return (
       <MiseEnPageAuth>
-        <h1 className={titre}>Vérifiez votre email</h1>
+        <h1 className={titre}>{t('verification.titre')}</h1>
         <p className="mt-2 text-base leading-[1.6] text-muted-foreground">
-          On a envoyé un code à 6 chiffres à <strong className="text-foreground">{emailAVerifier}</strong>. Vérifiez aussi vos spams.
+          <Trans t={t} i18nKey="verification.texte" values={{ email: emailAVerifier }} components={{ b: <strong className="text-foreground" /> }} />
         </p>
         <form onSubmit={verifierEmail} className="mt-8 flex flex-col gap-5">
           <div>
@@ -173,18 +173,18 @@ export default function AuthPage({ defaultTab = 'login' }) {
             {messageVerif && <p className="mt-2 text-sm text-primary">{messageVerif}</p>}
           </div>
           <Button type="submit" size="lg" disabled={envoiVerif || !codeComplet} className="w-full">
-            {envoiVerif ? 'Vérification...' : 'Vérifier le code'}
+            {envoiVerif ? t('verification.enCours') : t('verification.verifier')}
           </Button>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button type="button" onClick={renvoyerCode} disabled={envoiVerif} className={lienCharte}>
-              Renvoyer le code
+              {t('verification.renvoyer')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/login')}
               className="inline-flex min-h-11 items-center bg-transparent p-0 font-sans text-sm font-bold text-muted-foreground hover:text-foreground"
             >
-              Vérifier plus tard
+              {t('verification.plusTard')}
             </button>
           </div>
         </form>
@@ -196,8 +196,8 @@ export default function AuthPage({ defaultTab = 'login' }) {
     <MiseEnPageAuth>
       <div className="grid grid-cols-2 gap-2" role="tablist">
         {[
-          ['login', 'Se connecter'],
-          ['signup', "S'inscrire"],
+          ['login', t('onglets.login')],
+          ['signup', t('onglets.signup')],
         ].map(([valeur, libelle]) => (
           <button
             key={valeur}
@@ -216,15 +216,15 @@ export default function AuthPage({ defaultTab = 'login' }) {
 
       {tab === 'login' ? (
         <>
-          <h1 className={`mt-8 ${titre}`}>Bon retour parmi nous</h1>
-          <p className="mt-2 text-base text-muted-foreground">Connectez-vous pour suivre vos cagnottes et vos dons.</p>
+          <h1 className={`mt-8 ${titre}`}>{t('connexion.titre')}</h1>
+          <p className="mt-2 text-base text-muted-foreground">{t('connexion.sousTitre')}</p>
 
           <form className="mt-8 flex flex-col gap-5" onSubmit={soumettreLogin}>
             <Champ
               id="login-email"
               type="email"
-              libelle="Email"
-              placeholder="vous@exemple.com"
+              libelle={t('champs.email')}
+              placeholder={t('champs.emailPlaceholder')}
               autoComplete="email"
               required
               value={emailLogin}
@@ -233,7 +233,7 @@ export default function AuthPage({ defaultTab = 'login' }) {
             <div>
               <ChampMotDePasse
                 id="login-password"
-                libelle="Mot de passe"
+                libelle={t('champs.motDePasse')}
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
@@ -242,32 +242,32 @@ export default function AuthPage({ defaultTab = 'login' }) {
               />
               <div className="mt-2 text-right">
                 <Link to="/mot-de-passe-oublie" className="inline-flex min-h-11 items-center text-sm font-bold text-primary underline decoration-2 underline-offset-[5px]">
-                  Mot de passe oublié ?
+                  {t('connexion.motDePasseOublie')}
                 </Link>
               </div>
             </div>
             {erreurLogin && <p className="text-sm text-destructive">{erreurLogin}</p>}
-            <Button type="submit" size="lg" className="w-full">Se connecter</Button>
+            <Button type="submit" size="lg" className="w-full">{t('connexion.bouton')}</Button>
             <Diviseur />
             <BoutonGoogle />
           </form>
         </>
       ) : (
         <>
-          <h1 className={`mt-8 ${titre}`}>Créez votre compte</h1>
-          <p className="mt-2 text-base text-muted-foreground">Lancez votre cagnotte en quelques minutes.</p>
+          <h1 className={`mt-8 ${titre}`}>{t('inscription.titre')}</h1>
+          <p className="mt-2 text-base text-muted-foreground">{t('inscription.sousTitre')}</p>
 
           <form className="mt-8 flex flex-col gap-5" onSubmit={soumettreSignup} noValidate>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Champ id="signup-prenom" name="prenom" libelle="Prénom" placeholder="Jean" autoComplete="given-name" value={form.prenom} onChange={handleChange} erreur={erreursChamps.prenom} />
-              <Champ id="signup-nom" name="nom" libelle="Nom" placeholder="Mballa" autoComplete="family-name" value={form.nom} onChange={handleChange} erreur={erreursChamps.nom} />
+              <Champ id="signup-prenom" name="prenom" libelle={t('champs.prenom')} placeholder="Jean" autoComplete="given-name" value={form.prenom} onChange={handleChange} erreur={erreursChamps.prenom} />
+              <Champ id="signup-nom" name="nom" libelle={t('champs.nom')} placeholder="Mballa" autoComplete="family-name" value={form.nom} onChange={handleChange} erreur={erreursChamps.nom} />
             </div>
-            <Champ id="signup-email" name="email" type="email" libelle="Email" placeholder="vous@exemple.com" autoComplete="email" value={form.email} onChange={handleChange} erreur={erreursChamps.email} />
-            <Champ id="signup-phone" name="telephone" type="tel" libelle="Téléphone (facultatif)" prefixe="+237" placeholder="6 99 00 00 00" autoComplete="tel-national" value={form.telephone} onChange={handleChange} />
+            <Champ id="signup-email" name="email" type="email" libelle={t('champs.email')} placeholder={t('champs.emailPlaceholder')} autoComplete="email" value={form.email} onChange={handleChange} erreur={erreursChamps.email} />
+            <Champ id="signup-phone" name="telephone" type="tel" libelle={t('champs.telephone')} prefixe="+237" placeholder="6 99 00 00 00" autoComplete="tel-national" value={form.telephone} onChange={handleChange} />
             <ChampMotDePasse
               id="signup-password"
-              libelle="Mot de passe"
-              placeholder="8 caractères minimum"
+              libelle={t('champs.motDePasse')}
+              placeholder={t('champs.motDePassePlaceholder')}
               autoComplete="new-password"
               value={form.mot_de_passe}
               onChange={(e) => setForm({ ...form, mot_de_passe: e.target.value })}
@@ -275,7 +275,7 @@ export default function AuthPage({ defaultTab = 'login' }) {
             />
             <ChampMotDePasse
               id="signup-confirm"
-              libelle="Confirmer le mot de passe"
+              libelle={t('champs.confirmer')}
               placeholder="••••••••"
               autoComplete="new-password"
               value={form.confirmation}
@@ -283,14 +283,18 @@ export default function AuthPage({ defaultTab = 'login' }) {
               erreur={erreursChamps.confirmation}
             />
             {erreurSignup && <p className="text-sm text-destructive">{erreurSignup}</p>}
-            <Button type="submit" size="lg" className="w-full">Créer mon compte</Button>
+            <Button type="submit" size="lg" className="w-full">{t('inscription.bouton')}</Button>
             <Diviseur />
             <BoutonGoogle />
             <p className="text-center text-sm leading-relaxed text-muted-foreground">
-              En créant un compte, vous acceptez nos{' '}
-              <a href="/conditions" target="_blank" rel="noopener" className="font-bold text-primary underline decoration-2 underline-offset-[5px]">conditions d'utilisation</a>
-              {' '}et notre{' '}
-              <a href="/confidentialite" target="_blank" rel="noopener" className="font-bold text-primary underline decoration-2 underline-offset-[5px]">politique de confidentialité</a>.
+              <Trans
+                t={t}
+                i18nKey="inscription.acceptation"
+                components={{
+                  c: <a href="/conditions" target="_blank" rel="noopener" className="font-bold text-primary underline decoration-2 underline-offset-[5px]" />,
+                  p: <a href="/confidentialite" target="_blank" rel="noopener" className="font-bold text-primary underline decoration-2 underline-offset-[5px]" />,
+                }}
+              />
             </p>
           </form>
         </>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
@@ -8,6 +9,7 @@ import { champPilule, erreurTexte, lienCharte, titreSection } from './classes';
 
 export default function CommentairesCagnotte({ idCagnotte, commentaires, infos, utilisateurConnecte, executer, charger, onVoirPlus, enCours, erreurs }) {
   const [nouveauCommentaire, setNouveauCommentaire] = useState('');
+  const { t } = useTranslation('cagnotte');
 
   function publier(e) {
     e.preventDefault();
@@ -20,7 +22,7 @@ export default function CommentairesCagnotte({ idCagnotte, commentaires, infos, 
   }
 
   function supprimer(idCommentaire) {
-    if (!window.confirm('Supprimer ce commentaire ?')) return;
+    if (!window.confirm(t('commentaires.confirmerSuppression'))) return;
     return executer('listeCommentaires', async () => {
       await api.delete(`/commentaires/${idCommentaire}`);
       charger();
@@ -29,24 +31,24 @@ export default function CommentairesCagnotte({ idCagnotte, commentaires, infos, 
 
   return (
     <div>
-      <h2 className={titreSection}>Mots d'encouragement</h2>
+      <h2 className={titreSection}>{t('commentaires.titre')}</h2>
 
       {utilisateurConnecte ? (
         <form onSubmit={publier} className="mt-5 flex gap-3">
           <input
-            aria-label="Votre mot d'encouragement"
-            placeholder="Écrivez un commentaire d'encouragement..."
+            aria-label={t('commentaires.champ')}
+            placeholder={t('commentaires.placeholder')}
             value={nouveauCommentaire}
             onChange={(e) => setNouveauCommentaire(e.target.value)}
             className={`${champPilule} flex-1`}
           />
           <Button type="submit" disabled={enCours.commentaire}>
-            {enCours.commentaire ? 'Envoi en cours...' : 'Publier'}
+            {enCours.commentaire ? t('commun:actions.envoiEnCours') : t('commentaires.publier')}
           </Button>
         </form>
       ) : (
         <p className="mt-5">
-          <Link to="/login" className={lienCharte}>Connectez-vous pour laisser un mot</Link>
+          <Link to="/login" className={lienCharte}>{t('commentaires.connexion')}</Link>
         </p>
       )}
       {erreurs.commentaire && <p className={`mt-2 ${erreurTexte}`}>{erreurs.commentaire}</p>}
@@ -66,7 +68,7 @@ export default function CommentairesCagnotte({ idCagnotte, commentaires, infos, 
                     disabled={enCours.listeCommentaires}
                     className="ml-auto inline-flex min-h-11 items-center bg-transparent p-0 font-sans text-sm font-bold text-destructive hover:underline disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Supprimer
+                    {t('commentaires.supprimer')}
                   </button>
                 )}
               </div>
@@ -74,12 +76,12 @@ export default function CommentairesCagnotte({ idCagnotte, commentaires, infos, 
             </div>
           </div>
         ))}
-        {commentaires.length === 0 && <p className="text-[17px] text-muted-foreground">Aucun commentaire pour le moment.</p>}
+        {commentaires.length === 0 && <p className="text-[17px] text-muted-foreground">{t('commentaires.vide')}</p>}
       </div>
 
       {infos.page < infos.pages && (
         <Button variant="outline" onClick={onVoirPlus} className="mt-6" disabled={enCours.listeCommentaires}>
-          {enCours.listeCommentaires ? 'Chargement...' : 'Voir plus de commentaires'}
+          {enCours.listeCommentaires ? t('commun:chargementPoints') : t('commentaires.voirPlus')}
         </Button>
       )}
       {erreurs.listeCommentaires && <p className={`mt-2 ${erreurTexte}`}>{erreurs.listeCommentaires}</p>}

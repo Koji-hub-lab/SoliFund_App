@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -21,6 +22,7 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState('');
+  const { t } = useTranslation('tableau-de-bord');
 
   useEffect(() => {
     Promise.all([api.get('/cagnottes/mes'), api.get('/notifications')])
@@ -43,13 +45,13 @@ export default function Dashboard() {
         <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
             <h1 className="font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] text-foreground sm:text-[44px]">
-              Bonjour, {utilisateur.prenom}
+              {t('accueil.bonjour', { prenom: utilisateur.prenom })}
             </h1>
-            <p className="mt-2 text-lg text-muted-foreground">Voici où en sont vos cagnottes aujourd'hui.</p>
+            <p className="mt-2 text-lg text-muted-foreground">{t('accueil.sousTitre')}</p>
           </div>
           <Button to="/creer-cagnotte" className="shrink-0">
             <Plus className="size-5" />
-            Créer une cagnotte
+            {t('accueil.creer')}
           </Button>
         </div>
 
@@ -64,10 +66,10 @@ export default function Dashboard() {
         {!chargement && !erreur && (
           <>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.5fr_0.85fr_0.85fr_1.4fr]">
-              <CarteChiffre libelle="Total collecté" valeur={formaterMontant(totalCollecte)} teinte="lagune" />
-              <CarteChiffre libelle="Cagnottes actives" valeur={nbActives} />
-              <CarteChiffre libelle="Donateurs" valeur={nbDonateurs} />
-              <CarteChiffre libelle="Disponible au retrait" valeur={formaterMontant(totalDisponible)} valeurEnLagune />
+              <CarteChiffre libelle={t('accueil.totalCollecte')} valeur={formaterMontant(totalCollecte)} teinte="lagune" />
+              <CarteChiffre libelle={t('accueil.actives')} valeur={nbActives} />
+              <CarteChiffre libelle={t('accueil.donateurs')} valeur={nbDonateurs} />
+              <CarteChiffre libelle={t('accueil.disponible')} valeur={formaterMontant(totalDisponible)} valeurEnLagune />
             </div>
 
             {mesCagnottes.length === 0 ? (
@@ -76,8 +78,8 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
                 <section>
                   <div className="flex items-center justify-between gap-4">
-                    <h2 className={titreBloc}>Mes cagnottes</h2>
-                    <Link to="/mes-cagnottes" className={lienCharte}>Tout voir</Link>
+                    <h2 className={titreBloc}>{t('accueil.mesCagnottes')}</h2>
+                    <Link to="/mes-cagnottes" className={lienCharte}>{t('accueil.toutVoir')}</Link>
                   </div>
                   <div className="mt-5 flex flex-col gap-4">
                     {mesCagnottes.slice(0, 3).map((c) => (
@@ -88,11 +90,11 @@ export default function Dashboard() {
 
                 <section className="self-start rounded-[28px] border border-border bg-card p-6">
                   <div className="flex items-center justify-between gap-4">
-                    <h2 className={titreBloc}>Activité récente</h2>
-                    <Link to="/notifications" className={lienCharte}>Tout voir</Link>
+                    <h2 className={titreBloc}>{t('accueil.activite')}</h2>
+                    <Link to="/notifications" className={lienCharte}>{t('accueil.toutVoir')}</Link>
                   </div>
                   {notifications.length === 0 ? (
-                    <p className="mt-5 text-base text-muted-foreground">Aucune activité pour le moment.</p>
+                    <p className="mt-5 text-base text-muted-foreground">{t('accueil.aucuneActivite')}</p>
                   ) : (
                     <ul className="m-0 mt-5 flex list-none flex-col gap-5 p-0">
                       {notifications.slice(0, 4).map((r) => (

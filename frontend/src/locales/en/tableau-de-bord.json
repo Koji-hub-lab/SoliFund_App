@@ -1,0 +1,276 @@
+{
+  "nav": {
+    "tableauDeBord": "Dashboard",
+    "mesCagnottes": "My fundraisers",
+    "creer": "Start a fundraiser",
+    "notifications": "Notifications",
+    "profil": "My profile",
+    "administration": "Admin",
+    "decouvrir": "Discover fundraisers",
+    "erreurNotifications": "We couldn't check your notifications. {{detail}}"
+  },
+  "accueil": {
+    "bonjour": "Hello, {{prenom}}",
+    "sousTitre": "Here's how your fundraisers are doing today.",
+    "creer": "Start a fundraiser",
+    "totalCollecte": "Total raised",
+    "actives": "Active fundraisers",
+    "donateurs": "Donors",
+    "disponible": "Available to withdraw",
+    "mesCagnottes": "My fundraisers",
+    "toutVoir": "See all",
+    "activite": "Recent activity",
+    "aucuneActivite": "Nothing to show yet.",
+    "nonLue": "Unread"
+  },
+  "vide": {
+    "titre": "Start your first fundraiser",
+    "texte": "A wedding, medical care, a community project: set up your fundraiser in a few minutes and share it with your people."
+  },
+  "liste": {
+    "titre": "My fundraisers",
+    "sousTitre": "Manage all the fundraisers you've created.",
+    "filtres": {
+      "toutes": "All",
+      "ACTIVE": "Active",
+      "TERMINEE": "Ended",
+      "SUSPENDUE": "Suspended",
+      "ANNULEE": "Cancelled"
+    },
+    "filtre": "{{libelle}} ({{nombre}})",
+    "aucune": "No fundraisers in this category.",
+    "resume": "{{collecte}} of {{objectif}}",
+    "donateurs_one": "{{count}} donor",
+    "donateurs_other": "{{count}} donors",
+    "gerer": "Manage"
+  },
+  "gestion": {
+    "filAriane": "Breadcrumb",
+    "collectesSur": "<b>{{collecte}}</b> raised of {{objectif}}",
+    "terminee": "ended",
+    "joursRestants_one": "{{count}} day left",
+    "joursRestants_other": "{{count}} days left",
+    "pagePublique": "View public page",
+    "modifier": "Edit",
+    "onglets": {
+      "apercu": "Overview",
+      "retraits": "Withdrawals",
+      "actualites": "Updates",
+      "photo": "Photo and settings"
+    },
+    "collecte": "Raised",
+    "donateur_one": "Donor",
+    "donateur_other": "Donors",
+    "disponible": "Available to withdraw",
+    "donsRecus": "Gifts received ({{total}})",
+    "aucunDon": "No gifts yet. Share your fundraiser to get the first ones.",
+    "anonyme": "Anonymous",
+    "voirPlusDons": "See more gifts"
+  },
+  "retraits": {
+    "disponible": "Available to withdraw",
+    "resume": "Raised {{collecte}} · already withdrawn or pending {{engage}}",
+    "demander": "Request a withdrawal",
+    "montant": "Amount (XAF)",
+    "montantMinimum": "The minimum amount is {{montant}}.",
+    "montantDepasse": "That's more than what's available ({{disponible}}).",
+    "commission": "SoliFund fee ({{taux}}): {{montant}}",
+    "vousRecevrez": "You'll receive: {{montant}}",
+    "recevoirSur": "Receive on",
+    "numero": "Recipient number",
+    "bouton": "Request withdrawal",
+    "verification": "Our team checks every request before paying it out.",
+    "historique": "Withdrawal history",
+    "aucun": "No withdrawals yet.",
+    "ligneCommission": "Fee ({{taux}}): {{montant}} · ",
+    "sansCommission": "No fee · ",
+    "netVerse": "Net paid: {{montant}}",
+    "motifRejet": "Reason for rejection: {{motif}}",
+    "annulerTitre": "Cancel this fundraiser",
+    "annulerTexte": "If the fundraiser has already received gifts, it's cancelled: it stops taking gifts and is hidden from the public, but its history is kept. Otherwise it's deleted for good.",
+    "annulerConfirmation": "Cancel this fundraiser? This can't be undone.",
+    "annulation": "Cancelling...",
+    "dejaAnnulee": "Fundraiser already cancelled"
+  },
+  "actualites": {
+    "publierTitre": "Post an update",
+    "publierTexte": "Keep your donors in the loop: updates appear on the public page.",
+    "titre": "Update title",
+    "contenu": "Update content",
+    "contenuPlaceholder": "Content",
+    "publier": "Post",
+    "publication": "Posting...",
+    "publiees": "Posted updates ({{total}})",
+    "aucune": "No updates yet."
+  },
+  "photo": {
+    "titre": "Cover photo",
+    "formats": "JPG, PNG or WEBP, 5 MB max.",
+    "apercu": "Preview of the new photo — not saved yet.",
+    "alt": "Cover photo",
+    "choisir": "Choose a photo",
+    "enregistrer": "Save photo"
+  },
+  "creation": {
+    "erreurs": {
+      "titre": "Please add a title.",
+      "objectif": "The goal must be greater than 0.",
+      "dateDebut": "Please choose a start date.",
+      "dateFin": "Please choose an end date.",
+      "ordreDates": "The end date must be after the start date."
+    },
+    "erreurCategories": "We couldn't load the categories: you can still create your fundraiser without one. {{detail}}",
+    "codeEnvoye": "New code sent.",
+    "enregistreeTitre": "Your fundraiser is saved",
+    "attenteIdentite": "Your fundraiser will go live as soon as your identity has been verified (usually within 24 hours). You can keep working on it in the meantime.",
+    "attenteEquipe": "Your fundraiser will go live once our team has reviewed it (usually within 24 hours). You can keep working on it in the meantime.",
+    "gerer": "Manage my fundraiser",
+    "titre": "Start a fundraiser",
+    "sousTitre": "Tell us about your project to get your fundraiser going.",
+    "verifierEmail": "To start a fundraiser, please verify your email first: enter the 6-digit code we sent to <b>{{email}}</b>.",
+    "verification": "Checking...",
+    "verifierCode": "Verify code",
+    "renvoyerCode": "Resend code",
+    "photo": "Cover photo",
+    "altApercu": "Preview of the chosen photo",
+    "ajouterPhoto": "Add a photo (optional)",
+    "formats": "JPG, PNG or WEBP, 5 MB max",
+    "changerPhoto": "Click the photo to choose another one.",
+    "champTitre": "Fundraiser title",
+    "champTitrePlaceholder": "E.g. Help for Marie's surgery",
+    "description": "Description",
+    "descriptionPlaceholder": "Tell people what this fundraiser is for...",
+    "objectif": "Goal (XAF)",
+    "categorie": "Category",
+    "aucuneCategorie": "No category",
+    "dateDebut": "Start date",
+    "dateFin": "End date",
+    "commission": "SoliFund takes a {{taux}} fee on withdrawals.",
+    "conditions": "Terms of use",
+    "creer": "Create my fundraiser",
+    "creationEnCours": "Creating..."
+  },
+  "modification": {
+    "titre": "Edit fundraiser",
+    "sousTitre": "Update your fundraiser's details.",
+    "erreurChargement": "We couldn't load the fundraiser. {{detail}}",
+    "retour": "Back to my fundraisers"
+  },
+  "notifications": {
+    "titre": "Notifications",
+    "nonLues_one": "{{count}} unread notification",
+    "nonLues_other": "{{count}} unread notifications",
+    "aJour": "You're all caught up.",
+    "toutLu": "Mark all as read",
+    "aucune": "No notifications yet.",
+    "gerer": "Manage fundraiser",
+    "voirCommentaire": "View comment",
+    "voirCagnotte": "View fundraiser",
+    "marquerLue": "Mark as read"
+  },
+  "profil": {
+    "titre": "My profile",
+    "sousTitre": "Manage your personal details.",
+    "cagnottes_one": "Fundraiser",
+    "cagnottes_other": "Fundraisers",
+    "collectes": "Raised",
+    "erreurChiffres": "We couldn't load your figures. {{detail}}",
+    "modifier": "Edit my details",
+    "prenom": "First name",
+    "nom": "Last name",
+    "email": "Email",
+    "emailAide": "Your email can't be changed for now.",
+    "telephone": "Phone",
+    "misAJour": "Your profile has been updated.",
+    "enregistrer": "Save changes",
+    "motDePasse": {
+      "erreurActuel": "Enter your current password.",
+      "erreurNouveau": "Your new password must be at least 8 characters long.",
+      "erreurConfirmation": "The two passwords don't match.",
+      "definiTitre": "Set a password",
+      "changerTitre": "Change password",
+      "definiTexte": "You log in with Google. Set a password so you can also log in with your email address.",
+      "changerTexte": "You'll be logged out on your other devices.",
+      "actuel": "Current password",
+      "nouveau": "New password",
+      "aide": "At least 8 characters.",
+      "confirmer": "Confirm new password",
+      "defini": "Your password has been set.",
+      "modifie": "Your password has been changed.",
+      "definir": "Set password",
+      "changer": "Change password"
+    }
+  },
+  "codesNotification": {
+    "inconnue": {
+      "titre": "New notification",
+      "message": ""
+    },
+    "DON_RECU": {
+      "titre": "New gift received",
+      "message": "You received a gift of {{montant}} on “{{titre}}”."
+    },
+    "COMMENTAIRE_RECU": {
+      "titre": "New comment",
+      "message": "{{prenom}} commented on your fundraiser “{{titre}}”."
+    },
+    "CAGNOTTE_PUBLIEE": {
+      "titre": "Fundraiser published",
+      "message": "Your fundraiser “{{titre}}” has been reviewed: it is now live."
+    },
+    "CAGNOTTE_PUBLIEE_IDENTITE": {
+      "titre": "Fundraiser published",
+      "message": "Your identity is verified: your fundraiser “{{titre}}” is now live."
+    },
+    "CAGNOTTE_REFUSEE": {
+      "titre": "Fundraiser declined",
+      "message": "Your fundraiser “{{titre}}” wasn't published. Reason: {{motif}} You can edit it and submit it again."
+    },
+    "CAGNOTTE_SUSPENDUE": {
+      "titre": "Fundraiser suspended",
+      "message": "Your fundraiser “{{titre}}” has been suspended by the SoliFund team. Reason: {{motif}}"
+    },
+    "CAGNOTTE_SUSPENDUE_SIGNALEMENTS": {
+      "titre": "Fundraiser suspended",
+      "message": "Your fundraiser “{{titre}}” has been suspended after several reports. Our team is looking into it."
+    },
+    "CAGNOTTE_REACTIVEE": {
+      "titre": "Fundraiser reinstated",
+      "message": "Your fundraiser “{{titre}}” has been reinstated."
+    },
+    "CAGNOTTE_TERMINEE": {
+      "titre": "Fundraiser ended",
+      "message": "Your fundraiser “{{titre}}” has ended. Amount raised: {{montant}}."
+    },
+    "IDENTITE_VERIFIEE": {
+      "titre": "Identity verified",
+      "message": "Your identity has been verified. You can request withdrawals: they will be paid to {{telephone}}."
+    },
+    "IDENTITE_REFUSEE": {
+      "titre": "Identity check declined",
+      "message": "Your identity check was declined. Reason: {{motif}} You can submit a new request."
+    },
+    "RETRAIT_TRAITE": {
+      "titre": "Withdrawal paid",
+      "message": "Your withdrawal of {{brut}} has been processed: {{net}} was paid to {{numero}} (SoliFund fee: {{commission}}).",
+      "messageSansCommission": "Your withdrawal of {{brut}} has been processed: the money was paid to {{numero}}."
+    },
+    "RETRAIT_REJETE": {
+      "titre": "Withdrawal rejected",
+      "message": "Your withdrawal of {{brut}} was rejected. Reason: {{motif}}",
+      "messageSansMotif": "Your withdrawal of {{brut}} was rejected. No reason was given."
+    },
+    "IDENTITE_A_VERIFIER": {
+      "titre": "Identity to verify",
+      "message": "{{prenoms}} {{nom}} has submitted an identity check."
+    },
+    "CAGNOTTE_EN_VERIFICATION": {
+      "titre": "Fundraiser under review",
+      "message": "The fundraiser “{{titre}}” is waiting for review ({{raisons}})."
+    },
+    "SUSPENSION_AUTOMATIQUE": {
+      "titre": "Automatic suspension",
+      "message": "The fundraiser “{{titre}}” was automatically suspended after {{nombre}} reports."
+    }
+  }
+}

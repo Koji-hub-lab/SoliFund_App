@@ -41,3 +41,8 @@ export function estEchue(
 ): boolean {
   return finDuDernierJour(dateFin) <= maintenant;
 }
+
+// Jour calendaire à Douala, au format AAAA-MM-JJ (comparable tel quel à une autre date de ce format).
+export function jourADouala(instant: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: FUSEAU }).format(instant);
+}
