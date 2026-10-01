@@ -32,8 +32,9 @@ Plan des dossiers sur le serveur (tout ce qui est privé reste **hors de `public
 
 Prisma 7 prend en charge **PostgreSQL 9.6 et plus récent** : sa liste des versions supportées commence
 à la 9.6, et le passage à Prisma 7 ne change pas ce minimum. Les migrations de SoliFund n'utilisent rien
-de plus récent. Les versions 9.6 à 12 ne reçoivent toutefois plus de correctifs de sécurité : **13 ou plus
-est recommandé**. Vérifier la version fournie par o2switch :
+de plus récent. Vérifié sur un conteneur `postgres:9.6.24` : `prisma migrate deploy` sur une base vide,
+puis les 171 tests e2e, tous réussis. Les versions 9.6 à 12 ne reçoivent toutefois plus de correctifs
+de sécurité : **13 ou plus est recommandé**. Vérifier la version fournie par o2switch :
 
 ```bash
 psql --version                 # en SSH

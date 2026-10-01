@@ -11,8 +11,10 @@ Plateforme de cagnottes solidaires au Cameroun (dons via Mobile Money MTN/Orange
 - Après chaque modification du backend, vérifier que `npm run build` passe dans backend/.
 - La production (o2switch) est en PostgreSQL 9.6 : toute migration doit y fonctionner. En particulier,
   un ajout de valeur à un enum (`ALTER TYPE ... ADD VALUE`) va dans une migration à part, qui ne
-  contient que cette seule instruction (avant PostgreSQL 12, elle échoue avec d'autres commandes), et
-  la nouvelle valeur ne peut être utilisée que dans une migration suivante. Pas de fonctions ni de
+  contient que cette seule instruction, et la nouvelle valeur n'est utilisée que dans une migration
+  suivante. Sur 9.6, cette instruction échoue dans une transaction ou avec d'autres commandes envoyées
+  d'un bloc (`prisma migrate deploy` exécute les instructions une à une, mais un script SQL lancé à la
+  main, lui, échouerait). Vérifier toute nouvelle migration sur un conteneur postgres:9.6. Pas de fonctions ni de
   syntaxes postérieures à 9.6 (gen_random_uuid() natif, colonnes générées, procédures, INCLUDE,
   NULLS NOT DISTINCT, fonctions jsonpath...). L'historique des migrations a été regroupé dans
   `00000000000000_initialisation`.
