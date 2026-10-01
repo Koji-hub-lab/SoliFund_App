@@ -60,7 +60,6 @@ export async function creerApplication(options: { aangaraa?: object } = {}) {
     logger: false,
     rawBody: true, // comme main.ts : signature des webhooks
   });
-  app.set('trust proxy', true);
   configurerApplication(app);
   await app.init();
   return {

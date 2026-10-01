@@ -100,6 +100,7 @@ describe('validerEnvironnement : clés Notch Pay', () => {
       NODE_ENV: 'production',
       NOTCHPAY_PUBLIC_KEY: 'pk_live_x',
       NOTCHPAY_PRIVATE_KEY: 'sk_live_x',
+      PUBLIC_API_URL: 'https://api.solifund.cm',
     };
     expect(() =>
       validerEnvironnement({
@@ -126,6 +127,58 @@ describe('validerEnvironnement : DON_MONTANT_MINIMUM', () => {
       expect(() =>
         validerEnvironnement({ ...base, DON_MONTANT_MINIMUM: valeur }),
       ).toThrow(/DON_MONTANT_MINIMUM/);
+    }
+  });
+});
+
+describe('validerEnvironnement : PUBLIC_API_URL', () => {
+  const production = {
+    ...base,
+    NODE_ENV: 'production',
+    NOTCHPAY_PUBLIC_KEY: 'pk_live_abc',
+    NOTCHPAY_PRIVATE_KEY: 'sk_live_abc',
+    NOTCHPAY_WEBHOOK_HASH: 'hsk_live_abc',
+  };
+
+  it('obligatoire en production, quel que soit le fournisseur', () => {
+    expect(() => validerEnvironnement(production)).toThrow(
+      /PUBLIC_API_URL : variable manquante/,
+    );
+    expect(() =>
+      validerEnvironnement({
+        ...production,
+        PUBLIC_API_URL: 'https://api.solifund.cm',
+      }),
+    ).not.toThrow();
+  });
+
+  it('facultative en développement avec Notch Pay', () => {
+    expect(() => validerEnvironnement({ ...base })).not.toThrow();
+  });
+});
+
+describe('validerEnvironnement : JWT_DUREE et TRUST_PROXY', () => {
+  it('accepte une durée en secondes ou avec une unité, refuse le reste', () => {
+    for (const duree of ['3600', '30m', '12h', '1d', '']) {
+      expect(() =>
+        validerEnvironnement({ ...base, JWT_DUREE: duree }),
+      ).not.toThrow();
+    }
+    for (const duree of ['0', '1 jour', '1w', '-5', '1.5h']) {
+      expect(() => validerEnvironnement({ ...base, JWT_DUREE: duree })).toThrow(
+        /JWT_DUREE/,
+      );
+    }
+  });
+
+  it('TRUST_PROXY : nombre entier de proxys', () => {
+    expect(() =>
+      validerEnvironnement({ ...base, TRUST_PROXY: '1' }),
+    ).not.toThrow();
+    for (const valeur of ['-1', 'true', '1.5']) {
+      expect(() =>
+        validerEnvironnement({ ...base, TRUST_PROXY: valeur }),
+      ).toThrow(/TRUST_PROXY/);
     }
   });
 });

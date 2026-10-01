@@ -1,4 +1,5 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { BrevoService } from '../jetons/brevo.service';
 import {
   NotificationsService,
@@ -38,16 +39,15 @@ export function texteAlerte(alerte: Alerte, langue: Langue): string {
 }
 
 // Alertes de modération destinées aux administrateurs : identité à vérifier, cagnotte en
-// vérification, suspension automatique. Chaque alerte crée tout de suite une notification dans
-// l'application pour chaque administrateur, et un email (immédiat, puis regroupé), écrit dans la
-// langue préférée de chaque administrateur.
-// Le regroupement est en mémoire : il vaut pour une instance du serveur.
+// vérification, suspension automatique, versement à vérifier. Chaque alerte crée tout de suite une
+// notification dans l'application pour chaque administrateur, et un email écrit dans la langue
+// préférée de chacun : immédiat, puis regroupé (un email au plus toutes les 10 minutes).
+// Les alertes en attente d'email sont en base (slf_alerte_email) : elles survivent à un redémarrage
+// ou à une mise en veille de l'application, et sont envoyées à la fin de la fenêtre par la tâche
+// « alertes » (TachesService, lancée par Cron ou par l'application avec TACHES_INTERNES=true).
 @Injectable()
-export class AlertesAdminService implements OnModuleDestroy {
+export class AlertesAdminService {
   private readonly logger = new Logger(AlertesAdminService.name);
-  private dernierEnvoi = 0;
-  private enAttente: Alerte[] = [];
-  private minuteur: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -76,27 +76,46 @@ export class AlertesAdminService implements OnModuleDestroy {
       this.logger.warn(`Notification d'alerte non envoyée : ${this.texte(e)}`);
     }
 
-    this.enAttente.push({ code, parametres });
-    const attente = this.dernierEnvoi + DELAI_REGROUPEMENT_MS - Date.now();
-    if (attente <= 0) {
-      await this.envoyerEmails();
-    } else if (!this.minuteur) {
-      this.minuteur = setTimeout(() => void this.envoyerEmails(), attente);
-      // Ne retient pas l'arrêt du serveur.
-      this.minuteur.unref();
+    try {
+      await this.prisma.alerteEmail.create({
+        data: { code, parametres: parametres as Prisma.InputJsonObject },
+      });
+      // Aucun email depuis 10 minutes : envoi immédiat ; sinon l'alerte attend la fin de la fenêtre.
+      if (await this.fenetreTerminee()) await this.envoyerEmails();
+    } catch (e) {
+      this.logger.error(
+        `Alerte non enregistrée pour l'email : ${this.texte(e)}`,
+      );
     }
   }
 
-  // Envoie en un seul email toutes les alertes en attente.
-  async envoyerEmails() {
-    if (this.minuteur) {
-      clearTimeout(this.minuteur);
-      this.minuteur = null;
-    }
-    const alertes = this.enAttente;
-    this.enAttente = [];
-    if (alertes.length === 0) return;
-    this.dernierEnvoi = Date.now();
+  // Tâche « alertes » : envoie les alertes en attente si la fenêtre de regroupement est terminée.
+  // Renvoie le nombre d'alertes envoyées.
+  async envoyerAlertesEnAttente(): Promise<number> {
+    const enAttente = await this.prisma.alerteEmail.count({
+      where: { date_envoi: null },
+    });
+    if (enAttente === 0 || !(await this.fenetreTerminee())) return 0;
+    return this.envoyerEmails();
+  }
+
+  // Envoie en un seul email toutes les alertes en attente, sans attendre la fin de la fenêtre.
+  // Les alertes sont réservées de façon atomique : deux processus (application et Cron) ne les
+  // envoient jamais deux fois. En cas d'échec, elles sont remises en attente. Renvoie leur nombre.
+  async envoyerEmails(): Promise<number> {
+    const reservees = await this.prisma.$queryRaw<
+      {
+        id_alerte: number;
+        code: CodeAlerte;
+        parametres: ParametresNotification;
+      }[]
+    >`UPDATE slf_alerte_email SET date_envoi = now()
+      WHERE date_envoi IS NULL
+      RETURNING id_alerte, code, parametres`;
+    if (reservees.length === 0) return 0;
+    const alertes: Alerte[] = reservees
+      .sort((a, b) => a.id_alerte - b.id_alerte)
+      .map(({ code, parametres }) => ({ code, parametres }));
     try {
       const admins = await this.administrateurs();
       for (const admin of admins) {
@@ -111,13 +130,36 @@ export class AlertesAdminService implements OnModuleDestroy {
           alertes.map((alerte) => texteAlerte(alerte, langue)),
         );
       }
+      return alertes.length;
     } catch (e) {
       this.logger.error(`Email d'alerte non envoyé : ${this.texte(e)}`);
+      await this.prisma.alerteEmail.updateMany({
+        where: { id_alerte: { in: reservees.map((a) => a.id_alerte) } },
+        data: { date_envoi: null },
+      });
+      return 0;
     }
   }
 
-  onModuleDestroy() {
-    if (this.minuteur) clearTimeout(this.minuteur);
+  // Supprime les alertes envoyées depuis plus de 30 jours (maintenance nocturne).
+  async purgerAlertesEnvoyees(maintenant = new Date()): Promise<number> {
+    const { count } = await this.prisma.alerteEmail.deleteMany({
+      where: {
+        date_envoi: {
+          lt: new Date(maintenant.getTime() - 30 * 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    return count;
+  }
+
+  // Vrai si aucun email d'alerte n'est parti depuis DELAI_REGROUPEMENT_MS.
+  private async fenetreTerminee(): Promise<boolean> {
+    const dernier = await this.prisma.alerteEmail.aggregate({
+      _max: { date_envoi: true },
+    });
+    const date = dernier._max.date_envoi;
+    return !date || Date.now() - date.getTime() >= DELAI_REGROUPEMENT_MS;
   }
 
   private administrateurs() {

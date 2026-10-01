@@ -5,56 +5,129 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { FUSEAU, estEchue } from '../common/dates';
 import { ReconciliationDonsService } from '../dons/reconciliation-dons.service';
 import { RetraitsService } from '../retraits/retraits.service';
+import { VerificationIdentiteService } from '../verification-identite/verification-identite.service';
+import { AlertesAdminService } from '../alertes-admin/alertes-admin.service';
+
+// Tâches planifiées. En production, elles sont lancées par Cron avec le script
+// scripts/taches.ts (« node dist/scripts/taches.js <tâche> ») : l'application peut être mise en
+// veille par l'hébergeur (Passenger) et ne doit pas en dépendre. Avec TACHES_INTERNES=true
+// (développement), l'application les lance elle-même (@Cron, actif seulement dans ce cas).
+//   reconciliation  : dons EN_ATTENTE et retraits APPROUVE relus chez le fournisseur (5 minutes)
+//   alertes         : emails d'alerte regroupés en attente (5 minutes)
+//   maintenance     : cagnottes échues terminées, suspensions levées, vieilles alertes supprimées
+//   purge-identites : fichiers des vérifications d'identité refusées depuis plus de 30 jours
+export const TACHES = [
+  'reconciliation',
+  'alertes',
+  'maintenance',
+  'purge-identites',
+] as const;
+export type NomTache = (typeof TACHES)[number];
+
+export function estTache(nom: unknown): nom is NomTache {
+  return TACHES.includes(nom as NomTache);
+}
 
 @Injectable()
 export class TachesService {
   private readonly logger = new Logger(TachesService.name);
+  // Une exécution à la fois par tâche dans ce processus (une réconciliation peut durer si le
+  // fournisseur répond lentement). Entre processus, Cron utilise flock (voir la documentation).
+  private readonly enCours = new Set<NomTache>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly reconciliationDons: ReconciliationDonsService,
     private readonly retraitsService: RetraitsService,
+    private readonly verificationIdentite: VerificationIdentiteService,
+    private readonly alertesAdmin: AlertesAdminService,
   ) {}
 
-  private reconciliationEnCours = false;
+  // Exécute une tâche et renvoie son résumé. Lève l'erreur en cas d'échec (le script la transforme
+  // en code de sortie non nul, visible dans les emails de Cron).
+  async executer(nom: NomTache): Promise<string> {
+    return (await this.executerAvecBilan(nom)).resume;
+  }
 
-  // Toutes les 5 minutes : relit chez Notch Pay le statut des dons EN_ATTENTE depuis plus de
-  // 2 minutes et des retraits APPROUVE (versement lancé) depuis plus de 5 minutes.
-  @Cron('*/5 * * * *', { name: 'reconciliation-paiements' })
-  async reconciliationPaiements() {
-    // Un passage à la fois : le précédent peut durer si Notch Pay répond lentement.
-    if (this.reconciliationEnCours) return;
-    this.reconciliationEnCours = true;
+  // activite : faux quand la tâche n'a rien eu à faire (les tâches fréquentes ne l'écrivent pas).
+  private async executerAvecBilan(
+    nom: NomTache,
+  ): Promise<{ resume: string; activite: boolean }> {
+    if (this.enCours.has(nom)) {
+      return {
+        resume: `Tâche ${nom} déjà en cours : ignorée.`,
+        activite: false,
+      };
+    }
+    this.enCours.add(nom);
     try {
-      const dons = await this.reconciliationDons.reconcilier();
-      const retraits = await this.retraitsService.reconcilierVersements();
-      if (dons.consultes > 0 || retraits.consultes > 0) {
-        this.logger.log(
-          `Réconciliation : ${dons.consultes} don(s) consulté(s) (${dons.valides} validé(s), ${dons.echoues} échoué(s), ${dons.abandonnes} abandonné(s)) ; ${retraits.consultes} retrait(s) consulté(s) (${retraits.traites} versé(s), ${retraits.echoues} échoué(s)).`,
-        );
+      switch (nom) {
+        case 'reconciliation': {
+          const dons = await this.reconciliationDons.reconcilier();
+          const retraits = await this.retraitsService.reconcilierVersements();
+          return {
+            resume: `Réconciliation : ${dons.consultes} don(s) consulté(s) (${dons.valides} validé(s), ${dons.echoues} échoué(s), ${dons.abandonnes} abandonné(s)) ; ${retraits.consultes} retrait(s) consulté(s) (${retraits.traites} versé(s), ${retraits.echoues} échoué(s)).`,
+            activite: dons.consultes + retraits.consultes > 0,
+          };
+        }
+        case 'alertes': {
+          const envoyees = await this.alertesAdmin.envoyerAlertesEnAttente();
+          return {
+            resume: `Alertes : ${envoyees} alerte(s) envoyée(s) par email.`,
+            activite: envoyees > 0,
+          };
+        }
+        case 'maintenance': {
+          const terminees = await this.terminerCagnottesEchues();
+          const reactives = await this.leverSuspensionsEchues();
+          const alertes = await this.alertesAdmin.purgerAlertesEnvoyees();
+          return {
+            resume: `Maintenance : ${terminees} cagnotte(s) terminée(s), ${reactives} compte(s) réactivé(s), ${alertes} ancienne(s) alerte(s) supprimée(s).`,
+            activite: true,
+          };
+        }
+        case 'purge-identites': {
+          const nb = await this.verificationIdentite.purgerFichiersRefuses();
+          return {
+            resume: `Purge : fichiers de ${nb} vérification(s) d'identité refusée(s) supprimés.`,
+            activite: true,
+          };
+        }
       }
-    } catch (e) {
-      this.logger.error(
-        'Échec de la réconciliation des paiements',
-        e instanceof Error ? e.stack : String(e),
-      );
     } finally {
-      this.reconciliationEnCours = false;
+      this.enCours.delete(nom);
     }
   }
 
-  @Cron('5 0 * * *', { name: 'maintenance-nocturne', timeZone: FUSEAU })
-  async maintenanceNocturne() {
+  // Tâches internes (TACHES_INTERNES=true) : mêmes tâches, erreurs seulement écrites dans les logs.
+  @Cron('*/5 * * * *', { name: 'reconciliation' })
+  reconciliationInterne() {
+    return this.lancer('reconciliation');
+  }
+
+  @Cron('*/5 * * * *', { name: 'alertes' })
+  alertesInterne() {
+    return this.lancer('alertes');
+  }
+
+  @Cron('5 0 * * *', { name: 'maintenance', timeZone: FUSEAU })
+  maintenanceInterne() {
+    return this.lancer('maintenance');
+  }
+
+  @Cron('30 0 * * *', { name: 'purge-identites', timeZone: FUSEAU })
+  purgeIdentitesInterne() {
+    return this.lancer('purge-identites');
+  }
+
+  private async lancer(nom: NomTache) {
     try {
-      const terminees = await this.terminerCagnottesEchues();
-      const reactives = await this.leverSuspensionsEchues();
-      this.logger.log(
-        `Maintenance : ${terminees} cagnotte(s) terminée(s), ${reactives} compte(s) réactivé(s).`,
-      );
+      const { resume, activite } = await this.executerAvecBilan(nom);
+      if (activite) this.logger.log(resume);
     } catch (e) {
       this.logger.error(
-        'Échec de la maintenance nocturne',
+        `Échec de la tâche ${nom}`,
         e instanceof Error ? e.stack : String(e),
       );
     }

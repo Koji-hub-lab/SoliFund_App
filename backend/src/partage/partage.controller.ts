@@ -1,4 +1,5 @@
-import { Controller, Get, Header, Param } from '@nestjs/common';
+import { Controller, Get, Header, Param, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { CSP_PAGE_PARTAGE, PartageService } from './partage.service';
 import { LangueRequete } from '../i18n/langue-requete.decorator';
@@ -17,7 +18,16 @@ export class PartageController {
   @Header('Cache-Control', 'public, max-age=300')
   // La page dépend de la langue demandée : les caches gardent une version par langue.
   @Header('Vary', 'Accept-Language')
-  pageCagnotte(@Param('id') id: string, @LangueRequete() langue: Langue) {
-    return this.partageService.pageCagnotte(id, langue);
+  pageCagnotte(
+    @Param('id') id: string,
+    @LangueRequete() langue: Langue,
+    @Req() req: Request,
+  ) {
+    // Sans PUBLIC_API_URL (développement uniquement) : adresse de la requête reçue.
+    return this.partageService.pageCagnotte(
+      id,
+      langue,
+      `${req.protocol}://${req.get('host') ?? ''}`,
+    );
   }
 }

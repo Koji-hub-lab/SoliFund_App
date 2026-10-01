@@ -19,6 +19,10 @@ process.env.STOCKAGE_PRIVE_DIR = join(
   tmpdir(),
   'solifund-tests-stockage-prive',
 );
+// Un proxy de confiance : les tests simulent des visiteurs différents avec X-Forwarded-For
+// (limites par adresse IP). proxy.e2e-spec.ts vérifie aussi le réglage par défaut (0).
+process.env.TRUST_PROXY = '1';
+
 // Photos des cagnottes envoyées par les tests : dossier temporaire aussi, jamais backend/uploads.
 process.env.UPLOADS_DIR = join(tmpdir(), 'solifund-tests-uploads');
 

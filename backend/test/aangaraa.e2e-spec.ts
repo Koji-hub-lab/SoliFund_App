@@ -172,11 +172,11 @@ describe('AangaraaPay comme fournisseur actif (e2e)', () => {
 
   beforeAll(async () => {
     // Import après le choix du fournisseur ci-dessus.
-    outils = await import('./outils');
+    outils = await import('./outils.js');
     ({ app, prisma, jwt } = await outils.creerApplication({ aangaraa }));
     await outils.viderBase(prisma);
     const { ReconciliationDonsService } =
-      await import('../src/dons/reconciliation-dons.service');
+      await import('../src/dons/reconciliation-dons.service.js');
     const reconciliation = app.get(ReconciliationDonsService);
     reconcilier = () => reconciliation.reconcilier();
     const orga = await outils.creerUtilisateur(prisma, jwt);
@@ -550,7 +550,7 @@ describe('AangaraaPay comme fournisseur actif (e2e)', () => {
         data: { date_validation: new Date(Date.now() - 6 * 60_000) },
       });
       const { RetraitsService } =
-        await import('../src/retraits/retraits.service');
+        await import('../src/retraits/retraits.service.js');
       await app.get(RetraitsService).reconcilierVersements();
       return retrait(id);
     }

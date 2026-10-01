@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import {
   ErreurAuthentificationPaiement,
+  ErreurConfigurationPaiement,
   ErreurIntrouvablePaiement,
   ErreurLimitePaiement,
   ErreurPaiement,
@@ -103,7 +104,8 @@ export class AangaraaPayClient {
   // signe pas ses notifications, seul ce jeton prouve qu'elles viennent de l'adresse donnée.
   private readonly jetonWebhook: string;
   // notify_url : webhook de SoliFund, construit avec PUBLIC_API_URL et le jeton.
-  readonly urlNotification: string;
+  // notify_url du webhook ; null sans PUBLIC_API_URL (obligatoire au démarrage avec AangaraaPay).
+  readonly urlNotification: string | null;
 
   // Attente avant chaque nouvel essai : 2 nouveaux essais, donc 3 tentatives au plus.
   delaisNouvelEssaiMs = [1_000, 3_000];
@@ -116,11 +118,12 @@ export class AangaraaPayClient {
     const urlApi = (
       config.get<string>('AANGARAA_API_URL') || URL_API_AANGARAA_PAR_DEFAUT
     ).replace(/\/+$/, '');
-    const port = config.get<string>('PORT') ?? '3000';
-    const urlPublique = (
-      config.get<string>('PUBLIC_API_URL') || `http://localhost:${port}`
-    ).replace(/\/+$/, '');
-    this.urlNotification = `${urlPublique}/paiements/webhook/aangaraa/${encodeURIComponent(this.jetonWebhook)}`;
+    const urlPublique = config
+      .get<string>('PUBLIC_API_URL')
+      ?.replace(/\/+$/, '');
+    this.urlNotification = urlPublique
+      ? `${urlPublique}/paiements/webhook/aangaraa/${encodeURIComponent(this.jetonWebhook)}`
+      : null;
     this.http = axios.create({
       baseURL: urlApi,
       timeout: DELAI_MAX_AANGARAA_MS,
@@ -141,6 +144,12 @@ export class AangaraaPayClient {
     reference: string;
     methode: MethodePaiement;
   }): Promise<OperationAangaraa> {
+    if (!this.urlNotification) {
+      // Rien n'est envoyé : AangaraaPay ne pourrait pas prévenir SoliFund du résultat.
+      throw new ErreurConfigurationPaiement(
+        'PUBLIC_API_URL manquante : adresse du webhook AangaraaPay inconnue.',
+      );
+    }
     const brut = await this.requete('POST', '/api/v1/no_redirect/payment', {
       corps: {
         phone_number: avecIndicatif(paiement.numero),

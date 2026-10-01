@@ -30,7 +30,12 @@ import { NotchPayWebhookModule } from './payment/notchpay-webhook.module';
     ThrottlerModule.forRoot({
       throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }],
     }),
-    ScheduleModule.forRoot(),
+    // Tâches planifiées lancées par l'application elle-même : seulement avec TACHES_INTERNES=true
+    // (développement). En production, Cron lance scripts/taches.ts (voir TachesService). La
+    // variable est lue après ConfigModule.forRoot, qui charge le fichier .env.
+    ...(process.env.TACHES_INTERNES === 'true'
+      ? [ScheduleModule.forRoot()]
+      : []),
     PrismaModule,
     UtilisateursModule,
     AuthModule,

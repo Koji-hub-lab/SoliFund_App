@@ -10,6 +10,17 @@ import { GoogleAuthGuard } from './google-auth.guard';
 import { UtilisateursModule } from '../utilisateurs/utilisateurs.module';
 import { JetonsModule } from '../jetons/jetons.module';
 
+// Durée de validité des jetons (JWT_DUREE, vérifiée au démarrage) : un nombre de secondes
+// (« 3600 ») ou une durée avec son unité (« 30m », « 12h », « 1d ») ; 1 jour par défaut.
+function dureeJeton(
+  valeur?: string,
+): number | `${number}${'s' | 'm' | 'h' | 'd'}` {
+  const duree = valeur?.trim() || '1d';
+  return /^\d+$/.test(duree)
+    ? Number(duree)
+    : (duree as `${number}${'s' | 'm' | 'h' | 'd'}`);
+}
+
 @Module({
   imports: [
     UtilisateursModule,
@@ -20,7 +31,7 @@ import { JetonsModule } from '../jetons/jetons.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '1d' },
+        signOptions: { expiresIn: dureeJeton(config.get<string>('JWT_DUREE')) },
       }),
     }),
   ],

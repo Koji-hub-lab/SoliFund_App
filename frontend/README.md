@@ -1,16 +1,12 @@
-# React + Vite
+# SoliFund : site (frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Site React 19 + Vite + Tailwind 4 de SoliFund. Charte graphique et composants : [DESIGN.md](DESIGN.md).
 
-Currently, two official plugins are available:
+Installation, variables d'environnement (modèle : `.env.example`), lancement et mise en production : voir
+le [README à la racine du dépôt](../README.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```bash
+npm run dev     # développement (http://localhost:5173, appels API par le proxy /api)
+npm run lint    # oxlint
+npm run build   # fichiers statiques dans dist/
+```

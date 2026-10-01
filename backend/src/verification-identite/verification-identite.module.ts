@@ -19,5 +19,6 @@ import { VerificationIdentiteService } from './verification-identite.service';
     VerificationIdentiteAdminController,
   ],
   providers: [VerificationIdentiteService],
+  exports: [VerificationIdentiteService],
 })
 export class VerificationIdentiteModule {}

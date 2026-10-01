@@ -360,7 +360,13 @@ describe('AangaraaPayClient (HTTP simulé avec les exemples de la documentation)
           numero: '+237677123456',
           client: { nom: 'Awa' },
         })
-        .catch((e: unknown) => e as ErreurPaiement);
+        // Rejet attendu : un succès fait échouer le test.
+        .then(
+          () => {
+            throw new Error('Échec attendu');
+          },
+          (e: unknown) => e as ErreurPaiement,
+        );
       expect(erreur).toBeInstanceOf(ErreurReseauPaiement);
       expect(erreur.demandePeutEtrePartie).toBe(true);
       expect(recues).toHaveLength(3);
@@ -384,7 +390,13 @@ describe('AangaraaPayClient (HTTP simulé avec les exemples de la documentation)
           numero: '+237677123456',
           client: { nom: 'Awa' },
         })
-        .catch((e: unknown) => e as ErreurPaiement);
+        // Rejet attendu : un succès fait échouer le test.
+        .then(
+          () => {
+            throw new Error('Échec attendu');
+          },
+          (e: unknown) => e as ErreurPaiement,
+        );
       expect(erreur).toBeInstanceOf(ErreurValidationPaiement);
       expect(erreur.message).toBe('Amount must be greater than 0');
       expect(erreur.demandePeutEtrePartie).toBe(false);
@@ -513,7 +525,13 @@ describe('AangaraaPayClient (HTTP simulé avec les exemples de la documentation)
           montant: 1000,
           methode: 'ORANGE_MONEY',
         })
-        .catch((e: unknown) => e as ErreurPaiement);
+        // Rejet attendu : un succès fait échouer le test.
+        .then(
+          () => {
+            throw new Error('Échec attendu');
+          },
+          (e: unknown) => e as ErreurPaiement,
+        );
       expect(erreur).toBeInstanceOf(ErreurValidationPaiement);
       expect(erreur.message).toBe('Insufficient balance for Orange_Cameroon');
       expect(erreur.code).toBe('Insufficient balance');

@@ -54,17 +54,17 @@ type Apercu = {
 
 @Injectable()
 export class PartageService {
-  private readonly urlApi: string;
+  // PUBLIC_API_URL (obligatoire en production) ; null en développement s'il est absent : l'adresse
+  // de la requête reçue sert alors de base (voir pageCagnotte).
+  private readonly urlApi: string | null;
   private readonly urlFrontend: string;
 
   constructor(
     config: ConfigService,
     private readonly cagnottesService: CagnottesService,
   ) {
-    const port = config.get<string>('PORT') ?? '3000';
-    this.urlApi = (
-      config.get<string>('PUBLIC_API_URL') ?? `http://localhost:${port}`
-    ).replace(/\/+$/, '');
+    this.urlApi =
+      config.get<string>('PUBLIC_API_URL')?.replace(/\/+$/, '') || null;
     this.urlFrontend = config
       .getOrThrow<string>('FRONTEND_URL')
       .replace(/\/+$/, '');
@@ -74,9 +74,15 @@ export class PartageService {
   // (privée, suspendue, annulée) reçoit les balises génériques de SoliFund, sans aucun détail.
   // Le contenu de la cagnotte (titre, description) est repris tel quel ; les textes génériques
   // sont écrits dans la langue demandée (Accept-Language).
-  async pageCagnotte(idTexte: string, langue: Langue): Promise<string> {
+  // origineRequete : « https://hote » de la requête, utilisée seulement sans PUBLIC_API_URL.
+  async pageCagnotte(
+    idTexte: string,
+    langue: Langue,
+    origineRequete = '',
+  ): Promise<string> {
+    const urlApi = this.urlApi ?? origineRequete;
     const id = /^\d{1,9}$/.test(idTexte) ? Number(idTexte) : null;
-    const urlPartage = `${this.urlApi}/partage/cagnottes/${encodeURIComponent(idTexte)}`;
+    const urlPartage = `${urlApi}/partage/cagnottes/${encodeURIComponent(idTexte)}`;
     const generique: Apercu = {
       langue,
       generique: true,
@@ -108,9 +114,7 @@ export class PartageService {
             titre: extrait(cagnotte.titre, 80),
           }),
       // Image de 1200 px (WebP) ; image générique si la cagnotte n'a pas de photo.
-      image: cagnotte.image
-        ? `${this.urlApi}${cagnotte.image}`
-        : generique.image,
+      image: cagnotte.image ? `${urlApi}${cagnotte.image}` : generique.image,
       texteImage: cagnotte.image ? cagnotte.titre : generique.texteImage,
       urlPartage,
       urlPage: `${this.urlFrontend}/cagnottes/${cagnotte.id_cagnotte}`,

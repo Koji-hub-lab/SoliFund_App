@@ -57,10 +57,17 @@ async function bootstrap() {
     );
   }
 
-  const port = Number(config.get<string>('PORT') ?? 3000);
-  await app.listen(port);
+  // PORT : numéro, ou chemin de socket (Passenger) ; 3000 par défaut.
+  const port = process.env.PORT || '3000';
+  await app.listen(/^\d+$/.test(port) ? Number(port) : port);
   Logger.log(
     `API démarrée sur le port ${port}${docsActives ? ` — documentation sur /docs` : ''}`,
+    'Bootstrap',
+  );
+  Logger.log(
+    process.env.TACHES_INTERNES === 'true'
+      ? "Tâches planifiées lancées par l'application (TACHES_INTERNES=true)."
+      : 'Tâches planifiées internes désactivées : à lancer par Cron (node dist/scripts/taches.js <tâche>).',
     'Bootstrap',
   );
 }

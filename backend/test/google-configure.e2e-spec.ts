@@ -14,7 +14,7 @@ describe('Connexion avec Google configurée (e2e)', () => {
 
   beforeAll(async () => {
     // Import après la configuration des variables GOOGLE_* ci-dessus.
-    const { creerApplication } = await import('./outils');
+    const { creerApplication } = await import('./outils.js');
     ({ app } = await creerApplication());
   });
 

@@ -411,10 +411,10 @@ describe('Publication et modération des cagnottes (e2e)', () => {
 
   it('limite les signalements à 3 par minute et par adresse IP', async () => {
     const orga = await organisateur('VALIDEE');
-    const ids = [];
+    const ids: number[] = [];
     for (let i = 0; i < 4; i++) ids.push(corps(await creer(orga)).id_cagnotte);
 
-    const statuts = [];
+    const statuts: number[] = [];
     for (const id of ids)
       statuts.push((await signaler(id, undefined, '41.202.9.9')).status);
     expect(statuts).toEqual([201, 201, 201, 429]);

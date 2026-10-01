@@ -25,7 +25,7 @@ describe('Commission sur les retraits (e2e)', () => {
   const applications: INestApplication<App>[] = [];
 
   beforeAll(async () => {
-    outils = await import('./outils');
+    outils = await import('./outils.js');
     ({ app, prisma, jwt } = await outils.creerApplication());
     applications.push(app);
     await outils.viderBase(prisma);
@@ -284,7 +284,7 @@ describe('Commission sur les retraits (e2e)', () => {
     // Le taux passe à 5 % : nouvelle instance de l'application avec la nouvelle configuration.
     jest.resetModules();
     process.env.COMMISSION_TAUX_POURCENT = '5';
-    const outils5 = await import('./outils');
+    const outils5 = await import('./outils.js');
     const { app: app5 } = await outils5.creerApplication();
     applications.push(app5);
     expect(

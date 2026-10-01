@@ -13,8 +13,25 @@ function urlSite(mode) {
   return { name: 'url-site', transformIndexHtml: (html) => html.replaceAll('%URL_SITE%', url) }
 }
 
+// En production, le site est servi par un hébergement statique (o2switch) : sans VITE_API_URL, il
+// appellerait « /api » sur ce même domaine, où aucune API ne répond. Avertissement au build.
+function verifierUrlApi(mode) {
+  return {
+    name: 'verifier-url-api',
+    apply: 'build',
+    buildStart() {
+      if (mode === 'production' && !loadEnv(mode, process.cwd(), 'VITE_').VITE_API_URL) {
+        this.warn(
+          'VITE_API_URL est vide : le site construit appellera /api sur son propre domaine. ' +
+            'Pour la mise en ligne, renseignez-la dans frontend/.env.production (ex. https://api.solifund.exemple.cm).',
+        )
+      }
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss(), urlSite(mode)],
+  plugins: [react(), tailwindcss(), urlSite(mode), verifierUrlApi(mode)],
   server: {
     host: true, // écoute aussi sur l'adresse du réseau local
     proxy: {

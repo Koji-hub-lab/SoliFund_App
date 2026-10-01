@@ -5,9 +5,8 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { Prisma, VerificationIdentite } from '@prisma/client';
-import { FUSEAU, jourADouala } from '../common/dates';
+import { jourADouala } from '../common/dates';
 import { construirePage, lirePagination } from '../common/pagination';
 import {
   NotificationsService,
@@ -315,24 +314,8 @@ export class VerificationIdentiteService {
     return presenter(verification);
   }
 
-  // Chaque nuit : supprime les fichiers des soumissions refusées depuis plus de 30 jours.
-  @Cron('30 0 * * *', { name: 'purge-identites-refusees', timeZone: FUSEAU })
-  async purgeNocturne() {
-    try {
-      const nb = await this.purgerFichiersRefuses();
-      if (nb > 0) {
-        this.logger.log(
-          `Purge : fichiers de ${nb} vérification(s) refusée(s) supprimés.`,
-        );
-      }
-    } catch (e) {
-      this.logger.error(
-        'Échec de la purge des pièces refusées',
-        e instanceof Error ? e.stack : String(e),
-      );
-    }
-  }
-
+  // Supprime les fichiers des soumissions refusées depuis plus de 30 jours (tâche « purge-identites »,
+  // voir TachesService).
   async purgerFichiersRefuses(maintenant: Date = new Date()): Promise<number> {
     const limite = new Date(
       maintenant.getTime() - CONSERVATION_REFUS_JOURS * 24 * 60 * 60 * 1000,

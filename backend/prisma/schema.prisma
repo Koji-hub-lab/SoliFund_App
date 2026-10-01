@@ -578,3 +578,18 @@ model Commission {
   @@index([id_cagnotte])
   @@map("slf_commission")
 }
+
+// Alertes des administrateurs en attente d'email (regroupement : un email au plus toutes les
+// 10 minutes, voir AlertesAdminService). Gardées en base pour survivre à un redémarrage ou à une
+// mise en veille de l'application, et pour être envoyées par la tâche « alertes » (Cron).
+model AlerteEmail {
+  id_alerte     Int       @id @default(autoincrement())
+  code          String    @db.VarChar(50)
+  parametres    Json
+  date_creation DateTime  @default(now())
+  // Vide tant que l'alerte n'a pas été envoyée par email.
+  date_envoi    DateTime?
+
+  @@index([date_envoi])
+  @@map("slf_alerte_email")
+}

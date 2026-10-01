@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  Matches,
   Max,
   Min,
   MinLength,
@@ -57,10 +58,12 @@ class VariablesEnvironnement {
   FRONTEND_URL!: string;
 
   // URL publique du backend telle que la voient les visiteurs et les robots de WhatsApp / Facebook
-  // (liens de partage, images des aperçus) et AangaraaPay (notify_url du webhook). Par défaut :
-  // http://localhost:<PORT> ; obligatoire avec AangaraaPay, qui doit pouvoir joindre le webhook.
+  // (liens de partage, images des aperçus) et AangaraaPay (notify_url du webhook). Obligatoire en
+  // production et avec AangaraaPay (qui doit pouvoir joindre le webhook) ; sinon facultative, et les
+  // pages de partage utilisent l'adresse de la requête reçue.
   @ValidateIf(
     (variables: VariablesEnvironnement) =>
+      variables.NODE_ENV === 'production' ||
       variables.PAIEMENT_FOURNISSEUR === 'aangaraa' ||
       variables.PUBLIC_API_URL !== undefined,
   )
@@ -250,6 +253,24 @@ class VariablesEnvironnement {
   @IsString()
   STOCKAGE_PRIVE_DIR?: string;
 
+  // Durée de validité des jetons de connexion : secondes (« 3600 ») ou durée avec unité s, m, h ou d
+  // (« 30m », « 12h », « 1d »). 1 jour par défaut.
+  @IsOptional()
+  @Matches(/^[1-9]\d*[smhd]?$/, {
+    message: 'JWT_DUREE doit être une durée comme 3600, 30m, 12h ou 1d.',
+  })
+  JWT_DUREE?: string;
+
+  // Nombre de proxys de confiance devant l'API (0 par défaut), voir configuration-application.ts.
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({
+    message: 'TRUST_PROXY doit être un nombre entier de proxys (0, 1, 2...).',
+  })
+  @Min(0)
+  @Max(10)
+  TRUST_PROXY?: number;
+
   // Dossier des photos des cagnottes (servi sous /uploads). Par défaut : backend/uploads.
   @IsOptional()
   @IsString()
@@ -270,12 +291,21 @@ class VariablesEnvironnement {
   @IsIn(['true', 'false'])
   NOTCHPAY_AUTORISER_LIVE_EN_DEV?: string;
 
+  // Port HTTP (3000 par défaut). Hébergement Passenger (cPanel) : fourni par Passenger, qui peut
+  // aussi donner le chemin d'un socket ; les deux sont acceptés.
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(65535)
-  PORT?: number;
+  @Matches(/^([1-9]\d{0,4}|\/.+)$/, {
+    message: "PORT doit être un numéro de port ou le chemin d'un socket.",
+  })
+  PORT?: string;
+
+  // Tâches planifiées lancées par l'application (développement) : « true ». En production, laisser
+  // vide ou « false » et créer les tâches Cron (docs/DEPLOIEMENT-O2SWITCH.md).
+  @IsOptional()
+  @IsIn(['true', 'false'], {
+    message: 'TACHES_INTERNES doit valoir « true » ou « false ».',
+  })
+  TACHES_INTERNES?: string;
 
   @IsOptional()
   @IsIn(['development', 'production', 'test'])
@@ -305,6 +335,11 @@ export function validerEnvironnement(config: Record<string, unknown>) {
     'AANGARAA_APP_KEY',
     'AANGARAA_WEBHOOK_JETON',
     'PUBLIC_API_URL',
+    'JWT_DUREE',
+    'TRUST_PROXY',
+    'UPLOADS_DIR',
+    'TACHES_INTERNES',
+    'PORT',
   ]) {
     if (aVerifier[nom] === '') delete aVerifier[nom];
   }

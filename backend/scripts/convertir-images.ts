@@ -11,11 +11,16 @@ import { readFile, stat } from 'fs/promises';
 import { join } from 'path';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { ImagesService } from '../src/uploads/images.service';
+import { ImagesService, dossierUploads } from '../src/uploads/images.service';
 
 const essai = process.argv.includes('--essai');
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 const images = new ImagesService();
+
+// « /uploads/cagnottes/x.webp » → fichier dans le dossier des photos.
+function cheminLocal(cheminPublic: string) {
+  return join(dossierUploads(), cheminPublic.replace(/^\/uploads\//, ''));
+}
 
 function ko(octets: number) {
   return `${Math.round(octets / 1024)} Ko`;
@@ -34,8 +39,8 @@ async function main() {
   let converties = 0;
   for (const c of cagnottes) {
     const ancienne = c.image!;
-    // Les images sont servies sous /uploads/... et stockées dans backend/uploads/...
-    const fichier = join(process.cwd(), ancienne.replace(/^\//, ''));
+    // Les images sont servies sous /uploads/... et stockées dans UPLOADS_DIR (backend/uploads par défaut).
+    const fichier = cheminLocal(ancienne);
     let contenu: Buffer;
     try {
       contenu = await readFile(fichier);
@@ -60,8 +65,8 @@ async function main() {
         console.log(`⚠️  Cagnotte ${c.id_cagnotte} : image modifiée pendant la conversion, ignorée.`);
         continue;
       }
-      const tailleImage = (await stat(join(process.cwd(), nouvelles.image.replace(/^\//, '')))).size;
-      const tailleMiniature = (await stat(join(process.cwd(), nouvelles.image_miniature.replace(/^\//, '')))).size;
+      const tailleImage = (await stat(cheminLocal(nouvelles.image))).size;
+      const tailleMiniature = (await stat(cheminLocal(nouvelles.image_miniature))).size;
       await images.supprimer('cagnottes', ancienne);
       avant += contenu.length;
       apres += tailleImage + tailleMiniature;
