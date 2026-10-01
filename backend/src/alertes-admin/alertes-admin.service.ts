@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { BrevoService } from '../jetons/brevo.service';
 import {
   NotificationsService,
@@ -78,7 +77,7 @@ export class AlertesAdminService {
 
     try {
       await this.prisma.alerteEmail.create({
-        data: { code, parametres: parametres as Prisma.InputJsonObject },
+        data: { code, parametres },
       });
       // Aucun email depuis 10 minutes : envoi immédiat ; sinon l'alerte attend la fin de la fenêtre.
       if (await this.fenetreTerminee()) await this.envoyerEmails();

@@ -102,6 +102,8 @@ variable obligatoire manque. Le message d'erreur se lit dans le journal de Passe
 | `NOTCHPAY_PRIVATE_KEY` | `sk.FAUSSE_CLE_PRIVEE` | Si `notchpay` (versements, solde) |
 | `NOTCHPAY_WEBHOOK_HASH` | `hsk.FAUX_HASH_WEBHOOK` | Si `notchpay` : signature des webhooks, obligatoire en production |
 | `NOTCHPAY_FORMAT_TELEPHONE` | `sans_plus` | Facultative : `sans_plus` ou `avec_plus` |
+| `NOTCHPAY_API_URL` | `https://api.notchpay.co` | Facultative (valeur par défaut) |
+| `NOTCHPAY_AUTORISER_LIVE_EN_DEV` | *(ne pas définir)* | Sert seulement hors production ; en production, les clés « live » sont acceptées |
 | `FRAIS_MTN_ENCAISSEMENT_POURCENT` | `1.7` | Frais payés par le donateur (tarifs d'AangaraaPay par défaut) |
 | `FRAIS_MTN_VERSEMENT_POURCENT` | `1.3` | |
 | `FRAIS_ORANGE_ENCAISSEMENT_POURCENT` | `1.5` | |

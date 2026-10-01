@@ -1,3 +1,9 @@
+-- Migration de départ : schéma complet de SoliFund, généré depuis prisma/schema.prisma
+-- (prisma migrate diff --from-empty --to-schema). Elle remplace les migrations précédentes, regroupées
+-- pour la production en PostgreSQL 9.6 : chaque type énuméré est créé directement avec toutes ses
+-- valeurs (avant PostgreSQL 12, ALTER TYPE ... ADD VALUE échoue dans un fichier de migration).
+-- Futures migrations : un ajout de valeur à un enum va dans une migration à part (voir CLAUDE.md).
+
 -- CreateEnum
 CREATE TYPE "RoleNom" AS ENUM ('ROLE_USER', 'ROLE_ADMIN');
 
@@ -8,7 +14,10 @@ CREATE TYPE "StatutUtilisateur" AS ENUM ('ACTIF', 'SUSPENDU', 'BANNI', 'INACTIF'
 CREATE TYPE "TypeJeton" AS ENUM ('VERIF_EMAIL', 'RESET_MDP');
 
 -- CreateEnum
-CREATE TYPE "StatutCagnotte" AS ENUM ('ACTIVE', 'TERMINEE', 'SUSPENDUE', 'ANNULEE');
+CREATE TYPE "StatutCagnotte" AS ENUM ('ACTIVE', 'TERMINEE', 'SUSPENDUE', 'ANNULEE', 'EN_VERIFICATION', 'REFUSEE');
+
+-- CreateEnum
+CREATE TYPE "FournisseurPaiement" AS ENUM ('NOTCHPAY', 'AANGARAA');
 
 -- CreateEnum
 CREATE TYPE "MethodePaiement" AS ENUM ('MTN_MOBILE_MONEY', 'ORANGE_MONEY');
@@ -17,7 +26,7 @@ CREATE TYPE "MethodePaiement" AS ENUM ('MTN_MOBILE_MONEY', 'ORANGE_MONEY');
 CREATE TYPE "StatutPaiement" AS ENUM ('EN_ATTENTE', 'VALIDE', 'ECHOUE', 'REMBOURSE');
 
 -- CreateEnum
-CREATE TYPE "StatutRetrait" AS ENUM ('EN_ATTENTE', 'APPROUVE', 'REJETE', 'TRAITE');
+CREATE TYPE "StatutRetrait" AS ENUM ('EN_ATTENTE', 'APPROUVE', 'REJETE', 'TRAITE', 'ECHOUE');
 
 -- CreateEnum
 CREATE TYPE "TypeTransaction" AS ENUM ('DON', 'RETRAIT', 'REMBOURSEMENT');
@@ -26,10 +35,28 @@ CREATE TYPE "TypeTransaction" AS ENUM ('DON', 'RETRAIT', 'REMBOURSEMENT');
 CREATE TYPE "StatutTransaction" AS ENUM ('EN_ATTENTE', 'SUCCES', 'ECHEC');
 
 -- CreateEnum
+CREATE TYPE "Langue" AS ENUM ('fr', 'en');
+
+-- CreateEnum
 CREATE TYPE "TypeNotification" AS ENUM ('DON', 'RETRAIT', 'COMMENTAIRE', 'SYSTEME', 'VERIFICATION');
 
 -- CreateEnum
 CREATE TYPE "StatutLecture" AS ENUM ('NON_LUE', 'LUE');
+
+-- CreateEnum
+CREATE TYPE "TypePieceIdentite" AS ENUM ('CNI', 'RECEPISSE_CNI', 'PASSEPORT');
+
+-- CreateEnum
+CREATE TYPE "StatutVerificationIdentite" AS ENUM ('EN_ATTENTE', 'VALIDEE', 'REFUSEE');
+
+-- CreateEnum
+CREATE TYPE "ActionJournalIdentite" AS ENUM ('CONSULTATION_FICHIER', 'VALIDATION', 'REFUS');
+
+-- CreateEnum
+CREATE TYPE "MotifSignalement" AS ENUM ('ARNAQUE', 'CONTENU_INAPPROPRIE', 'FAUSSES_INFORMATIONS', 'AUTRE');
+
+-- CreateEnum
+CREATE TYPE "StatutSignalement" AS ENUM ('OUVERT', 'CLASSE');
 
 -- CreateTable
 CREATE TABLE "slf_role" (
@@ -45,13 +72,16 @@ CREATE TABLE "slf_utilisateur" (
     "nom" VARCHAR(100) NOT NULL,
     "prenom" VARCHAR(100) NOT NULL,
     "email" VARCHAR(255) NOT NULL,
-    "mot_de_passe" VARCHAR(255) NOT NULL,
+    "mot_de_passe" VARCHAR(255),
+    "google_id" VARCHAR(255),
     "telephone" VARCHAR(20),
     "photo_profil" VARCHAR(255),
     "date_inscription" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "est_verifie" BOOLEAN NOT NULL DEFAULT false,
     "statut" "StatutUtilisateur" NOT NULL DEFAULT 'ACTIF',
     "date_fin_suspension" TIMESTAMP(3),
+    "date_changement_mdp" TIMESTAMP(3),
+    "langue_preferee" "Langue" NOT NULL DEFAULT 'fr',
 
     CONSTRAINT "slf_utilisateur_pkey" PRIMARY KEY ("id_utilisateur")
 );
@@ -73,6 +103,7 @@ CREATE TABLE "slf_jeton" (
     "date_creation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "date_expiration" TIMESTAMP(3) NOT NULL,
     "est_utilise" BOOLEAN NOT NULL DEFAULT false,
+    "tentatives" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "slf_jeton_pkey" PRIMARY KEY ("id_jeton")
 );
@@ -104,6 +135,9 @@ CREATE TABLE "slf_cagnotte" (
     "date_modification" TIMESTAMP(3),
     "devise" VARCHAR(10) NOT NULL DEFAULT 'XAF',
     "image" VARCHAR(255),
+    "image_miniature" VARCHAR(255),
+    "raisons_verification" TEXT[],
+    "motif_refus" TEXT,
     "id_utilisateur" INTEGER NOT NULL,
     "id_categorie" INTEGER,
 
@@ -116,8 +150,14 @@ CREATE TABLE "slf_paiement" (
     "montant" DECIMAL(15,2) NOT NULL,
     "devise" VARCHAR(10) NOT NULL DEFAULT 'XAF',
     "methode_paiement" "MethodePaiement" NOT NULL,
-    "transaction_id" VARCHAR(255),
-    "reference_externe" VARCHAR(255),
+    "reference" VARCHAR(100) NOT NULL,
+    "fournisseur" "FournisseurPaiement",
+    "reference_fournisseur" VARCHAR(255),
+    "canal" VARCHAR(50),
+    "statut_operateur" VARCHAR(50),
+    "raison_operateur" TEXT,
+    "code_erreur" VARCHAR(100),
+    "message_erreur" TEXT,
     "statut" "StatutPaiement" NOT NULL DEFAULT 'EN_ATTENTE',
     "date_creation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "date_maj" TIMESTAMP(3),
@@ -130,6 +170,9 @@ CREATE TABLE "slf_paiement" (
 -- CreateTable
 CREATE TABLE "slf_don" (
     "id_don" SERIAL NOT NULL,
+    "montant_don" DECIMAL(15,2) NOT NULL,
+    "montant_frais" DECIMAL(15,2) NOT NULL DEFAULT 0,
+    "montant_total" DECIMAL(15,2) NOT NULL,
     "message" TEXT,
     "est_anonyme" BOOLEAN NOT NULL DEFAULT false,
     "date_creation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -155,10 +198,20 @@ CREATE TABLE "slf_commentaire" (
 -- CreateTable
 CREATE TABLE "slf_retrait" (
     "id_retrait" SERIAL NOT NULL,
-    "montant" DECIMAL(15,2) NOT NULL,
+    "montant_brut" DECIMAL(15,2) NOT NULL,
+    "taux_commission" DECIMAL(5,2) NOT NULL,
+    "montant_commission" DECIMAL(15,2) NOT NULL,
+    "montant_net" DECIMAL(15,2) NOT NULL,
     "methode_retrait" "MethodePaiement" NOT NULL,
     "numero_beneficiaire" VARCHAR(20) NOT NULL,
     "reference_retrait" VARCHAR(255),
+    "fournisseur" "FournisseurPaiement",
+    "reference_fournisseur" VARCHAR(255),
+    "tentatives_versement" INTEGER NOT NULL DEFAULT 0,
+    "code_erreur" VARCHAR(100),
+    "message_erreur" TEXT,
+    "hors_plateforme" BOOLEAN NOT NULL DEFAULT false,
+    "traite_par" INTEGER,
     "motif_rejet" TEXT,
     "statut" "StatutRetrait" NOT NULL DEFAULT 'EN_ATTENTE',
     "date_creation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -168,6 +221,18 @@ CREATE TABLE "slf_retrait" (
     "id_cagnotte" INTEGER NOT NULL,
 
     CONSTRAINT "slf_retrait_pkey" PRIMARY KEY ("id_retrait")
+);
+
+-- CreateTable
+CREATE TABLE "slf_webhook_recu" (
+    "id_webhook" SERIAL NOT NULL,
+    "id_evenement" VARCHAR(255) NOT NULL,
+    "type" VARCHAR(100) NOT NULL,
+    "reference" VARCHAR(255),
+    "date_reception" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date_traitement" TIMESTAMP(3),
+
+    CONSTRAINT "slf_webhook_recu_pkey" PRIMARY KEY ("id_webhook")
 );
 
 -- CreateTable
@@ -188,8 +253,10 @@ CREATE TABLE "slf_transaction" (
 -- CreateTable
 CREATE TABLE "slf_notification" (
     "id_notification" SERIAL NOT NULL,
-    "titre" VARCHAR(255) NOT NULL,
-    "message" TEXT NOT NULL,
+    "code" VARCHAR(100),
+    "parametres" JSONB,
+    "titre" VARCHAR(255),
+    "message" TEXT,
     "type" "TypeNotification" NOT NULL,
     "date_envoi" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "id_cagnotte" INTEGER,
@@ -218,11 +285,90 @@ CREATE TABLE "slf_actualite" (
     CONSTRAINT "slf_actualite_pkey" PRIMARY KEY ("id_actualite")
 );
 
+-- CreateTable
+CREATE TABLE "slf_verification_identite" (
+    "id_verification" SERIAL NOT NULL,
+    "type_piece" "TypePieceIdentite" NOT NULL,
+    "nom" VARCHAR(100) NOT NULL,
+    "prenoms" VARCHAR(150) NOT NULL,
+    "date_naissance" DATE NOT NULL,
+    "numero_piece" VARCHAR(50) NOT NULL,
+    "date_expiration" DATE,
+    "fichier_recto" VARCHAR(255),
+    "fichier_verso" VARCHAR(255),
+    "fichier_selfie" VARCHAR(255),
+    "fichiers_supprimes_le" TIMESTAMP(3),
+    "telephone_retrait" VARCHAR(20) NOT NULL,
+    "methode_retrait" "MethodePaiement" NOT NULL,
+    "statut" "StatutVerificationIdentite" NOT NULL DEFAULT 'EN_ATTENTE',
+    "motif_refus" TEXT,
+    "date_soumission" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date_decision" TIMESTAMP(3),
+    "id_utilisateur" INTEGER NOT NULL,
+    "id_admin" INTEGER,
+
+    CONSTRAINT "slf_verification_identite_pkey" PRIMARY KEY ("id_verification")
+);
+
+-- CreateTable
+CREATE TABLE "slf_journal_verification_identite" (
+    "id_journal" SERIAL NOT NULL,
+    "action" "ActionJournalIdentite" NOT NULL,
+    "detail" TEXT,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "id_verification" INTEGER NOT NULL,
+    "id_admin" INTEGER NOT NULL,
+
+    CONSTRAINT "slf_journal_verification_identite_pkey" PRIMARY KEY ("id_journal")
+);
+
+-- CreateTable
+CREATE TABLE "slf_signalement" (
+    "id_signalement" SERIAL NOT NULL,
+    "motif" "MotifSignalement" NOT NULL,
+    "commentaire" TEXT,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "statut" "StatutSignalement" NOT NULL DEFAULT 'OUVERT',
+    "date_classement" TIMESTAMP(3),
+    "id_cagnotte" INTEGER NOT NULL,
+    "id_utilisateur" INTEGER,
+    "empreinte_ip" VARCHAR(64),
+    "id_admin" INTEGER,
+
+    CONSTRAINT "slf_signalement_pkey" PRIMARY KEY ("id_signalement")
+);
+
+-- CreateTable
+CREATE TABLE "slf_commission" (
+    "id_commission" SERIAL NOT NULL,
+    "montant" DECIMAL(15,2) NOT NULL,
+    "taux" DECIMAL(5,2) NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "id_retrait" INTEGER NOT NULL,
+    "id_cagnotte" INTEGER NOT NULL,
+
+    CONSTRAINT "slf_commission_pkey" PRIMARY KEY ("id_commission")
+);
+
+-- CreateTable
+CREATE TABLE "slf_alerte_email" (
+    "id_alerte" SERIAL NOT NULL,
+    "code" VARCHAR(50) NOT NULL,
+    "parametres" JSONB NOT NULL,
+    "date_creation" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date_envoi" TIMESTAMP(3),
+
+    CONSTRAINT "slf_alerte_email_pkey" PRIMARY KEY ("id_alerte")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "slf_role_nom_key" ON "slf_role"("nom");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "slf_utilisateur_email_key" ON "slf_utilisateur"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "slf_utilisateur_google_id_key" ON "slf_utilisateur"("google_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "slf_utilisateur_telephone_key" ON "slf_utilisateur"("telephone");
@@ -234,7 +380,7 @@ CREATE INDEX "slf_utilisateur_email_idx" ON "slf_utilisateur"("email");
 CREATE INDEX "slf_utilisateur_statut_idx" ON "slf_utilisateur"("statut");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "slf_jeton_code_key" ON "slf_jeton"("code");
+CREATE INDEX "slf_jeton_id_utilisateur_type_est_utilise_idx" ON "slf_jeton"("id_utilisateur", "type", "est_utilise");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "slf_categorie_nom_key" ON "slf_categorie"("nom");
@@ -255,13 +401,16 @@ CREATE INDEX "slf_cagnotte_id_categorie_idx" ON "slf_cagnotte"("id_categorie");
 CREATE INDEX "slf_cagnotte_date_fin_idx" ON "slf_cagnotte"("date_fin");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "slf_paiement_transaction_id_key" ON "slf_paiement"("transaction_id");
+CREATE UNIQUE INDEX "slf_paiement_reference_key" ON "slf_paiement"("reference");
 
 -- CreateIndex
 CREATE INDEX "slf_paiement_statut_idx" ON "slf_paiement"("statut");
 
 -- CreateIndex
 CREATE INDEX "slf_paiement_id_utilisateur_idx" ON "slf_paiement"("id_utilisateur");
+
+-- CreateIndex
+CREATE INDEX "slf_paiement_reference_fournisseur_idx" ON "slf_paiement"("reference_fournisseur");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "slf_don_id_paiement_key" ON "slf_don"("id_paiement");
@@ -288,6 +437,12 @@ CREATE INDEX "slf_retrait_id_utilisateur_idx" ON "slf_retrait"("id_utilisateur")
 CREATE INDEX "slf_retrait_id_cagnotte_idx" ON "slf_retrait"("id_cagnotte");
 
 -- CreateIndex
+CREATE INDEX "slf_retrait_reference_fournisseur_idx" ON "slf_retrait"("reference_fournisseur");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "slf_webhook_recu_id_evenement_key" ON "slf_webhook_recu"("id_evenement");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "slf_transaction_reference_key" ON "slf_transaction"("reference");
 
 -- CreateIndex
@@ -310,6 +465,36 @@ CREATE INDEX "slf_recevoir_statut_idx" ON "slf_recevoir"("statut");
 
 -- CreateIndex
 CREATE INDEX "slf_actualite_id_cagnotte_idx" ON "slf_actualite"("id_cagnotte");
+
+-- CreateIndex
+CREATE INDEX "slf_verification_identite_id_utilisateur_idx" ON "slf_verification_identite"("id_utilisateur");
+
+-- CreateIndex
+CREATE INDEX "slf_verification_identite_statut_idx" ON "slf_verification_identite"("statut");
+
+-- CreateIndex
+CREATE INDEX "slf_journal_verification_identite_id_verification_idx" ON "slf_journal_verification_identite"("id_verification");
+
+-- CreateIndex
+CREATE INDEX "slf_signalement_statut_idx" ON "slf_signalement"("statut");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "slf_signalement_id_cagnotte_id_utilisateur_key" ON "slf_signalement"("id_cagnotte", "id_utilisateur");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "slf_signalement_id_cagnotte_empreinte_ip_key" ON "slf_signalement"("id_cagnotte", "empreinte_ip");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "slf_commission_id_retrait_key" ON "slf_commission"("id_retrait");
+
+-- CreateIndex
+CREATE INDEX "slf_commission_date_idx" ON "slf_commission"("date");
+
+-- CreateIndex
+CREATE INDEX "slf_commission_id_cagnotte_idx" ON "slf_commission"("id_cagnotte");
+
+-- CreateIndex
+CREATE INDEX "slf_alerte_email_date_envoi_idx" ON "slf_alerte_email"("date_envoi");
 
 -- AddForeignKey
 ALTER TABLE "slf_posseder" ADD CONSTRAINT "slf_posseder_id_utilisateur_fkey" FOREIGN KEY ("id_utilisateur") REFERENCES "slf_utilisateur"("id_utilisateur") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -367,3 +552,31 @@ ALTER TABLE "slf_recevoir" ADD CONSTRAINT "slf_recevoir_id_notification_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "slf_actualite" ADD CONSTRAINT "slf_actualite_id_cagnotte_fkey" FOREIGN KEY ("id_cagnotte") REFERENCES "slf_cagnotte"("id_cagnotte") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_verification_identite" ADD CONSTRAINT "slf_verification_identite_id_utilisateur_fkey" FOREIGN KEY ("id_utilisateur") REFERENCES "slf_utilisateur"("id_utilisateur") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_verification_identite" ADD CONSTRAINT "slf_verification_identite_id_admin_fkey" FOREIGN KEY ("id_admin") REFERENCES "slf_utilisateur"("id_utilisateur") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_journal_verification_identite" ADD CONSTRAINT "slf_journal_verification_identite_id_verification_fkey" FOREIGN KEY ("id_verification") REFERENCES "slf_verification_identite"("id_verification") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_journal_verification_identite" ADD CONSTRAINT "slf_journal_verification_identite_id_admin_fkey" FOREIGN KEY ("id_admin") REFERENCES "slf_utilisateur"("id_utilisateur") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_signalement" ADD CONSTRAINT "slf_signalement_id_cagnotte_fkey" FOREIGN KEY ("id_cagnotte") REFERENCES "slf_cagnotte"("id_cagnotte") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_signalement" ADD CONSTRAINT "slf_signalement_id_utilisateur_fkey" FOREIGN KEY ("id_utilisateur") REFERENCES "slf_utilisateur"("id_utilisateur") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_signalement" ADD CONSTRAINT "slf_signalement_id_admin_fkey" FOREIGN KEY ("id_admin") REFERENCES "slf_utilisateur"("id_utilisateur") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_commission" ADD CONSTRAINT "slf_commission_id_retrait_fkey" FOREIGN KEY ("id_retrait") REFERENCES "slf_retrait"("id_retrait") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slf_commission" ADD CONSTRAINT "slf_commission_id_cagnotte_fkey" FOREIGN KEY ("id_cagnotte") REFERENCES "slf_cagnotte"("id_cagnotte") ON DELETE RESTRICT ON UPDATE CASCADE;
+

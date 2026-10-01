@@ -1,0 +1,6 @@
+{
+  // VS Code utilise le TypeScript du projet (5.9, le même que tsc, ts-jest et nest build), et non sa
+  // version intégrée : les erreurs affichées sont alors celles de la compilation réelle.
+  "typescript.tsdk": "backend/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}
