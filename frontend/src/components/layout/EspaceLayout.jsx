@@ -15,7 +15,8 @@ function classeLien(actif) {
 
 // Mise en page des espaces connectés (organisateur, administration) : barre latérale Encre fixe,
 // menu mobile, zone de contenu sur fond Sable.
-// liens : [{ label, href, icon, compteur?, actifSi? }] ; etiquette : élément affiché sous le logo.
+// liens : [{ label, href, icon, compteur?, pastille?, actifSi? }] ; etiquette : élément affiché sous le logo.
+// pastille : texte d'un petit point Ambre (action à faire), lu par les lecteurs d'écran.
 // liensSecondaires : liens hors de l'espace (ex. pages publiques), séparés des autres par un trait.
 export default function EspaceLayout({ liens, liensSecondaires = [], etiquette, lienLogo = '/', children }) {
   const { utilisateur, deconnecter } = useAuth();
@@ -46,6 +47,11 @@ export default function EspaceLayout({ liens, liensSecondaires = [], etiquette, 
         {lien.label}
         {lien.compteur > 0 && (
           <span className="ml-auto rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-encre">{lien.compteur}</span>
+        )}
+        {lien.pastille && (
+          <span className="ml-auto size-2.5 shrink-0 rounded-full bg-accent">
+            <span className="sr-only">{lien.pastille}</span>
+          </span>
         )}
       </Link>
     );

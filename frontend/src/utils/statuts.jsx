@@ -7,9 +7,11 @@ import i18n from '../i18n';
 
 export const statutsRetrait = {
   EN_ATTENTE: { cle: 'commun:statuts.retrait.EN_ATTENTE', classes: 'bg-accent-soft text-[#7A5312]', Icone: Clock },
-  APPROUVE: { cle: 'commun:statuts.retrait.APPROUVE', classes: 'bg-primary-soft text-primary', Icone: null },
+  APPROUVE: { cle: 'commun:statuts.retrait.APPROUVE', classes: 'bg-primary-soft text-primary', Icone: Clock },
   TRAITE: { cle: 'commun:statuts.retrait.TRAITE', classes: 'bg-primary-soft text-primary', Icone: CheckCircle2 },
   REJETE: { cle: 'commun:statuts.retrait.REJETE', classes: 'bg-destructive/10 text-destructive', Icone: XCircle },
+  // Versement échoué : l'administrateur peut le relancer ou rejeter le retrait.
+  ECHOUE: { cle: 'commun:statuts.retrait.ECHOUE', classes: 'bg-destructive/10 text-destructive', Icone: XCircle },
 };
 
 export const statutsCagnotte = {

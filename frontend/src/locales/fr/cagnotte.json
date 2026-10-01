@@ -13,7 +13,11 @@
     "rechercher": "Rechercher une cagnotte",
     "rechercherPlaceholder": "Rechercher une cagnotte...",
     "trier": "Trier les cagnottes",
-    "tris": { "recentes": "Plus récentes", "populaires": "Plus populaires", "bientot_terminees": "Bientôt terminées" },
+    "tris": {
+      "recentes": "Plus récentes",
+      "populaires": "Plus populaires",
+      "bientot_terminees": "Bientôt terminées"
+    },
     "toutes": "Toutes",
     "erreurCategories": "Les catégories n'ont pas pu être chargées. {{detail}}",
     "total_one": "{{count}} cagnotte",
@@ -29,7 +33,11 @@
     "felicitationsTexte": "Partagez-la dès maintenant à vos proches : les premiers dons viennent presque toujours d'eux.",
     "organisateur": "Vous êtes l'organisateur de cette cagnotte",
     "gerer": "Gérer la cagnotte →",
-    "onglets": { "histoire": "L'histoire", "actualites": "Actualités", "commentaires": "Commentaires" },
+    "onglets": {
+      "histoire": "L'histoire",
+      "actualites": "Actualités",
+      "commentaires": "Commentaires"
+    },
     "organiseePar": "Organisée par {{nom}}",
     "membreDepuis": "Membre depuis {{date}}",
     "emailVerifie": "Email vérifié",
@@ -48,14 +56,15 @@
   },
   "don": {
     "montantMinimum": "Le montant minimum est de {{montant}}.",
+    "montantInvalide": "Saisissez un montant valide.",
     "connexion": "Connectez-vous pour soutenir cette cagnotte.",
     "seConnecter": "Se connecter",
     "attente": {
-      "titre": "Confirmez sur votre téléphone",
-      "texte": "Une demande de paiement de <b>{{montant}}</b> a été envoyée au <b>{{numero}}</b>. Validez-la avec votre code {{operateur}}, puis vérifiez le paiement.",
-      "verifier": "Vérifier le paiement",
-      "verification": "Vérification...",
-      "toujours": "Le paiement est toujours en attente de votre confirmation."
+      "titre": "Confirmez le paiement sur votre téléphone",
+      "texte": "Une demande de paiement de <b>{{montant}}</b> (votre don et les frais de transaction) a été envoyée au <b>{{numero}}</b>. Validez-la avec votre code {{operateur}}.",
+      "automatique": "Nous vérifions le paiement automatiquement : gardez cette page ouverte.",
+      "rienRecu": "Vous n'avez rien reçu ? Vérifiez votre téléphone : la demande peut mettre un moment à s'afficher.",
+      "tropLong": "Le paiement n'est toujours pas confirmé. Vous pouvez réessayer."
     },
     "succes": {
       "titre": "Merci, {{prenom}} !",
@@ -64,7 +73,12 @@
     },
     "echec": {
       "titre": "Le paiement n'a pas abouti",
-      "texte": "Le paiement a été refusé ou annulé sur votre téléphone. Vous pouvez réessayer."
+      "texte": "Le paiement a été refusé ou annulé sur votre téléphone. Vous pouvez réessayer.",
+      "changer": "Changer de moyen de paiement"
+    },
+    "indisponible": {
+      "titre": "Le service de paiement ne répond pas",
+      "texte": "Le service de paiement ne répond pas pour le moment. Aucun montant n'a été prélevé. Réessayez dans quelques minutes."
     },
     "titre": "Faire un don",
     "montant": "Montant (XAF)",
@@ -75,8 +89,18 @@
     "messagePlaceholder": "Un message d'encouragement pour l'organisateur...",
     "anonyme": "Donner anonymement",
     "donner": "Donner",
-    "donnerMontant": "Donner {{montant}}",
-    "confirmation": "Vous confirmez le paiement sur votre téléphone"
+    "confirmation": "Vous confirmez le paiement sur votre téléphone",
+    "numeroAutreOperateur": "Ce numéro est un numéro {{operateur}}.",
+    "recapitulatif": {
+      "don": "Votre don",
+      "frais": "Frais de transaction",
+      "total": "Total à payer",
+      "calcul": "Calcul...",
+      "infoFrais": "À propos des frais de transaction",
+      "explicationFrais": "Ces frais couvrent les coûts de Mobile Money, pour que l'organisateur reçoive l'intégralité de votre don.",
+      "indisponible": "Les frais de transaction n'ont pas pu être calculés. Ils seront ajoutés au montant demandé sur votre téléphone."
+    },
+    "payerMontant": "Payer {{montant}}"
   },
   "dons": {
     "titre": "Derniers dons",

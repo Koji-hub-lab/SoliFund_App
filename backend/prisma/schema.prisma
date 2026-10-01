@@ -38,6 +38,12 @@ enum StatutCagnotte {
   REFUSEE
 }
 
+// Fournisseur de paiement Mobile Money (variable PAIEMENT_FOURNISSEUR).
+enum FournisseurPaiement {
+  NOTCHPAY
+  AANGARAA
+}
+
 enum MethodePaiement {
   MTN_MOBILE_MONEY
   ORANGE_MONEY
@@ -50,11 +56,14 @@ enum StatutPaiement {
   REMBOURSE
 }
 
+// APPROUVE : versement Notch Pay lancé, en attente de son statut final.
+// ECHOUE : versement échoué ; le retrait peut être relancé ou rejeté, et n'est plus engagé.
 enum StatutRetrait {
   EN_ATTENTE
   APPROUVE
   REJETE
   TRAITE
+  ECHOUE
 }
 
 enum TypeTransaction {
@@ -221,23 +230,30 @@ model Cagnotte {
 }
 
 model Paiement {
-  id_paiement        Int             @id @default(autoincrement())
-  montant            Decimal         @db.Decimal(15, 2)
-  devise             String          @default("XAF") @db.VarChar(10)
-  methode_paiement   MethodePaiement
-  // Notre référence (genererReference), envoyée à Notch Pay à la création du paiement.
-  reference          String          @unique @db.VarChar(100)
-  // Référence du paiement chez Notch Pay : sert à le traiter, le consulter et l'annuler.
-  reference_notchpay String?         @db.VarChar(255)
-  // Canal Notch Pay utilisé (« cm.mtn », « cm.orange »).
-  canal              String?         @db.VarChar(50)
-  // Raison de l'échec renvoyée par Notch Pay, quand le paiement a échoué.
-  code_erreur        String?         @db.VarChar(100)
-  message_erreur     String?
-  statut             StatutPaiement  @default(EN_ATTENTE)
-  date_creation      DateTime        @default(now())
-  date_maj           DateTime?       @updatedAt
-  numero_payeur      String?         @db.VarChar(20)
+  id_paiement           Int                  @id @default(autoincrement())
+  montant               Decimal              @db.Decimal(15, 2)
+  devise                String               @default("XAF") @db.VarChar(10)
+  methode_paiement      MethodePaiement
+  // Notre référence (« SOLIFUND-DON-<id_don> »), envoyée au fournisseur à la création du paiement.
+  reference             String               @unique @db.VarChar(100)
+  // Fournisseur qui a traité le paiement (vide pour les paiements antérieurs aux fournisseurs).
+  fournisseur           FournisseurPaiement?
+  // Référence du paiement chez le fournisseur, qui sert à le consulter (et l'annuler) :
+  // Notch Pay : « trx.… » ; AangaraaPay : le payToken.
+  reference_fournisseur String?              @db.VarChar(255)
+  // Canal Notch Pay (« cm.mtn », « cm.orange ») ou opérateur AangaraaPay (« MTN_Cameroon »).
+  canal                 String?              @db.VarChar(50)
+  // Dernier statut renvoyé par le fournisseur (« failed », « SUCCESSFUL »...) et raison donnée par
+  // l'opérateur (details.reason chez AangaraaPay).
+  statut_operateur      String?              @db.VarChar(50)
+  raison_operateur      String?
+  // Raison de l'échec retenue par SoliFund, quand le paiement a échoué.
+  code_erreur           String?              @db.VarChar(100)
+  message_erreur        String?
+  statut                StatutPaiement       @default(EN_ATTENTE)
+  date_creation         DateTime             @default(now())
+  date_maj              DateTime?            @updatedAt
+  numero_payeur         String?              @db.VarChar(20)
 
   id_utilisateur Int
   utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
@@ -247,12 +263,18 @@ model Paiement {
 
   @@index([statut])
   @@index([id_utilisateur])
-  @@index([reference_notchpay])
+  @@index([reference_fournisseur])
   @@map("slf_paiement")
 }
 
 model Don {
   id_don        Int            @id @default(autoincrement())
+  // Montant du don (ajouté à la cagnotte), frais de transaction Mobile Money payés par le donateur
+  // (src/config/frais-transaction.ts), et total payé : c'est le total qui est demandé au
+  // fournisseur (Paiement.montant) et vérifié à la validation.
+  montant_don   Decimal        @db.Decimal(15, 2)
+  montant_frais Decimal        @default(0) @db.Decimal(15, 2)
+  montant_total Decimal        @db.Decimal(15, 2)
   message       String?
   est_anonyme   Boolean        @default(false)
   date_creation DateTime       @default(now())
@@ -289,22 +311,35 @@ model Commentaire {
 }
 
 model Retrait {
-  id_retrait          Int             @id @default(autoincrement())
+  id_retrait            Int                  @id @default(autoincrement())
   // Montant demandé par l'organisateur (déduit du disponible de la cagnotte).
-  montant_brut        Decimal         @db.Decimal(15, 2)
+  montant_brut          Decimal              @db.Decimal(15, 2)
   // Commission SoliFund, figée à la demande : taux en vigueur ce jour-là (en %), montant arrondi
   // à l'entier, et montant net à verser (brut - commission).
-  taux_commission     Decimal         @db.Decimal(5, 2)
-  montant_commission  Decimal         @db.Decimal(15, 2)
-  montant_net         Decimal         @db.Decimal(15, 2)
-  methode_retrait     MethodePaiement
-  numero_beneficiaire String          @db.VarChar(20)
-  reference_retrait   String?         @unique @db.VarChar(255)
-  motif_rejet         String?
-  statut              StatutRetrait   @default(EN_ATTENTE)
-  date_creation       DateTime        @default(now())
-  date_traitement     DateTime?
-  date_validation     DateTime?
+  taux_commission       Decimal              @db.Decimal(5, 2)
+  montant_commission    Decimal              @db.Decimal(15, 2)
+  montant_net           Decimal              @db.Decimal(15, 2)
+  methode_retrait       MethodePaiement
+  numero_beneficiaire   String               @db.VarChar(20)
+  // Notre référence du versement en cours ou du dernier versement (« SOLIFUND-RET-<id> », puis
+  // « -2 », « -3 » à chaque relance), le fournisseur qui l'a versé, et la référence du versement
+  // chez lui (Notch Pay : « po.… » ; AangaraaPay : reference_id).
+  reference_retrait     String?              @unique @db.VarChar(255)
+  fournisseur           FournisseurPaiement?
+  reference_fournisseur String?              @db.VarChar(255)
+  tentatives_versement  Int                  @default(0)
+  // Raison du dernier échec de versement.
+  code_erreur           String?              @db.VarChar(100)
+  message_erreur        String?
+  // Mode manuel de secours : somme versée hors plateforme, sans appel à Notch Pay.
+  hors_plateforme       Boolean              @default(false)
+  // Administrateur qui a lancé le versement ou marqué le retrait comme versé.
+  traite_par            Int?
+  motif_rejet           String?
+  statut                StatutRetrait        @default(EN_ATTENTE)
+  date_creation         DateTime             @default(now())
+  date_traitement       DateTime?
+  date_validation       DateTime?
 
   id_utilisateur Int
   utilisateur    Utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: Restrict)
@@ -317,7 +352,21 @@ model Retrait {
 
   @@index([id_utilisateur])
   @@index([id_cagnotte])
+  @@index([reference_fournisseur])
   @@map("slf_retrait")
+}
+
+// Événements reçus de Notch Pay par webhook : l'identifiant unique évite de traiter deux fois le
+// même événement. date_traitement reste vide tant que le traitement n'a pas abouti.
+model WebhookRecu {
+  id_webhook      Int       @id @default(autoincrement())
+  id_evenement    String    @unique @db.VarChar(255)
+  type            String    @db.VarChar(100)
+  reference       String?   @db.VarChar(255)
+  date_reception  DateTime  @default(now())
+  date_traitement DateTime?
+
+  @@map("slf_webhook_recu")
 }
 
 model Transaction {

@@ -153,13 +153,19 @@ describe('Commission sur les retraits (e2e)', () => {
         .post(chemin)
         .set(outils.entete(admin.jeton))
         .send(corps);
-    expect((await post(`/retraits/${traite}/traiter`)).status).toBe(201);
+    expect(
+      (await post(`/retraits/${traite}/traiter`, { hors_plateforme: true }))
+        .status,
+    ).toBe(201);
     expect(
       (await post(`/retraits/${rejete}/rejeter`, { motif_rejet: 'Test' }))
         .status,
     ).toBe(201);
     // Un double clic ne crée pas deux lignes.
-    expect((await post(`/retraits/${traite}/traiter`)).status).toBe(400);
+    expect(
+      (await post(`/retraits/${traite}/traiter`, { hors_plateforme: true }))
+        .status,
+    ).toBe(400);
 
     const registre = await prisma.commission.findMany({
       where: { id_cagnotte: cagnotte.id_cagnotte },
@@ -208,7 +214,8 @@ describe('Commission sur les retraits (e2e)', () => {
     ).id_retrait;
     await request(app.getHttpServer())
       .post(`/retraits/${ancien}/traiter`)
-      .set(outils.entete(admin.jeton));
+      .set(outils.entete(admin.jeton))
+      .send({ hors_plateforme: true });
     await prisma.commission.update({
       where: { id_retrait: ancien },
       data: { date: new Date('2026-03-15T10:00:00Z') },
@@ -226,7 +233,7 @@ describe('Commission sur les retraits (e2e)', () => {
     };
     expect(corps.total).toBe(attendu + 1200);
     expect(corps.total_mois_en_cours).toBe(attendu);
-    expect(corps.par_mois.find((m) => m.mois === '2026-03')).toEqual({
+    expect(corps.par_mois.find((m) => m.mois === '2026-03')).toMatchObject({
       mois: '2026-03',
       total: 1200,
       nombre: 1,
@@ -296,7 +303,8 @@ describe('Commission sur les retraits (e2e)', () => {
     // ... mais le retrait demandé à 3 % reste à 3 %, y compris quand il est traité après le changement.
     const traitement = await request(app5.getHttpServer())
       .post(`/retraits/${avant}/traiter`)
-      .set(outils.entete(admin.jeton));
+      .set(outils.entete(admin.jeton))
+      .send({ hors_plateforme: true });
     expect(traitement.status).toBe(201);
     expect(montants(traitement.body as Retrait)).toEqual({
       brut: 10000,

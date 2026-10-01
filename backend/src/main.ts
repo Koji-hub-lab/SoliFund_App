@@ -6,12 +6,16 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import type { NextFunction, Request, Response } from 'express';
 import type { ServerResponse } from 'http';
-import { join } from 'path';
 import { AppModule } from './app.module';
 import { configurerApplication } from './configuration-application';
+import { dossierUploads } from './uploads/images.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // rawBody : le corps brut de chaque requête est gardé (req.rawBody), pour vérifier la signature
+  // des webhooks Notch Pay sur les octets reçus.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
   const config = app.get(ConfigService);
   const docsActives = config.get<string>('NODE_ENV') !== 'production';
 
@@ -28,7 +32,7 @@ async function bootstrap() {
   // FRONTEND_URL est obligatoire (vérifiée au démarrage par src/config/env.validation.ts).
   app.enableCors({ origin: config.getOrThrow<string>('FRONTEND_URL') });
   configurerApplication(app);
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+  app.useStaticAssets(dossierUploads(), {
     prefix: '/uploads',
     // Empêche le navigateur de deviner un autre type que celui annoncé (ex. exécuter du HTML).
     setHeaders: (res: ServerResponse) => {

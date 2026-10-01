@@ -25,6 +25,7 @@ const CreerCagnotte = lazy(() => import('./pages/CreerCagnotte'));
 const ModifierCagnotte = lazy(() => import('./pages/ModifierCagnotte'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Compte = lazy(() => import('./pages/Compte'));
+const VerificationIdentite = lazy(() => import('./pages/VerificationIdentite'));
 const AdminTableauDeBord = lazy(() => import('./pages/admin/AdminTableauDeBord'));
 const AdminCagnottes = lazy(() => import('./pages/admin/AdminCagnottes'));
 const AdminRetraits = lazy(() => import('./pages/admin/AdminRetraits'));
@@ -32,6 +33,7 @@ const AdminUtilisateurs = lazy(() => import('./pages/admin/AdminUtilisateurs'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminSignalements = lazy(() => import('./pages/admin/AdminSignalements'));
 const AdminRevenus = lazy(() => import('./pages/admin/AdminRevenus'));
+const AdminVerifications = lazy(() => import('./pages/admin/AdminVerifications'));
 
 function ContenuApp() {
   return (
@@ -50,12 +52,14 @@ function ContenuApp() {
         <Route path="/mes-cagnottes/:id" element={<RouteProtegee><GererCagnotte /></RouteProtegee>} />
         <Route path="/notifications" element={<RouteProtegee><Notifications /></RouteProtegee>} />
         <Route path="/compte" element={<RouteProtegee><Compte /></RouteProtegee>} />
+        <Route path="/verification-identite" element={<RouteProtegee><VerificationIdentite /></RouteProtegee>} />
         <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
         <Route path="/auth/google/retour" element={<RetourGoogle />} />
         <Route path="/conditions" element={<Conditions />} />
         <Route path="/confidentialite" element={<Confidentialite />} />
         <Route path="/admin/tableau-de-bord" element={<AdminRoute><AdminTableauDeBord /></AdminRoute>} />
         <Route path="/admin/cagnottes" element={<AdminRoute><AdminCagnottes /></AdminRoute>} />
+        <Route path="/admin/verifications" element={<AdminRoute><AdminVerifications /></AdminRoute>} />
         <Route path="/admin/retraits" element={<AdminRoute><AdminRetraits /></AdminRoute>} />
         <Route path="/admin/utilisateurs" element={<AdminRoute><AdminUtilisateurs /></AdminRoute>} />
         <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />

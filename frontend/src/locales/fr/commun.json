@@ -1,7 +1,11 @@
 {
   "titreSite": "SoliFund — Cagnottes solidaires au Cameroun",
   "aLInstant": "à l'instant",
-  "langue": { "libelle": "Langue", "fr": "Français", "en": "English" },
+  "langue": {
+    "libelle": "Langue",
+    "fr": "Français",
+    "en": "English"
+  },
   "nav": {
     "commentCaMarche": "Comment ça marche",
     "parcourir": "Parcourir les cagnottes",
@@ -55,7 +59,13 @@
     "retour": "Retour à l'accueil"
   },
   "statuts": {
-    "retrait": { "EN_ATTENTE": "En attente", "APPROUVE": "Approuvé", "TRAITE": "Traité", "REJETE": "Rejeté" },
+    "retrait": {
+      "EN_ATTENTE": "En attente",
+      "APPROUVE": "Versement en cours",
+      "TRAITE": "Traité",
+      "REJETE": "Rejeté",
+      "ECHOUE": "Versement échoué"
+    },
     "cagnotte": {
       "ACTIVE": "Active",
       "TERMINEE": "Terminée",
@@ -64,7 +74,12 @@
       "EN_VERIFICATION": "En vérification",
       "REFUSEE": "Refusée"
     },
-    "utilisateur": { "ACTIF": "Actif", "SUSPENDU": "Suspendu", "BANNI": "Banni", "INACTIF": "Inactif" }
+    "utilisateur": {
+      "ACTIF": "Actif",
+      "SUSPENDU": "Suspendu",
+      "BANNI": "Banni",
+      "INACTIF": "Inactif"
+    }
   },
   "badges": {
     "objectifAtteint": "Objectif atteint",

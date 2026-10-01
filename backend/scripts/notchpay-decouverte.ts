@@ -25,7 +25,7 @@ import {
   type EchangeNotchPay,
 } from '../src/payment/notchpay.client';
 import { estCleDeTest } from '../src/payment/notchpay.config';
-import { ErreurNotchPay } from '../src/payment/notchpay.erreurs';
+import { ErreurPaiement } from '../src/payment/paiement.erreurs';
 import {
   canalNotchPay,
   erreurMobileMoney,
@@ -107,7 +107,7 @@ function enregistrer(nom: string, contenu: object) {
 }
 
 function decrireErreur(e: unknown) {
-  return e instanceof ErreurNotchPay
+  return e instanceof ErreurPaiement
     ? {
         type: e.name,
         statutHttp: e.statutHttp,

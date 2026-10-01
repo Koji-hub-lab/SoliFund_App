@@ -17,6 +17,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { DonsService } from './dons.service';
 import { CreateDonDto } from './dto/create-don.dto';
+import { CalculerFraisDto } from './dto/calculer-frais.dto';
 import type {
   RequeteAuthentifiee,
   RequeteOptionnelle,
@@ -61,6 +62,17 @@ export class DonsController {
   @Get()
   listerTous() {
     return this.donsService.listerTous();
+  }
+
+  // Frais de transaction d'un don, affichés avant l'envoi (GET /dons/frais?id_cagnotte=&montant=
+  // &methode_paiement=). Public ; token facultatif, même visibilité que la cagnotte.
+  @UseGuards(OptionalJwtAuthGuard)
+  @Get('frais')
+  calculerFrais(
+    @Query() dto: CalculerFraisDto,
+    @Request() req: RequeteOptionnelle,
+  ) {
+    return this.donsService.calculerFrais(dto, req.user ?? null);
   }
 
   // Token facultatif : le propriétaire ou un admin voit aussi les cagnottes masquées.

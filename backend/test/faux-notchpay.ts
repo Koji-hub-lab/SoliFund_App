@@ -3,9 +3,9 @@ import type {
   NouveauVersement,
 } from '../src/payment/notchpay.client';
 import {
-  ErreurIntrouvableNotchPay,
-  ErreurNotchPay,
-} from '../src/payment/notchpay.erreurs';
+  ErreurIntrouvablePaiement,
+  ErreurPaiement,
+} from '../src/payment/paiement.erreurs';
 import type {
   PaiementNotchPay,
   SoldeNotchPay,
@@ -29,22 +29,45 @@ export class FauxNotchPay {
   paiements: PaiementSimule[] = [];
   annulations: string[] = [];
   consultations = 0;
+  // Versements : le dernier chiffre du numéro décide du résultat (0 réussi, 2 échoué, autre : en
+  // cours), sauf si statutVersements impose un statut à tous, ou statutsVersement à un versement
+  // (par notre référence « SOLIFUND-RET-... »).
+  versements: { reference: string; nouveau: NouveauVersement }[] = [];
+  statutVersements?: string;
+  statutsVersement: Record<string, string> = {};
+  solde = 1_000_000;
+  soldesLus = 0;
   // Erreur levée par le prochain appel à la méthode indiquée (une seule fois).
   erreurs: Partial<
-    Record<'initialiser' | 'traiter' | 'consulter' | 'annuler', ErreurNotchPay>
+    Record<
+      'initialiser' | 'traiter' | 'consulter' | 'annuler' | 'verser' | 'solde',
+      ErreurPaiement
+    >
   > = {};
   // Remplace le montant ou la devise renvoyés à la consultation (paiement incohérent).
   montantRenvoye?: number;
   deviseRenvoyee?: string;
+  // Comme les réponses réelles (docs/paiement/exemples/) : un paiement « failed » sans raison.
+  messageEchecAbsent = false;
   private compteur = 0;
+
+  estConfigure() {
+    return true;
+  }
 
   reinitialiser() {
     this.paiements = [];
     this.annulations = [];
+    this.versements = [];
+    this.statutVersements = undefined;
+    this.statutsVersement = {};
+    this.solde = 1_000_000;
+    this.soldesLus = 0;
     this.consultations = 0;
     this.erreurs = {};
     this.montantRenvoye = undefined;
     this.deviseRenvoyee = undefined;
+    this.messageEchecAbsent = false;
   }
 
   private leverSiPrevu(methode: keyof FauxNotchPay['erreurs']) {
@@ -60,7 +83,7 @@ export class FauxNotchPay {
       (p) => p.reference === reference || p.nouveau.reference === reference,
     );
     if (!paiement) {
-      throw new ErreurIntrouvableNotchPay('Payment not found', {
+      throw new ErreurIntrouvablePaiement('Payment not found', {
         statutHttp: 404,
         code: '404',
       });
@@ -80,8 +103,8 @@ export class FauxNotchPay {
       montant: this.montantRenvoye ?? paiement.nouveau.montant,
       devise: this.deviseRenvoyee ?? paiement.nouveau.devise ?? 'XAF',
       canal: paiement.canal,
-      codeErreur: erreur.code,
-      messageErreur: erreur.message,
+      codeErreur: this.messageEchecAbsent ? undefined : erreur.code,
+      messageErreur: this.messageEchecAbsent ? undefined : erreur.message,
       brut: {},
     };
   }
@@ -149,14 +172,69 @@ export class FauxNotchPay {
     return Promise.resolve();
   }
 
-  // Non utilisés par les dons.
-  initierVersement(_: NouveauVersement): Promise<VersementNotchPay> {
-    return Promise.reject(new Error('versement non simulé'));
+  private lireVersement(versement: {
+    reference: string;
+    nouveau: NouveauVersement;
+  }): VersementNotchPay {
+    const chiffre = versement.nouveau.beneficiaire.telephone.slice(-1);
+    const statut =
+      this.statutsVersement[versement.nouveau.reference] ??
+      this.statutVersements ??
+      (chiffre === '0'
+        ? 'complete'
+        : chiffre === '2'
+          ? 'failed'
+          : 'processing');
+    return {
+      reference: versement.reference,
+      referenceMarchand: versement.nouveau.reference,
+      statut,
+      montant: versement.nouveau.montant,
+      devise: versement.nouveau.devise ?? 'XAF',
+      canal: versement.nouveau.canal,
+      codeErreur: statut === 'failed' ? 'PROVIDER_ERROR' : undefined,
+      messageErreur: statut === 'failed' ? 'Transfer failed' : undefined,
+      brut: {},
+    };
   }
-  consulterVersement(_: string): Promise<VersementNotchPay> {
-    return Promise.reject(new Error('versement non simulé'));
+
+  // Comme Notch Pay : le versement est d'abord « envoyé », son résultat vient à la consultation.
+  initierVersement(nouveau: NouveauVersement): Promise<VersementNotchPay> {
+    this.leverSiPrevu('verser');
+    this.compteur += 1;
+    const versement = { reference: `po.test${this.compteur}`, nouveau };
+    this.versements.push(versement);
+    return Promise.resolve({
+      ...this.lireVersement(versement),
+      statut: 'sent',
+    });
   }
+
+  consulterVersement(reference: string): Promise<VersementNotchPay> {
+    this.consultations += 1;
+    this.leverSiPrevu('consulter');
+    const versement = this.versements.find(
+      (v) => v.reference === reference || v.nouveau.reference === reference,
+    );
+    if (!versement) {
+      return Promise.reject(
+        new ErreurIntrouvablePaiement('Transfer not found', {
+          statutHttp: 404,
+          code: '404',
+        }),
+      );
+    }
+    return Promise.resolve(this.lireVersement(versement));
+  }
+
   lireSolde(): Promise<SoldeNotchPay> {
-    return Promise.reject(new Error('solde non simulé'));
+    this.soldesLus += 1;
+    this.leverSiPrevu('solde');
+    return Promise.resolve({
+      disponible: this.solde,
+      devise: 'XAF',
+      environnement: 'test',
+      brut: {},
+    });
   }
 }

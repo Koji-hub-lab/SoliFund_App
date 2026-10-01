@@ -200,6 +200,13 @@ export const en: Record<keyof typeof fr, string> = {
     'You cancelled the payment on your phone. You can try again whenever you like.',
   'paiement.DUPLICATE_TRANSACTION':
     'An identical payment is already in progress. Please check your phone before trying again.',
+  'paiement.LOW_BALANCE_OR_PAYEE_LIMIT_REACHED_OR_NOT_ALLOWED':
+    'The payment was declined by MTN Mobile Money. Check that your balance is sufficient and that your account is allowed to pay merchants, then try again or use another number.',
+  'paiement.numeroAutreOperateur': 'This is an {operateur} number.',
+  'paiement.SERVICE_INDISPONIBLE':
+    "The payment service isn't responding right now. No money has been taken. Please try again in a few minutes.",
+  'paiement.SERVICE_INCERTAIN':
+    "The payment service isn't responding right now. If a payment request appears on your phone, please don't approve it. Try again in a few minutes.",
   'paiement.ECHEC':
     "The payment didn't go through. No money was taken. Please try again.",
 
@@ -211,6 +218,26 @@ export const en: Record<keyof typeof fr, string> = {
     "You can't request a withdrawal from a suspended or cancelled fundraiser.",
   'retraits.disponibleInsuffisant':
     'Not enough available funds ({disponible} {devise}).',
+  'retraits.soldeInsuffisantOperateur':
+    'The {operateur} balance of the {fournisseur} account is too low: {net|nombre} XAF to pay. Available balances: MTN {mtn|nombre} XAF, Orange {orange|nombre} XAF. Top up the {operateur} balance, then try again.',
+  'retraits.precedentEnCours':
+    'The previous payout is still in progress at {fournisseur}: please wait for its result before retrying.',
+  'retraits.precedentReussi':
+    'The previous payout finally went through at {fournisseur}: the withdrawal is marked as paid, nothing was sent again.',
+  'retraits.precedentNonConfirme':
+    "{fournisseur} doesn't confirm that the previous payout failed: nothing was sent again. Please check it in their dashboard.",
+  'retraits.versementEnCours':
+    'A payout is already in progress for this withdrawal. Please wait for its result.',
+  'retraits.soldeInsuffisant':
+    'The {fournisseur} account balance is too low: {disponible|nombre} XAF available for {net|nombre} XAF to pay. Top up the {fournisseur} account, then try again.',
+  'retraits.notchPayIndisponible':
+    "{fournisseur} isn't responding: the balance couldn't be checked and no payout was started. Please try again in a few minutes.",
+  'retraits.versementRefuse':
+    '{fournisseur} declined the payout: {detail} Nothing was paid; you can retry the payout or reject the withdrawal.',
+  'retraits.versementIncertain':
+    "{fournisseur} didn't respond: the payout may have gone through. Check it in the {fournisseur} dashboard before doing anything else with this withdrawal.",
+  'retraits.horsPlateformeRequis':
+    'Please confirm that the payout was made outside the platform.',
   'retraits.introuvable': 'Withdrawal not found.',
   'retraits.dejaTraite': 'This withdrawal has already been processed.',
 
@@ -276,6 +303,12 @@ export const en: Record<keyof typeof fr, string> = {
   'alertes.SUSPENSION_AUTOMATIQUE.titre': 'Automatic suspension',
   'alertes.SUSPENSION_AUTOMATIQUE.message':
     'The fundraiser “{titre}” was automatically suspended after {nombre} reports.',
+  'alertes.VERSEMENT_INCERTAIN.titre': 'Payout to check',
+  'alertes.VERSEMENT_INCERTAIN.message':
+    "{fournisseur} didn't respond to the payout for withdrawal no. {retrait} ({montant|nombre} XAF): it may have gone through. Check it in their dashboard before doing anything else.",
+  'alertes.VERSEMENT_INTROUVABLE.titre': 'Payout not found',
+  'alertes.VERSEMENT_INTROUVABLE.message':
+    "{fournisseur} can't find the payout for withdrawal no. {retrait} ({montant|nombre} XAF). No automatic action: please check it in their dashboard.",
   'raisons.OBJECTIF_ELEVE': 'high goal',
   'raisons.ANTECEDENT_ORGANISATEUR':
     'organiser with a suspended or declined fundraiser',

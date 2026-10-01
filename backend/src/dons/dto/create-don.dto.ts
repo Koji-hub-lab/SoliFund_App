@@ -6,12 +6,14 @@ import {
   TexteObligatoire,
 } from '../../common/validation';
 import { m } from '../../i18n/messages';
+import { montantMinimumDon } from '../../config/dons';
 
 export class CreateDonDto {
   @Identifiant('cagnotte')
   id_cagnotte!: number;
 
-  @Montant('montantDon', 100)
+  // Minimum réglable par DON_MONTANT_MINIMUM (src/config/dons.ts), lu à chaque requête.
+  @Montant('montantDon', montantMinimumDon)
   montant!: number;
 
   @IsIn(['MTN_MOBILE_MONEY', 'ORANGE_MONEY'], {

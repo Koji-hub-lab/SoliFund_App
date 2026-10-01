@@ -18,8 +18,10 @@ import { AdminModule } from './admin/admin.module';
 import { validerEnvironnement } from './config/env.validation';
 import { PartageModule } from './partage/partage.module';
 import { SanteController } from './sante/sante.controller';
+import { ConfigurationPubliqueController } from './configuration-publique/configuration-publique.controller';
 import { VerificationIdentiteModule } from './verification-identite/verification-identite.module';
 import { PaymentModule } from './payment/payment.module';
+import { NotchPayWebhookModule } from './payment/notchpay-webhook.module';
 
 @Module({
   imports: [
@@ -44,8 +46,9 @@ import { PaymentModule } from './payment/payment.module';
     PartageModule,
     VerificationIdentiteModule,
     PaymentModule,
+    NotchPayWebhookModule,
   ],
-  controllers: [SanteController],
+  controllers: [SanteController, ConfigurationPubliqueController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

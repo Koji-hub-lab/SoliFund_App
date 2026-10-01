@@ -8,7 +8,8 @@
     "revenus": "Revenus",
     "utilisateurs": "Utilisateurs",
     "categories": "Catégories",
-    "espaceOrganisateur": "Espace organisateur"
+    "espaceOrganisateur": "Espace organisateur",
+    "verifications": "Vérifications"
   },
   "tableau": {
     "titre": "Tableau de bord",
@@ -73,10 +74,17 @@
   },
   "retraits": {
     "titre": "Gestion des retraits",
-    "sousTitre": "Versez le montant net sur le numéro vérifié de l'organisateur, puis marquez le retrait comme versé.",
+    "sousTitre": "Approuvez un retrait pour verser le montant net par le fournisseur de paiement sur le numéro vérifié de l'organisateur.",
     "rechercher": "Rechercher un retrait",
     "rechercherPlaceholder": "Rechercher une cagnotte, un organisateur, un email...",
-    "filtres": { "EN_ATTENTE": "En attente", "TRAITE": "Traités", "REJETE": "Rejetés", "TOUS": "Tous" },
+    "filtres": {
+      "EN_ATTENTE": "En attente",
+      "APPROUVE": "En cours",
+      "ECHOUE": "Échoués",
+      "TRAITE": "Traités",
+      "REJETE": "Rejetés",
+      "TOUS": "Tous"
+    },
     "vide": "Aucune demande dans cette catégorie.",
     "aVerser": "À verser : {{montant}}",
     "verse": "Versé : {{montant}}",
@@ -87,13 +95,22 @@
     "motifRejet": "Motif du rejet : {{motif}}",
     "marquer": "Marquer comme versé",
     "rejeter": "Rejeter",
-    "traiterTitre": "Marquer ce retrait comme versé ?",
-    "traiterMessage": "Confirmez que vous avez versé exactement {{net}} au {{numero}} ({{operateur}}). L'organisateur sera prévenu.",
     "rejeterTitre": "Rejeter ce retrait ?",
     "rejeterMessage": "La demande de {{brut}} sera rejetée et le montant redeviendra disponible. L'organisateur sera prévenu.",
     "rejeterLibelle": "Rejeter le retrait",
     "motif": "Motif du rejet",
-    "motifPlaceholder": "Ex. numéro bénéficiaire incorrect"
+    "motifPlaceholder": "Ex. numéro bénéficiaire incorrect",
+    "approuver": "Approuver et verser",
+    "relancer": "Relancer le versement",
+    "approuverTitre": "Approuver et verser ce retrait ?",
+    "relancerTitre": "Relancer le versement ?",
+    "approuverMessage": "{{net}} seront versés par le fournisseur de paiement au {{numero}} ({{operateur}}). L'organisateur sera prévenu quand le versement aura abouti.",
+    "horsPlateforme": "Versement effectué hors plateforme : ne rien envoyer par le fournisseur de paiement et marquer le retrait comme versé.",
+    "horsPlateformeMessage": "Confirmez que vous avez déjà versé exactement {{net}} au {{numero}} ({{operateur}}), hors plateforme. Aucun versement ne sera envoyé par le fournisseur de paiement ; cette action est enregistrée à votre nom.",
+    "enCours": "Versement envoyé au fournisseur de paiement : en attente de confirmation.",
+    "echec": "Échec du versement : {{raison}}",
+    "echecInconnu": "raison non précisée",
+    "verseHorsPlateforme": "Versé hors plateforme (mode manuel)."
   },
   "utilisateurs": {
     "titre": "Utilisateurs",
@@ -101,7 +118,12 @@
     "sousTitre_other": "{{count}} comptes inscrits sur la plateforme.",
     "rechercher": "Rechercher un utilisateur",
     "rechercherPlaceholder": "Rechercher un nom ou un email...",
-    "filtres": { "tous": "Tous", "ACTIF": "Actifs", "SUSPENDU": "Suspendus", "BANNI": "Bannis" },
+    "filtres": {
+      "tous": "Tous",
+      "ACTIF": "Actifs",
+      "SUSPENDU": "Suspendus",
+      "BANNI": "Bannis"
+    },
     "vide": "Aucun utilisateur ne correspond à votre recherche.",
     "admin": "Admin",
     "inscritLe": "{{email}} · inscrit le {{date}}",
@@ -127,7 +149,12 @@
     "sousTitre": "Les catégories proposées aux organisateurs et utilisées comme filtres sur le site.",
     "couleur": "Couleur",
     "aucuneCouleur": "Aucune",
-    "couleurs": { "#087F7A": "Lagune", "#055955": "Lagune foncée", "#E9A23B": "Ambre", "#17262A": "Encre" },
+    "couleurs": {
+      "#087F7A": "Lagune",
+      "#055955": "Lagune foncée",
+      "#E9A23B": "Ambre",
+      "#17262A": "Encre"
+    },
     "nomObligatoire": "Le nom est obligatoire.",
     "ajouterTitre": "Ajouter une catégorie",
     "nom": "Nom",
@@ -181,7 +208,7 @@
   },
   "revenus": {
     "titre": "Revenus",
-    "sousTitre": "Commissions prélevées sur les retraits versés aux organisateurs.",
+    "sousTitre": "Commissions prélevées sur les retraits versés aux organisateurs, et frais de transaction payés par les donateurs.",
     "total": "Total des commissions",
     "mois": "Commissions de {{mois}}",
     "parMois": "Par mois",
@@ -190,6 +217,67 @@
     "colRetraits": "Retraits versés",
     "colCommissions": "Commissions",
     "detail": "Détail des commissions",
-    "ligne": "{{date}} · retrait de {{brut}} par {{nom}} · versé {{net}}"
+    "ligne": "{{date}} · retrait de {{brut}} par {{nom}} · versé {{net}}",
+    "totalFrais": "Frais payés par les donateurs",
+    "moisFrais": "Frais de {{mois}}",
+    "colDons": "Dons validés",
+    "colFrais": "Frais donateurs",
+    "notesFrais": "Les frais de transaction couvrent les coûts de Mobile Money (encaissement et versement) : ils ne sont pas comptés dans les commissions.",
+    "aucunMois": "Aucune commission ni aucun frais pour le moment."
+  },
+  "verifications": {
+    "titre": "Vérifications d'identité",
+    "sousTitre": "{{count}} demande(s)",
+    "sousTitreChargement": "Chargement des demandes...",
+    "filtres": {
+      "EN_ATTENTE": "En attente",
+      "VALIDEE": "Validées",
+      "REFUSEE": "Refusées",
+      "TOUTES": "Toutes"
+    },
+    "vide": "Aucune demande pour ce filtre.",
+    "soumiseLe": "Soumise le {{date}}",
+    "examiner": "Examiner",
+    "masquer": "Masquer",
+    "valider": "Valider",
+    "refuser": "Refuser",
+    "revoquer": "Révoquer",
+    "piece": "Pièce",
+    "numeroPiece": "Numéro",
+    "dateNaissance": "Date de naissance",
+    "dateExpiration": "Expiration",
+    "sansExpiration": "Non indiquée",
+    "retrait": "Retraits sur",
+    "compte": "Compte",
+    "motifRefus": "Motif du refus",
+    "fichiers": {
+      "recto": "Recto",
+      "verso": "Verso",
+      "selfie": "Selfie"
+    },
+    "fichierAbsent": "Fichier absent ou supprimé.",
+    "fichierErreur": "Impossible d'afficher ce fichier.",
+    "consultationJournalisee": "Chaque consultation d'un document est enregistrée.",
+    "confirmations": {
+      "valider": {
+        "titre": "Valider cette identité ?",
+        "message": "{{nom}} pourra demander des retraits sur le +237 {{telephone}}. Ses cagnottes qui n'attendaient que cette validation seront publiées.",
+        "libelle": "Valider"
+      },
+      "refuser": {
+        "titre": "Refuser cette vérification ?",
+        "message": "{{nom}} recevra le motif et pourra soumettre une nouvelle demande.",
+        "libelle": "Refuser",
+        "motif": "Motif du refus",
+        "placeholder": "Ex. : photo du recto illisible"
+      },
+      "revoquer": {
+        "titre": "Révoquer cette identité ?",
+        "message": "{{nom}} ne pourra plus demander de retrait tant qu'une nouvelle vérification n'aura pas été validée.",
+        "libelle": "Révoquer",
+        "motif": "Motif",
+        "placeholder": "Ex. : numéro de retrait à changer"
+      }
+    }
   }
 }

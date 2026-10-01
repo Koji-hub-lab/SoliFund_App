@@ -8,7 +8,8 @@
     "revenus": "Revenue",
     "utilisateurs": "Users",
     "categories": "Categories",
-    "espaceOrganisateur": "Organiser space"
+    "espaceOrganisateur": "Organiser space",
+    "verifications": "Identity checks"
   },
   "tableau": {
     "titre": "Dashboard",
@@ -73,10 +74,17 @@
   },
   "retraits": {
     "titre": "Manage withdrawals",
-    "sousTitre": "Send the net amount to the organiser's verified number, then mark the withdrawal as paid.",
+    "sousTitre": "Approve a withdrawal to pay the net amount through the payment provider to the organiser's verified number.",
     "rechercher": "Search withdrawals",
     "rechercherPlaceholder": "Search by fundraiser, organiser or email...",
-    "filtres": { "EN_ATTENTE": "Pending", "TRAITE": "Paid", "REJETE": "Rejected", "TOUS": "All" },
+    "filtres": {
+      "EN_ATTENTE": "Pending",
+      "APPROUVE": "In progress",
+      "ECHOUE": "Failed",
+      "TRAITE": "Paid",
+      "REJETE": "Rejected",
+      "TOUS": "All"
+    },
     "vide": "No requests in this category.",
     "aVerser": "To pay: {{montant}}",
     "verse": "Paid: {{montant}}",
@@ -87,13 +95,22 @@
     "motifRejet": "Reason for rejection: {{motif}}",
     "marquer": "Mark as paid",
     "rejeter": "Reject",
-    "traiterTitre": "Mark this withdrawal as paid?",
-    "traiterMessage": "Please confirm you have sent exactly {{net}} to {{numero}} ({{operateur}}). The organiser will be notified.",
     "rejeterTitre": "Reject this withdrawal?",
     "rejeterMessage": "The request for {{brut}} will be rejected and the amount will become available again. The organiser will be notified.",
     "rejeterLibelle": "Reject withdrawal",
     "motif": "Reason for rejection",
-    "motifPlaceholder": "E.g. wrong recipient number"
+    "motifPlaceholder": "E.g. wrong recipient number",
+    "approuver": "Approve and pay",
+    "relancer": "Retry payout",
+    "approuverTitre": "Approve and pay this withdrawal?",
+    "relancerTitre": "Retry the payout?",
+    "approuverMessage": "{{net}} will be paid through the payment provider to {{numero}} ({{operateur}}). The organiser will be notified once the payout has gone through.",
+    "horsPlateforme": "Payout made outside the platform: send nothing through the payment provider and mark the withdrawal as paid.",
+    "horsPlateformeMessage": "Please confirm you have already paid exactly {{net}} to {{numero}} ({{operateur}}), outside the platform. No payout will be sent through the payment provider; this action is recorded under your name.",
+    "enCours": "Payout sent to the payment provider: waiting for confirmation.",
+    "echec": "Payout failed: {{raison}}",
+    "echecInconnu": "no reason given",
+    "verseHorsPlateforme": "Paid outside the platform (manual mode)."
   },
   "utilisateurs": {
     "titre": "Users",
@@ -101,7 +118,12 @@
     "sousTitre_other": "{{count}} accounts registered on the platform.",
     "rechercher": "Search users",
     "rechercherPlaceholder": "Search by name or email...",
-    "filtres": { "tous": "All", "ACTIF": "Active", "SUSPENDU": "Suspended", "BANNI": "Banned" },
+    "filtres": {
+      "tous": "All",
+      "ACTIF": "Active",
+      "SUSPENDU": "Suspended",
+      "BANNI": "Banned"
+    },
     "vide": "No user matches your search.",
     "admin": "Admin",
     "inscritLe": "{{email}} · joined on {{date}}",
@@ -127,7 +149,12 @@
     "sousTitre": "The categories organisers can choose from, also used as filters on the site.",
     "couleur": "Colour",
     "aucuneCouleur": "None",
-    "couleurs": { "#087F7A": "Lagoon", "#055955": "Dark lagoon", "#E9A23B": "Amber", "#17262A": "Ink" },
+    "couleurs": {
+      "#087F7A": "Lagoon",
+      "#055955": "Dark lagoon",
+      "#E9A23B": "Amber",
+      "#17262A": "Ink"
+    },
     "nomObligatoire": "Please enter a name.",
     "ajouterTitre": "Add a category",
     "nom": "Name",
@@ -181,7 +208,7 @@
   },
   "revenus": {
     "titre": "Revenue",
-    "sousTitre": "Fees taken on withdrawals paid out to organisers.",
+    "sousTitre": "Fees charged on withdrawals paid to organisers, and transaction fees paid by donors.",
     "total": "Total fees",
     "mois": "Fees for {{mois}}",
     "parMois": "By month",
@@ -190,6 +217,67 @@
     "colRetraits": "Withdrawals paid",
     "colCommissions": "Fees",
     "detail": "Fee details",
-    "ligne": "{{date}} · withdrawal of {{brut}} by {{nom}} · paid {{net}}"
+    "ligne": "{{date}} · withdrawal of {{brut}} by {{nom}} · paid {{net}}",
+    "totalFrais": "Fees paid by donors",
+    "moisFrais": "Donor fees for {{mois}}",
+    "colDons": "Approved gifts",
+    "colFrais": "Donor fees",
+    "notesFrais": "Transaction fees cover Mobile Money costs (collection and payout): they are not counted as commissions.",
+    "aucunMois": "No commissions or fees yet."
+  },
+  "verifications": {
+    "titre": "Identity checks",
+    "sousTitre": "{{count}} request(s)",
+    "sousTitreChargement": "Loading requests...",
+    "filtres": {
+      "EN_ATTENTE": "Pending",
+      "VALIDEE": "Approved",
+      "REFUSEE": "Declined",
+      "TOUTES": "All"
+    },
+    "vide": "No requests for this filter.",
+    "soumiseLe": "Submitted on {{date}}",
+    "examiner": "Review",
+    "masquer": "Hide",
+    "valider": "Approve",
+    "refuser": "Decline",
+    "revoquer": "Revoke",
+    "piece": "Document",
+    "numeroPiece": "Number",
+    "dateNaissance": "Date of birth",
+    "dateExpiration": "Expiry",
+    "sansExpiration": "Not provided",
+    "retrait": "Withdrawals to",
+    "compte": "Account",
+    "motifRefus": "Reason for declining",
+    "fichiers": {
+      "recto": "Front",
+      "verso": "Back",
+      "selfie": "Selfie"
+    },
+    "fichierAbsent": "File missing or deleted.",
+    "fichierErreur": "This file can't be displayed.",
+    "consultationJournalisee": "Every time a document is viewed, it is logged.",
+    "confirmations": {
+      "valider": {
+        "titre": "Approve this identity?",
+        "message": "{{nom}} will be able to request withdrawals to +237 {{telephone}}. Their fundraisers that were only waiting for this approval will be published.",
+        "libelle": "Approve"
+      },
+      "refuser": {
+        "titre": "Decline this verification?",
+        "message": "{{nom}} will be notified with the reason and can submit a new request.",
+        "libelle": "Decline",
+        "motif": "Reason",
+        "placeholder": "E.g. the front photo is unreadable"
+      },
+      "revoquer": {
+        "titre": "Revoke this identity?",
+        "message": "{{nom}} won't be able to request withdrawals until a new verification is approved.",
+        "libelle": "Revoke",
+        "motif": "Reason",
+        "placeholder": "E.g. the withdrawal number needs to change"
+      }
+    }
   }
 }

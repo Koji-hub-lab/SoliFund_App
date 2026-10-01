@@ -1,13 +1,13 @@
 import {
-  ErreurAuthentificationNotchPay,
-  ErreurConflitNotchPay,
-  ErreurIntrouvableNotchPay,
-  ErreurLimiteNotchPay,
-  ErreurNotchPay,
-  ErreurReponseNotchPay,
-  ErreurServeurNotchPay,
-  ErreurValidationNotchPay,
-} from './notchpay.erreurs';
+  ErreurAuthentificationPaiement,
+  ErreurConflitPaiement,
+  ErreurIntrouvablePaiement,
+  ErreurLimitePaiement,
+  ErreurPaiement,
+  ErreurReponsePaiement,
+  ErreurServeurPaiement,
+  ErreurValidationPaiement,
+} from './paiement.erreurs';
 
 // Lecture des réponses de Notch Pay. C'est le SEUL fichier qui connaît la forme des réponses :
 // le reste du code n'utilise que les objets ci-dessous. La documentation n'est pas cohérente sur
@@ -21,15 +21,26 @@ const CLES_VERSEMENT = ['transfer', 'transaction', 'data'];
 const CLES_SOLDE = ['balance', 'data'];
 
 // Champs d'un paiement ou d'un versement, par ordre de préférence.
+// Réponses réelles (docs/paiement/exemples/paiement-echoue-*.json, GET /payments/{reference}) :
+// « transaction » contient reference, merchant_reference (= trxref, notre référence), amount,
+// currency, status, payment_method (identifiant « pm.… », PAS le canal) et provider_reference.
+// Un paiement « failed » ne contient AUCUNE raison d'échec : les champs d'erreur ci-dessous
+// restent donc vides pour lui ; ils sont gardés au cas où Notch Pay en ajouterait.
 const CHAMPS = {
   reference: ['reference'],
   referenceMarchand: ['merchant_reference', 'trxref'],
   statut: ['status'],
   montant: ['amount'],
   devise: ['currency'],
-  canal: ['channel', 'payment_method'],
+  canal: ['channel'],
   codeErreur: ['error_code', 'failure_code', 'reason_code'],
-  messageErreur: ['failure_reason', 'error_message', 'reason'],
+  messageErreur: [
+    'failure_reason',
+    'error_message',
+    'reason',
+    'status_reason',
+    'provider_message',
+  ],
 };
 // L'erreur peut aussi être un objet imbriqué ({ error: { code, message } }).
 const CLES_ERREUR_IMBRIQUEE = ['error', 'failure'];
@@ -101,7 +112,7 @@ function objetPrincipal(brut: unknown, cles: string[], nom: string): Objet {
       if (estObjet(brut[cle])) return brut[cle];
     }
   }
-  throw new ErreurReponseNotchPay(
+  throw new ErreurReponsePaiement(
     `Réponse Notch Pay illisible : ${nom} absent (clés attendues : ${cles.join(', ')}).`,
     { brut },
   );
@@ -111,7 +122,7 @@ function lireOperation(objet: Objet, brut: unknown, nom: string) {
   const reference = texte(premier(objet, CHAMPS.reference));
   const statut = texte(premier(objet, CHAMPS.statut));
   if (!reference || !statut) {
-    throw new ErreurReponseNotchPay(
+    throw new ErreurReponsePaiement(
       `Réponse Notch Pay illisible : ${nom} sans référence ou sans statut.`,
       { brut },
     );
@@ -157,7 +168,7 @@ export function lireSolde(brut: unknown): SoldeNotchPay {
   const disponible = nombre(premier(objet, ['available', 'balance']));
   const devise = texte(premier(objet, ['currency']));
   if (disponible === undefined || !devise) {
-    throw new ErreurReponseNotchPay(
+    throw new ErreurReponsePaiement(
       'Réponse Notch Pay illisible : solde sans montant disponible ou sans devise.',
       { brut },
     );
@@ -172,8 +183,31 @@ export function lireSolde(brut: unknown): SoldeNotchPay {
   };
 }
 
+export interface EvenementNotchPay {
+  // Identifiant unique de l'événement (absent si Notch Pay n'en envoie pas).
+  id?: string;
+  // « payment.complete », « payment.failed », « transfer.complete »...
+  type: string;
+  // Référence Notch Pay de l'opération concernée, et la nôtre si elle est présente.
+  reference?: string;
+  referenceMarchand?: string;
+}
+
+// Événement reçu par webhook : { id, type (ou event), data: { reference, ... } }. Seuls le type et
+// les références sont lus : le reste du contenu n'est jamais utilisé (le paiement est reconsulté).
+export function lireEvenement(brut: unknown): EvenementNotchPay {
+  const corps = estObjet(brut) ? brut : {};
+  const donnees = estObjet(corps.data) ? corps.data : {};
+  return {
+    id: texte(premier(corps, ['id', 'event_id'])),
+    type: texte(premier(corps, ['type', 'event'])) ?? 'inconnu',
+    reference: texte(premier(donnees, CHAMPS.reference)),
+    referenceMarchand: texte(premier(donnees, CHAMPS.referenceMarchand)),
+  };
+}
+
 // Réponse d'erreur ({ code, status, message, errors }) → exception typée selon le statut HTTP.
-export function lireErreur(statutHttp: number, brut: unknown): ErreurNotchPay {
+export function lireErreur(statutHttp: number, brut: unknown): ErreurPaiement {
   const corps = estObjet(brut) ? brut : {};
   const imbriquee = CLES_ERREUR_IMBRIQUEE.map((cle) => corps[cle]).find(
     estObjet,
@@ -201,12 +235,12 @@ export function lireErreur(statutHttp: number, brut: unknown): ErreurNotchPay {
   const details = { statutHttp, code, erreursChamps, brut };
 
   if (statutHttp === 401 || statutHttp === 403) {
-    return new ErreurAuthentificationNotchPay(message, details);
+    return new ErreurAuthentificationPaiement(message, details);
   }
   if (statutHttp === 404)
-    return new ErreurIntrouvableNotchPay(message, details);
-  if (statutHttp === 409) return new ErreurConflitNotchPay(message, details);
-  if (statutHttp === 429) return new ErreurLimiteNotchPay(message, details);
-  if (statutHttp >= 500) return new ErreurServeurNotchPay(message, details);
-  return new ErreurValidationNotchPay(message, details);
+    return new ErreurIntrouvablePaiement(message, details);
+  if (statutHttp === 409) return new ErreurConflitPaiement(message, details);
+  if (statutHttp === 429) return new ErreurLimitePaiement(message, details);
+  if (statutHttp >= 500) return new ErreurServeurPaiement(message, details);
+  return new ErreurValidationPaiement(message, details);
 }

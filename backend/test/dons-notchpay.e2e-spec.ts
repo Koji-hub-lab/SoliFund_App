@@ -4,9 +4,10 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { ReconciliationDonsService } from '../src/dons/reconciliation-dons.service';
 import {
-  ErreurReseauNotchPay,
-  ErreurValidationNotchPay,
-} from '../src/payment/notchpay.erreurs';
+  ErreurReseauPaiement,
+  ErreurServeurPaiement,
+  ErreurValidationPaiement,
+} from '../src/payment/paiement.erreurs';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { FauxNotchPay } from './faux-notchpay';
 import {
@@ -26,6 +27,7 @@ interface EtatDon {
   code_erreur?: string;
   message?: string;
   peut_reessayer?: boolean;
+  demande_envoyee?: boolean;
 }
 
 // Dons payés par Notch Pay, avec le faux client des tests : le dernier chiffre du numéro décide du
@@ -113,6 +115,7 @@ describe('Dons payés par Notch Pay (e2e)', () => {
     expect(reponse.status).toBe(201);
     expect(don).toMatchObject({
       statut: 'EN_ATTENTE',
+      demande_envoyee: true, // la demande est bien partie vers l'opérateur
       montant: 5000,
       devise: 'XAF',
     });
@@ -121,7 +124,7 @@ describe('Dons payés par Notch Pay (e2e)', () => {
     const paiement = await paiementDe(don.id_don);
     expect(paiement).toMatchObject({
       reference: `SOLIFUND-DON-${don.id_don}`,
-      reference_notchpay: notchPay.paiements[0].reference,
+      reference_fournisseur: notchPay.paiements[0].reference,
       canal: 'cm.mtn',
       numero_payeur: '+237670000000',
       statut: 'EN_ATTENTE',
@@ -304,7 +307,7 @@ describe('Dons payés par Notch Pay (e2e)', () => {
   });
 
   it('refus définitif à l’initialisation : le don passe en ECHOUE (audit A8)', async () => {
-    notchPay.erreurs.initialiser = new ErreurValidationNotchPay(
+    notchPay.erreurs.initialiser = new ErreurValidationPaiement(
       'Validation failed',
       { statutHttp: 422, code: '422' },
     );
@@ -315,12 +318,12 @@ describe('Dons payés par Notch Pay (e2e)', () => {
       statut: 'ECHOUE',
       code_erreur: '422',
       message_erreur: 'Validation failed',
-      reference_notchpay: null,
+      reference_fournisseur: null,
     });
   });
 
   it('refus définitif au traitement : le don passe en ECHOUE avec le code de Notch Pay', async () => {
-    notchPay.erreurs.traiter = new ErreurValidationNotchPay('Invalid phone', {
+    notchPay.erreurs.traiter = new ErreurValidationPaiement('Invalid phone', {
       statutHttp: 422,
       code: 'INVALID_PHONE',
     });
@@ -333,21 +336,106 @@ describe('Dons payés par Notch Pay (e2e)', () => {
     expect(don.message).toContain("n'est pas valide");
   });
 
+  it('refus réel « Invalid CM Mobile Money » (422) : enregistré, et compris comme numéro invalide', async () => {
+    notchPay.erreurs.traiter = new ErreurValidationPaiement(
+      'Invalid CM Mobile Money',
+      { statutHttp: 422, code: '422' },
+    );
+    const { don } = await donner('670000000');
+    expect(don).toMatchObject({
+      statut: 'ECHOUE',
+      code_erreur: 'INVALID_PHONE',
+      peut_reessayer: false,
+    });
+    expect(don.message).toContain("n'est pas valide");
+    expect(await paiementDe(don.id_don)).toMatchObject({
+      code_erreur: 'INVALID_PHONE',
+      message_erreur: 'Invalid CM Mobile Money',
+    });
+  });
+
+  it('paiement « failed » sans raison (cas réel) : message générique, échec enregistré', async () => {
+    const { don, donateur } = await donner('670000002');
+    notchPay.messageEchecAbsent = true; // comme Notch Pay : aucune raison dans la réponse
+    const etat = await verifier(don.id_don, donateur);
+    expect(etat).toMatchObject({ statut: 'ECHOUE', peut_reessayer: true });
+    expect(etat.message).toBe(
+      "Le paiement n'a pas abouti. Aucun montant n'a été débité. Veuillez réessayer.",
+    );
+    expect(await paiementDe(don.id_don)).toMatchObject({
+      statut: 'ECHOUE',
+      code_erreur: null,
+      message_erreur: 'Statut « failed », aucune raison fournie.',
+    });
+  });
+
   it('échec temporaire : le don reste EN_ATTENTE pour la réconciliation', async () => {
-    notchPay.erreurs.initialiser = new ErreurReseauNotchPay(
+    notchPay.erreurs.initialiser = new ErreurReseauPaiement(
       'Notch Pay est injoignable (ECONNABORTED).',
     );
-    const { reponse, don, donateur } = await donner('670000000');
+    const { reponse, don } = await donner('670000000');
     expect(reponse.status).toBe(201);
-    expect(don.statut).toBe('EN_ATTENTE');
+    expect(don).toMatchObject({
+      statut: 'INDISPONIBLE',
+      demande_envoyee: false,
+      peut_reessayer: true,
+    });
+    expect(don.message).toBe(
+      "Le service de paiement ne répond pas pour le moment. Aucun montant n'a été prélevé. Réessayez dans quelques minutes.",
+    );
+    // Aucune demande n'est partie vers l'opérateur : le don ne reste pas EN_ATTENTE.
+    expect(await paiementDe(don.id_don)).toMatchObject({
+      statut: 'ECHOUE',
+      code_erreur: 'SERVICE_INDISPONIBLE',
+      reference_fournisseur: null,
+    });
+  });
 
-    // Notch Pay ne connaît pas ce paiement : le don n'échoue pas pour autant...
-    expect((await verifier(don.id_don, donateur)).statut).toBe('EN_ATTENTE');
-    await vieillir(don.id_don, 10);
-    await reconciliation.reconcilier();
-    expect((await paiementDe(don.id_don)).statut).toBe('EN_ATTENTE');
+  it('Notch Pay indisponible au traitement : le paiement est annulé, puis le don passe en ECHOUE', async () => {
+    notchPay.erreurs.traiter = new ErreurServeurPaiement(
+      'The payment service is temporarily unavailable',
+      { statutHttp: 503, code: '503' },
+    );
+    const { don, donateur } = await donner('670000000');
+    expect(don).toMatchObject({
+      statut: 'INDISPONIBLE',
+      demande_envoyee: false,
+    });
+    expect(don.message).toContain("Aucun montant n'a été prélevé");
 
-    // ... avant 30 minutes sans statut final.
+    // Le paiement initialisé a été annulé chez Notch Pay : plus aucun argent ne peut bouger.
+    expect(notchPay.annulations).toEqual([notchPay.paiements[0].reference]);
+    expect(await paiementDe(don.id_don)).toMatchObject({
+      statut: 'ECHOUE',
+      code_erreur: 'SERVICE_INDISPONIBLE',
+      message_erreur: 'The payment service is temporarily unavailable',
+    });
+    // Une vérification ultérieure redonne le même message.
+    expect(await verifier(don.id_don, donateur)).toMatchObject({
+      statut: 'ECHOUE',
+      code_erreur: 'SERVICE_INDISPONIBLE',
+      peut_reessayer: true,
+    });
+  });
+
+  it('indisponible au traitement et annulation impossible : EN_ATTENTE pour la réconciliation', async () => {
+    notchPay.erreurs.traiter = new ErreurServeurPaiement('unavailable', {
+      statutHttp: 503,
+    });
+    notchPay.erreurs.annuler = new ErreurReseauPaiement('injoignable');
+    const { don } = await donner('670000000');
+    // Le donateur ne voit pas « Confirmez sur votre téléphone » : la demande n'est pas confirmée.
+    expect(don).toMatchObject({
+      statut: 'INDISPONIBLE',
+      demande_envoyee: false,
+    });
+    expect(don.message).toContain('ne la validez pas');
+    expect(await paiementDe(don.id_don)).toMatchObject({
+      statut: 'EN_ATTENTE',
+      code_erreur: null,
+    });
+
+    // La réconciliation tranche : ce paiement jamais traité est annulé après 30 minutes.
     await vieillir(don.id_don, 31);
     await reconciliation.reconcilier();
     expect(await paiementDe(don.id_don)).toMatchObject({
@@ -356,9 +444,28 @@ describe('Dons payés par Notch Pay (e2e)', () => {
     });
   });
 
+  it('refuse un numéro d’un autre opérateur que celui choisi, sans rien créer ni appeler Notch Pay', async () => {
+    const avant = await prisma.don.count();
+    // donner() choisit MTN Mobile Money : 699… est un numéro Orange (cas réel du don 34).
+    const orange = await donner('699415795');
+    expect(orange.reponse.status).toBe(400);
+    expect((orange.reponse.body as { message: string }).message).toBe(
+      'Ce numéro est un numéro Orange.',
+    );
+    const anglais = await donner('691000000', { langue: 'en' });
+    expect((anglais.reponse.body as { message: string }).message).toBe(
+      'This is an Orange number.',
+    );
+    expect(await prisma.don.count()).toBe(avant);
+    expect(notchPay.paiements).toHaveLength(0);
+
+    // Préfixe inconnu (ni MTN ni Orange dans la configuration) : pas de contrôle.
+    expect((await donner('662000000')).reponse.status).toBe(201);
+  });
+
   it('Notch Pay injoignable à la vérification : le statut ne change pas', async () => {
     const { don, donateur } = await donner('670000001');
-    notchPay.erreurs.consulter = new ErreurReseauNotchPay('injoignable');
+    notchPay.erreurs.consulter = new ErreurReseauPaiement('injoignable');
     expect((await verifier(don.id_don, donateur)).statut).toBe('EN_ATTENTE');
     expect((await verifier(don.id_don, donateur)).statut).toBe('ECHOUE');
   });
@@ -383,7 +490,9 @@ describe('Dons payés par Notch Pay (e2e)', () => {
   it('limite les tentatives de don par utilisateur', async () => {
     const donateur = await creerUtilisateur(prisma, jwt);
     for (let i = 0; i < 5; i += 1) {
-      expect((await donner('670000002', { donateur })).reponse.status).toBe(201);
+      expect((await donner('670000002', { donateur })).reponse.status).toBe(
+        201,
+      );
     }
     const avant = await prisma.don.count();
     const { reponse } = await donner('670000000', { donateur });

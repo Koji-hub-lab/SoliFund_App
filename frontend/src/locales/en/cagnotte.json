@@ -13,7 +13,11 @@
     "rechercher": "Search fundraisers",
     "rechercherPlaceholder": "Search fundraisers...",
     "trier": "Sort fundraisers",
-    "tris": { "recentes": "Newest", "populaires": "Most popular", "bientot_terminees": "Ending soon" },
+    "tris": {
+      "recentes": "Newest",
+      "populaires": "Most popular",
+      "bientot_terminees": "Ending soon"
+    },
     "toutes": "All",
     "erreurCategories": "We couldn't load the categories. {{detail}}",
     "total_one": "{{count}} fundraiser",
@@ -29,7 +33,11 @@
     "felicitationsTexte": "Share it with your friends and family right away — the first gifts almost always come from them.",
     "organisateur": "You're the organiser of this fundraiser",
     "gerer": "Manage fundraiser →",
-    "onglets": { "histoire": "The story", "actualites": "Updates", "commentaires": "Comments" },
+    "onglets": {
+      "histoire": "The story",
+      "actualites": "Updates",
+      "commentaires": "Comments"
+    },
     "organiseePar": "Organised by {{nom}}",
     "membreDepuis": "Member since {{date}}",
     "emailVerifie": "Email verified",
@@ -48,14 +56,15 @@
   },
   "don": {
     "montantMinimum": "The minimum amount is {{montant}}.",
+    "montantInvalide": "Enter a valid amount.",
     "connexion": "Log in to support this fundraiser.",
     "seConnecter": "Log in",
     "attente": {
-      "titre": "Confirm on your phone",
-      "texte": "We've sent a payment request for <b>{{montant}}</b> to <b>{{numero}}</b>. Approve it with your {{operateur}} PIN, then check the payment here.",
-      "verifier": "Check payment",
-      "verification": "Checking...",
-      "toujours": "The payment is still waiting for your confirmation."
+      "titre": "Confirm the payment on your phone",
+      "texte": "A payment request for <b>{{montant}}</b> (your gift and the transaction fee) has been sent to <b>{{numero}}</b>. Approve it with your {{operateur}} PIN.",
+      "automatique": "We check the payment automatically: please keep this page open.",
+      "rienRecu": "Haven't received anything? Check your phone: the request can take a moment to appear.",
+      "tropLong": "The payment still hasn't been confirmed. You can try again."
     },
     "succes": {
       "titre": "Thank you, {{prenom}}!",
@@ -64,7 +73,12 @@
     },
     "echec": {
       "titre": "The payment didn't go through",
-      "texte": "The payment was declined or cancelled on your phone. You can try again."
+      "texte": "The payment was declined or cancelled on your phone. You can try again.",
+      "changer": "Change payment method"
+    },
+    "indisponible": {
+      "titre": "The payment service isn't responding",
+      "texte": "The payment service isn't responding right now. No money has been taken. Please try again in a few minutes."
     },
     "titre": "Make a gift",
     "montant": "Amount (XAF)",
@@ -75,8 +89,18 @@
     "messagePlaceholder": "A word of encouragement for the organiser...",
     "anonyme": "Give anonymously",
     "donner": "Give",
-    "donnerMontant": "Give {{montant}}",
-    "confirmation": "You'll confirm the payment on your phone"
+    "confirmation": "You'll confirm the payment on your phone",
+    "numeroAutreOperateur": "This is an {{operateur}} number.",
+    "recapitulatif": {
+      "don": "Your gift",
+      "frais": "Transaction fee",
+      "total": "Total to pay",
+      "calcul": "Calculating...",
+      "infoFrais": "About the transaction fee",
+      "explicationFrais": "This fee covers Mobile Money costs, so that the organiser receives your full gift.",
+      "indisponible": "The transaction fee couldn't be calculated. It will be added to the amount requested on your phone."
+    },
+    "payerMontant": "Pay {{montant}}"
   },
   "dons": {
     "titre": "Latest gifts",

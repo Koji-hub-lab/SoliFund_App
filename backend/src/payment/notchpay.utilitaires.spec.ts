@@ -56,6 +56,7 @@ describe('statutDepuisNotchPay', () => {
     ['expired', 'ECHOUE'],
     ['rejected', 'ECHOUE'],
     ['abandoned', 'ECHOUE'],
+    ['reversed', 'ECHOUE'],
     ['pending', 'EN_ATTENTE'],
     ['processing', 'EN_ATTENTE'],
     ['sent', 'EN_ATTENTE'],
@@ -83,6 +84,7 @@ describe('erreurMobileMoney', () => {
     'PROVIDER_ERROR',
     'CANCELLED_BY_USER',
     'DUPLICATE_TRANSACTION',
+    'LOW_BALANCE_OR_PAYEE_LIMIT_REACHED_OR_NOT_ALLOWED',
   ];
 
   it.each(CODES)('%s a un message en français, au vouvoiement', (code) => {
@@ -102,6 +104,9 @@ describe('erreurMobileMoney', () => {
     expect(reessayer('TIMEOUT')).toBe(true);
     expect(reessayer('PROVIDER_ERROR')).toBe(true);
     expect(reessayer('CANCELLED_BY_USER')).toBe(true);
+    expect(reessayer('LOW_BALANCE_OR_PAYEE_LIMIT_REACHED_OR_NOT_ALLOWED')).toBe(
+      true,
+    );
     expect(reessayer('INVALID_PHONE')).toBe(false);
     expect(reessayer('UNREGISTERED_PHONE')).toBe(false);
     expect(reessayer('TRANSACTION_LIMIT_EXCEEDED')).toBe(false);

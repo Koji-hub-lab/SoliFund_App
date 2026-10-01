@@ -1,7 +1,11 @@
 {
   "titreSite": "SoliFund — Community fundraising in Cameroon",
   "aLInstant": "just now",
-  "langue": { "libelle": "Language", "fr": "Français", "en": "English" },
+  "langue": {
+    "libelle": "Language",
+    "fr": "Français",
+    "en": "English"
+  },
   "nav": {
     "commentCaMarche": "How it works",
     "parcourir": "Browse fundraisers",
@@ -55,7 +59,13 @@
     "retour": "Back to home"
   },
   "statuts": {
-    "retrait": { "EN_ATTENTE": "Pending", "APPROUVE": "Approved", "TRAITE": "Paid", "REJETE": "Rejected" },
+    "retrait": {
+      "EN_ATTENTE": "Pending",
+      "APPROUVE": "Payout in progress",
+      "TRAITE": "Paid",
+      "REJETE": "Rejected",
+      "ECHOUE": "Payout failed"
+    },
     "cagnotte": {
       "ACTIVE": "Active",
       "TERMINEE": "Ended",
@@ -64,7 +74,12 @@
       "EN_VERIFICATION": "Under review",
       "REFUSEE": "Declined"
     },
-    "utilisateur": { "ACTIF": "Active", "SUSPENDU": "Suspended", "BANNI": "Banned", "INACTIF": "Inactive" }
+    "utilisateur": {
+      "ACTIF": "Active",
+      "SUSPENDU": "Suspended",
+      "BANNI": "Banned",
+      "INACTIF": "Inactive"
+    }
   },
   "badges": {
     "objectifAtteint": "Goal reached",

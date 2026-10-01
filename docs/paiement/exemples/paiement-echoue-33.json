@@ -1,0 +1,42 @@
+{
+  "enregistre": {
+    "canal": "cm.mtn",
+    "code_erreur": null,
+    "message_erreur": "Statut Notch Pay : failed"
+  },
+  "reponses": [
+    {
+      "methode": "GET",
+      "chemin": "/payments/<reference>",
+      "statutHttp": 200,
+      "corps": {
+        "status": "OK",
+        "message": "Transaction retrieved",
+        "code": 200,
+        "transaction": {
+          "amount": 100,
+          "fees": [],
+          "amounts": {
+            "total": 100,
+            "converted": 100,
+            "currency": "XAF",
+            "rate": 1
+          },
+          "sandbox": 0,
+          "payment_method": "pm.QaGnhmWkkZyYelkC",
+          "description": "Don pour Aide pour Marie",
+          "reference": "trx.OVWOdQ1ocvOgunk65YNkG7Az",
+          "merchant_reference": "SOLIFUND-DON-33",
+          "trxref": "SOLIFUND-DON-33",
+          "provider_reference": null,
+          "status": "failed",
+          "currency": "XAF",
+          "customer": "[masqué]",
+          "charge": "customer",
+          "callback": null,
+          "created_at": "2026-09-30T17:26:06.000000Z"
+        }
+      }
+    }
+  ]
+}

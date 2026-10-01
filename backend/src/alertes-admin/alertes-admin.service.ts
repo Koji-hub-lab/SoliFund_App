@@ -17,7 +17,11 @@ import {
 export const DELAI_REGROUPEMENT_MS = 10 * 60 * 1000;
 
 export type CodeAlerte =
-  'IDENTITE_A_VERIFIER' | 'CAGNOTTE_EN_VERIFICATION' | 'SUSPENSION_AUTOMATIQUE';
+  | 'IDENTITE_A_VERIFIER'
+  | 'CAGNOTTE_EN_VERIFICATION'
+  | 'SUSPENSION_AUTOMATIQUE'
+  | 'VERSEMENT_INCERTAIN'
+  | 'VERSEMENT_INTROUVABLE';
 
 type Alerte = { code: CodeAlerte; parametres: ParametresNotification };
 

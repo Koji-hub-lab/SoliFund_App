@@ -10,6 +10,8 @@ import { configurerApplication } from '../src/configuration-application';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { BrevoService } from '../src/jetons/brevo.service';
 import { NotchPayClient } from '../src/payment/notchpay.client';
+import { AangaraaPayClient } from '../src/payment/aangaraa.client';
+import { ConfigService } from '@nestjs/config';
 import { FauxNotchPay } from './faux-notchpay';
 
 export const MOT_DE_PASSE = 'motdepasse-test-1';
@@ -23,8 +25,10 @@ export interface EmailAlerte {
 
 // Application complète (mêmes modules et réglages que l'API), branchée sur la base de test.
 // Aucun email réel n'est envoyé : BrevoService est remplacé, et les alertes sont gardées dans
-// `emails`. Aucun paiement réel non plus : NotchPayClient est remplacé par FauxNotchPay. « trust proxy » permet aux tests de simuler des adresses IP avec X-Forwarded-For.
-export async function creerApplication() {
+// `emails`. Aucun paiement réel non plus : NotchPayClient est remplacé par FauxNotchPay, et
+// AangaraaPayClient par le faux fourni (sinon il vise une adresse injoignable). « trust proxy »
+// permet aux tests de simuler des adresses IP avec X-Forwarded-For.
+export async function creerApplication(options: { aangaraa?: object } = {}) {
   const emails: EmailAlerte[] = [];
   const notchPay = new FauxNotchPay();
   const fauxBrevo = {
@@ -45,9 +49,16 @@ export async function creerApplication() {
     .useValue(fauxBrevo)
     .overrideProvider(NotchPayClient)
     .useValue(notchPay)
+    .overrideProvider(AangaraaPayClient)
+    .useFactory({
+      factory: (config: ConfigService) =>
+        options.aangaraa ?? new AangaraaPayClient(config),
+      inject: [ConfigService],
+    })
     .compile();
   const app: NestExpressApplication = module.createNestApplication({
     logger: false,
+    rawBody: true, // comme main.ts : signature des webhooks
   });
   app.set('trust proxy', true);
   configurerApplication(app);
@@ -165,6 +176,9 @@ export async function creerDon(
       id_cagnotte: idCagnotte,
       id_utilisateur: idDonateur,
       id_paiement: paiement.id_paiement,
+      // Sans frais : le total payé est le montant du don.
+      montant_don: montant,
+      montant_total: montant,
       statut,
     },
   });

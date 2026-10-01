@@ -11,10 +11,13 @@ Plateforme de cagnottes solidaires au Cameroun (dons via Mobile Money MTN/Orange
 - Après chaque modification du backend, vérifier que `npm run build` passe dans backend/.
 
 ## En attente
-Paiement : passage à Notch Pay (AangaraaPay est abandonné). backend/src/payment/ contient le client
-Notch Pay et peut être modifié. Les dons et les retraits ne sont pas encore branchés dessus : la
-lecture des réponses (notchpay.reponses.ts) reste à ajuster avec les résultats du script
-backend/scripts/notchpay-decouverte.ts (docs/paiement/exemples/).
+Paiement : deux fournisseurs, Notch Pay et AangaraaPay, derrière l'interface FournisseurPaiement
+(backend/src/payment/, modifiable). Le reste du code (dons, retraits, webhooks, réconciliation) ne
+passe que par FournisseursPaiement ; le fournisseur actif est choisi par PAIEMENT_FOURNISSEUR.
+AangaraaPay : client écrit d'après la documentation (docs/paiement/aangaraa-api.md), jamais essayé
+en réel ; ses webhooks ne sont pas signés (le statut est toujours reconsulté). Notch Pay : lecture
+des paiements calée sur de vraies réponses (docs/paiement/exemples/), corps du versement encore à
+confirmer en mode test.
 
 
 ## Frontend : charte graphique SoliFund

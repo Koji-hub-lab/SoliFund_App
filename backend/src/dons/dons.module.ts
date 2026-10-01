@@ -10,6 +10,6 @@ import { ReconciliationDonsService } from './reconciliation-dons.service';
   imports: [NotificationsModule, CagnottesModule, PaymentModule],
   controllers: [DonsController],
   providers: [DonsService, ReconciliationDonsService],
-  exports: [DonsService],
+  exports: [DonsService, ReconciliationDonsService],
 })
 export class DonsModule {}

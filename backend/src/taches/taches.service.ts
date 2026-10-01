@@ -3,6 +3,8 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { FUSEAU, estEchue } from '../common/dates';
+import { ReconciliationDonsService } from '../dons/reconciliation-dons.service';
+import { RetraitsService } from '../retraits/retraits.service';
 
 @Injectable()
 export class TachesService {
@@ -11,7 +13,36 @@ export class TachesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly reconciliationDons: ReconciliationDonsService,
+    private readonly retraitsService: RetraitsService,
   ) {}
+
+  private reconciliationEnCours = false;
+
+  // Toutes les 5 minutes : relit chez Notch Pay le statut des dons EN_ATTENTE depuis plus de
+  // 2 minutes et des retraits APPROUVE (versement lancé) depuis plus de 5 minutes.
+  @Cron('*/5 * * * *', { name: 'reconciliation-paiements' })
+  async reconciliationPaiements() {
+    // Un passage à la fois : le précédent peut durer si Notch Pay répond lentement.
+    if (this.reconciliationEnCours) return;
+    this.reconciliationEnCours = true;
+    try {
+      const dons = await this.reconciliationDons.reconcilier();
+      const retraits = await this.retraitsService.reconcilierVersements();
+      if (dons.consultes > 0 || retraits.consultes > 0) {
+        this.logger.log(
+          `Réconciliation : ${dons.consultes} don(s) consulté(s) (${dons.valides} validé(s), ${dons.echoues} échoué(s), ${dons.abandonnes} abandonné(s)) ; ${retraits.consultes} retrait(s) consulté(s) (${retraits.traites} versé(s), ${retraits.echoues} échoué(s)).`,
+        );
+      }
+    } catch (e) {
+      this.logger.error(
+        'Échec de la réconciliation des paiements',
+        e instanceof Error ? e.stack : String(e),
+      );
+    } finally {
+      this.reconciliationEnCours = false;
+    }
+  }
 
   @Cron('5 0 * * *', { name: 'maintenance-nocturne', timeZone: FUSEAU })
   async maintenanceNocturne() {

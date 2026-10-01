@@ -21,7 +21,7 @@ export default function Conditions() {
     <PageLegale
       cle="conditions"
       sections={SECTIONS}
-      miseAJour="2026-09-29"
+      miseAJour="2026-10-01"
       composants={{ taux: <TauxCommission />, lien: <Link to="/confidentialite" className={lien} /> }}
     />
   );

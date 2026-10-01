@@ -28,14 +28,16 @@
         "titre": "Obligations des organisateurs",
         "blocs": [
           "En créant une cagnotte, l'organisateur s'engage à :",
-          { "liste": [
-            "décrire son projet de façon sincère et complète, sans information trompeuse ;",
-            "utiliser les fonds collectés uniquement pour le projet annoncé ;",
-            "publier des nouvelles aux donateurs et répondre aux questions légitimes sur l'usage des fonds ;",
-            "ne publier que des photos et des textes dont il détient les droits, respectueux des personnes ;",
-            "ne pas utiliser SoliFund pour une activité illégale, une fraude, le blanchiment d'argent, le financement d'activités violentes ou la collecte au profit d'une personne sans son accord ;",
-            "respecter les obligations fiscales et légales qui s'appliquent aux sommes qu'il reçoit."
-          ] },
+          {
+            "liste": [
+              "décrire son projet de façon sincère et complète, sans information trompeuse ;",
+              "utiliser les fonds collectés uniquement pour le projet annoncé ;",
+              "publier des nouvelles aux donateurs et répondre aux questions légitimes sur l'usage des fonds ;",
+              "ne publier que des photos et des textes dont il détient les droits, respectueux des personnes ;",
+              "ne pas utiliser SoliFund pour une activité illégale, une fraude, le blanchiment d'argent, le financement d'activités violentes ou la collecte au profit d'une personne sans son accord ;",
+              "respecter les obligations fiscales et légales qui s'appliquent aux sommes qu'il reçoit."
+            ]
+          },
           "Une cagnotte qui a déjà reçu des dons ne peut pas être supprimée : elle est annulée, et son historique est conservé."
         ]
       },
@@ -58,10 +60,11 @@
       "frais": {
         "titre": "Frais",
         "blocs": [
-          "Les dons sont gratuits pour les donateurs : SoliFund ne prélève rien sur un don. SoliFund prélève une commission de <taux/> sur chaque retrait demandé par l'organisateur.",
-          "La commission est calculée sur le montant demandé et arrondie au franc CFA le plus proche. Elle est déduite de la somme versée : pour un retrait de 10 000 XAF à 3 %, la commission est de 300 XAF et l'organisateur reçoit 9 700 XAF. Le montant de la commission et la somme à recevoir sont affichés avant chaque demande.",
-          "Le taux appliqué à un retrait est celui en vigueur au moment de la demande ; un changement de taux ne modifie pas les retraits déjà demandés. [Politique tarifaire à valider par un juriste.]",
-          "Les frais éventuellement facturés par les opérateurs Mobile Money pour un paiement ou un transfert restent régis par les conditions de ces opérateurs."
+          "Un don comprend deux montants : le don lui-même, qui est entièrement ajouté à la cagnotte, et des frais de transaction à la charge du donateur. Ces frais couvrent les coûts facturés par les opérateurs Mobile Money pour encaisser le paiement puis le verser à l'organisateur. Ils s'ajoutent au don : l'organisateur reçoit l'intégralité du montant donné.",
+          "Les frais sont calculés en pourcentage du don : taux d'encaissement de l'opérateur du donateur (MTN Mobile Money ou Orange Money), plus taux de versement de l'opérateur sur lequel l'organisateur reçoit ses fonds. Ils sont arrondis au franc CFA supérieur. Le don, les frais et le total à payer sont affichés avant chaque paiement ; le montant demandé sur le téléphone est ce total. Le montant minimum d'un don s'applique au don, frais non compris.",
+          "SoliFund prélève une commission de <taux/> sur chaque retrait demandé par l'organisateur. La commission est calculée sur le montant demandé et arrondie au franc CFA le plus proche. Elle est déduite de la somme versée : pour un retrait de 10 000 XAF à 3 %, la commission est de 300 XAF et l'organisateur reçoit 9 700 XAF. Le montant de la commission et la somme à recevoir sont affichés avant chaque demande.",
+          "Les taux appliqués sont ceux en vigueur au moment du don ou de la demande de retrait ; un changement de taux ne modifie pas les dons déjà effectués ni les retraits déjà demandés. [Politique tarifaire à valider par un juriste.]",
+          "Les autres frais éventuellement facturés par les opérateurs Mobile Money à leurs clients restent régis par les conditions de ces opérateurs."
         ]
       },
       "moderation": {
@@ -113,14 +116,16 @@
         "titre": "Données collectées",
         "blocs": [
           "Nous collectons uniquement les données nécessaires au service :",
-          { "liste": [
-            "compte : nom, prénom, adresse email, téléphone (facultatif), mot de passe (conservé sous forme chiffrée, jamais en clair) ;",
-            "cagnottes : titre, description, dates, objectif, photo de couverture, actualités publiées ;",
-            "dons : montant, opérateur, numéro Mobile Money utilisé pour payer, message facultatif, choix de l'anonymat ;",
-            "retraits : montant, opérateur et numéro Mobile Money du bénéficiaire ;",
-            "commentaires publiés sur les cagnottes ;",
-            "données techniques : date d'inscription, historique des opérations et journaux techniques du serveur."
-          ] },
+          {
+            "liste": [
+              "compte : nom, prénom, adresse email, téléphone (facultatif), mot de passe (conservé sous forme chiffrée, jamais en clair) ;",
+              "cagnottes : titre, description, dates, objectif, photo de couverture, actualités publiées ;",
+              "dons : montant, opérateur, numéro Mobile Money utilisé pour payer, message facultatif, choix de l'anonymat ;",
+              "retraits : montant, opérateur et numéro Mobile Money du bénéficiaire ;",
+              "commentaires publiés sur les cagnottes ;",
+              "données techniques : date d'inscription, historique des opérations et journaux techniques du serveur."
+            ]
+          },
           "Les photos envoyées sont converties par nos serveurs, et leurs métadonnées (comme la position GPS enregistrée par l'appareil) sont supprimées."
         ]
       },
@@ -128,34 +133,40 @@
         "titre": "Utilisation des données",
         "blocs": [
           "Vos données servent à :",
-          { "liste": [
-            "créer et sécuriser votre compte, vérifier votre adresse email, réinitialiser votre mot de passe ;",
-            "afficher les cagnottes, les dons (sans nom pour les dons anonymes) et les commentaires ;",
-            "traiter les paiements et les retraits, et vous en informer par notification ;",
-            "prévenir la fraude, modérer les contenus et respecter nos obligations légales."
-          ] },
+          {
+            "liste": [
+              "créer et sécuriser votre compte, vérifier votre adresse email, réinitialiser votre mot de passe ;",
+              "afficher les cagnottes, les dons (sans nom pour les dons anonymes) et les commentaires ;",
+              "traiter les paiements et les retraits, et vous en informer par notification ;",
+              "prévenir la fraude, modérer les contenus et respecter nos obligations légales."
+            ]
+          },
           "Vos données ne sont ni vendues ni utilisées à des fins publicitaires."
         ]
       },
       "visibilite": {
         "titre": "Ce qui est visible publiquement",
         "blocs": [
-          { "liste": [
-            "sur une cagnotte publique : son contenu, le prénom et l'initiale du nom de l'organisateur ;",
-            "la liste des dons : prénom et nom du donateur, sauf s'il a choisi l'anonymat ;",
-            "les commentaires, avec le nom de leur auteur."
-          ] }
+          {
+            "liste": [
+              "sur une cagnotte publique : son contenu, le prénom et l'initiale du nom de l'organisateur ;",
+              "la liste des dons : prénom et nom du donateur, sauf s'il a choisi l'anonymat ;",
+              "les commentaires, avec le nom de leur auteur."
+            ]
+          }
         ]
       },
       "destinataires": {
         "titre": "Destinataires et prestataires",
         "blocs": [
           "Les données sont accessibles à l'équipe SoliFund dans la limite de ses missions, et transmises à :",
-          { "liste": [
-            "notre prestataire de paiement et les opérateurs Mobile Money (MTN, Orange), pour les paiements ;",
-            "Brevo, pour l'envoi des emails (codes de vérification et de réinitialisation) ;",
-            "notre hébergeur [nom et pays d'hébergement à compléter]."
-          ] },
+          {
+            "liste": [
+              "notre prestataire de paiement et les opérateurs Mobile Money (MTN, Orange), pour les paiements ;",
+              "Brevo, pour l'envoi des emails (codes de vérification et de réinitialisation) ;",
+              "notre hébergeur [nom et pays d'hébergement à compléter]."
+            ]
+          },
           "[Transferts hors du Cameroun éventuels et garanties associées à préciser.]"
         ]
       },

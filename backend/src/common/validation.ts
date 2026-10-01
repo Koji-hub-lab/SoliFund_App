@@ -10,6 +10,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateBy,
 } from 'class-validator';
 import { m, type CleMessage } from '../i18n/messages';
 
@@ -69,12 +70,23 @@ export function Identifiant(nom: Champ) {
 }
 
 // Montant en XAF : entier (pas de centimes), entre min et MONTANT_MAX.
-export function Montant(nom: Champ, min: number) {
+// `min` peut être une fonction : le minimum est alors lu à chaque validation (valeur réglable par
+// variable d'environnement, comme le minimum d'un don).
+export function Montant(nom: Champ, min: number | (() => number)) {
+  const minimum = typeof min === 'function' ? min : () => min;
   return applyDecorators(
     IsInt({
       message: m('validation.montantEntier', champ(nom)),
     }),
-    Min(min, { message: m('validation.montantMin', { ...champ(nom), min }) }),
+    ValidateBy({
+      name: 'montantMinimum',
+      validator: {
+        validate: (valeur: unknown) =>
+          typeof valeur === 'number' && valeur >= minimum(),
+        defaultMessage: () =>
+          m('validation.montantMin', { ...champ(nom), min: minimum() }),
+      },
+    }),
     Max(MONTANT_MAX, { message: m('validation.montantTropEleve', champ(nom)) }),
   );
 }

@@ -177,8 +177,8 @@ const scenarios: { nom: string; executer: () => Promise<string | null> }[] = [
       if (!r.ok) return `création du retrait impossible (${message(r)})`;
       const idRetrait = r.body.id_retrait;
       const [a, b] = await Promise.all([
-        appel(`/retraits/${idRetrait}/traiter`, tokenAdmin),
-        appel(`/retraits/${idRetrait}/traiter`, tokenAdmin),
+        appel(`/retraits/${idRetrait}/traiter`, tokenAdmin, { hors_plateforme: true }),
+        appel(`/retraits/${idRetrait}/traiter`, tokenAdmin, { hors_plateforme: true }),
       ]);
       const reussies = [a, b].filter((x) => x.ok).length;
       const refusees = [a, b].filter((x) => x.status === 400).length;
@@ -206,7 +206,7 @@ const scenarios: { nom: string; executer: () => Promise<string | null> }[] = [
       if ([a, b].filter((x) => x.ok).length !== 1 || [a, b].filter((x) => x.status === 400).length !== 1) {
         return `double rejet : attendu 1 succès + 1 refus 400, reçu : ${message(a)} | ${message(b)}`;
       }
-      const t = await appel(`/retraits/${idRetrait}/traiter`, tokenAdmin);
+      const t = await appel(`/retraits/${idRetrait}/traiter`, tokenAdmin, { hors_plateforme: true });
       if (t.status !== 400) return `un retrait rejeté a pu être traité (reçu ${message(t)})`;
       if ((await prisma.transaction.count({ where: { id_retrait: idRetrait } })) !== 0) {
         return 'une transaction a été créée pour un retrait rejeté';

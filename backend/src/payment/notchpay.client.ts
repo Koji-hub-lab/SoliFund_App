@@ -3,10 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import {
   avertissementsCles,
+  formaterTelephone,
   lireConfigurationNotchPay,
   type ConfigurationNotchPay,
 } from './notchpay.config';
-import { ErreurNotchPay, ErreurReseauNotchPay } from './notchpay.erreurs';
+import { ErreurPaiement, ErreurReseauPaiement } from './paiement.erreurs';
 import {
   lireErreur,
   lirePaiement,
@@ -36,8 +37,8 @@ export interface NouveauVersement {
   description: string;
   // Canal du bénéficiaire (« cm.mtn », « cm.orange »).
   canal: string;
-  // Bénéficiaire : identifiant Notch Pay ou numéro au format +2376XXXXXXXX.
-  beneficiaire: string;
+  // Bénéficiaire : nom et numéro Mobile Money au format +2376XXXXXXXX.
+  beneficiaire: { nom: string; telephone: string };
 }
 
 // Un échange HTTP avec Notch Pay, sans aucun en-tête (donc sans clé) : pour le script de
@@ -57,6 +58,8 @@ interface OptionsRequete {
   parametres?: Record<string, string>;
   // Ajoute l'en-tête X-Grant (clé privée) : versements et solde uniquement.
   avecClePrivee?: boolean;
+  // Une seule tentative, même sur erreur réseau ou 5xx (versements).
+  sansNouvelEssai?: boolean;
 }
 
 // Client de l'API Notch Pay (https://developer.notchpay.co, docs/paiement/notchpay-openapi.yaml).
@@ -91,6 +94,11 @@ export class NotchPayClient implements OnModuleInit {
     });
   }
 
+  // Faux si la clé publique n'est pas configurée (Notch Pay n'est pas le fournisseur actif).
+  estConfigure() {
+    return this.configuration.clePublique !== '';
+  }
+
   onModuleInit() {
     const avertissements = avertissementsCles(
       [
@@ -101,6 +109,11 @@ export class NotchPayClient implements OnModuleInit {
       this.environnement,
     );
     for (const avertissement of avertissements) this.logger.warn(avertissement);
+  }
+
+  // Numéro au format choisi par NOTCHPAY_FORMAT_TELEPHONE (sans « + » par défaut).
+  private telephone(numero: string) {
+    return formaterTelephone(numero, this.configuration.formatTelephone);
   }
 
   // POST /payments : crée le paiement chez Notch Pay (rien n'est encore demandé au client).
@@ -114,10 +127,14 @@ export class NotchPayClient implements OnModuleInit {
           currency: paiement.devise ?? 'XAF',
           reference: paiement.reference,
           description: paiement.description,
+          // Seul l'objet customer porte le téléphone : la spécification exige UN SEUL des champs
+          // email, phone ou customer au premier niveau (oneOf).
           customer: {
             name: paiement.client.nom,
             email: paiement.client.email,
-            phone: paiement.client.telephone,
+            phone: paiement.client.telephone
+              ? this.telephone(paiement.client.telephone)
+              : undefined,
           },
         },
       }),
@@ -132,7 +149,7 @@ export class NotchPayClient implements OnModuleInit {
   ): Promise<PaiementNotchPay> {
     return lirePaiement(
       await this.requete('PUT', this.cheminPaiement(reference), {
-        corps: { channel: canal, data: { phone: numero } },
+        corps: { channel: canal, data: { phone: this.telephone(numero) } },
       }),
     );
   }
@@ -149,20 +166,28 @@ export class NotchPayClient implements OnModuleInit {
     await this.requete('DELETE', this.cheminPaiement(reference));
   }
 
-  // POST /transfers (clé privée)
+  // POST /transfers (clé privée). Une seule tentative : un versement ne doit jamais partir deux fois.
   async initierVersement(
     versement: NouveauVersement,
   ): Promise<VersementNotchPay> {
     return lireVersement(
       await this.requete('POST', '/transfers', {
         avecClePrivee: true,
+        sansNouvelEssai: true,
         corps: {
           amount: versement.montant,
           currency: versement.devise ?? 'XAF',
           reference: versement.reference,
           description: versement.description,
           channel: versement.canal,
-          recipient: versement.beneficiaire,
+          // Forme de la référence de l'API (« With New Beneficiary »). La spécification OpenAPI
+          // et le guide décrivent d'autres formes (recipient, /recipients) : À CONFIRMER avec un
+          // vrai versement de test, et à ajuster ici seulement.
+          beneficiary_data: {
+            name: versement.beneficiaire.nom,
+            phone: this.telephone(versement.beneficiaire.telephone),
+            country: 'CM',
+          },
         },
       }),
     );
@@ -191,14 +216,16 @@ export class NotchPayClient implements OnModuleInit {
     return `/payments/${encodeURIComponent(reference)}`;
   }
 
-  // Envoie la requête et renvoie le corps de la réponse (2xx), ou lève une ErreurNotchPay.
+  // Envoie la requête et renvoie le corps de la réponse (2xx), ou lève une ErreurPaiement.
   private async requete(
     methode: 'GET' | 'POST' | 'PUT' | 'DELETE',
     chemin: string,
     options: OptionsRequete = {},
   ): Promise<unknown> {
-    const tentatives = this.delaisNouvelEssaiMs.length + 1;
-    let derniere: ErreurNotchPay | undefined;
+    const tentatives = options.sansNouvelEssai
+      ? 1
+      : this.delaisNouvelEssaiMs.length + 1;
+    let derniere: ErreurPaiement | undefined;
 
     for (let essai = 1; essai <= tentatives; essai += 1) {
       if (essai > 1) await attendre(this.delaisNouvelEssaiMs[essai - 2]);
@@ -236,7 +263,7 @@ export class NotchPayClient implements OnModuleInit {
           e instanceof AxiosError ? (e.code ?? e.message) : 'erreur inconnue';
         echange.erreurReseau = detail;
         this.surEchange?.(echange);
-        derniere = new ErreurReseauNotchPay(
+        derniere = new ErreurReseauPaiement(
           `Notch Pay est injoignable (${detail}).`,
         );
       }

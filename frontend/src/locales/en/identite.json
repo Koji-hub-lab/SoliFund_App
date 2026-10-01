@@ -10,5 +10,97 @@
     "OBJECTIF_ELEVE": "High goal",
     "ANTECEDENT_ORGANISATEUR": "Organiser has a suspended or declined fundraiser",
     "REVISION_APRES_REFUS": "Edited after being declined"
-  }
+  },
+  "formulaire": {
+    "titre": "Verify your identity",
+    "intro": "Before you create your first fundraiser, we verify your identity to protect donors. It takes about 3 minutes. Your documents are only visible to the SoliFund team.",
+    "refusee": "Your previous verification was declined. Reason: {{motif}} You can submit a new request.",
+    "refuseeSansMotif": "Your previous verification was declined. You can submit a new request.",
+    "etape": "Step {{numero}} of {{total}}",
+    "etapes": {
+      "piece": "Your ID document",
+      "identite": "Your details",
+      "photos": "Photos of your ID and a selfie",
+      "retrait": "Withdrawal number"
+    },
+    "typePiece": "Document type",
+    "types": {
+      "CNI": "National ID card",
+      "RECEPISSE_CNI": "ID card receipt",
+      "PASSEPORT": "Passport"
+    },
+    "numeroPiece": "Document number",
+    "dateExpiration": "Expiry date",
+    "dateExpirationFacultative": "Expiry date (optional)",
+    "nom": "Last name",
+    "prenoms": "First names",
+    "dateNaissance": "Date of birth",
+    "aideIdentite": "Enter these details exactly as they appear on your document.",
+    "recto": "Front of the document",
+    "verso": "Back of the document",
+    "pagePasseport": "Page with your photo",
+    "selfie": "Selfie holding your document",
+    "aideSelfie": "Your face and the document must be clearly visible.",
+    "ajouterPhoto": "Add a photo",
+    "changerPhoto": "Click the photo to change it.",
+    "formats": "JPG, PNG or WebP, 5 MB maximum",
+    "operateurRetrait": "Withdrawal operator",
+    "telephoneRetrait": "Mobile Money number for withdrawals",
+    "aideRetrait": "Funds from your fundraisers will only be paid to this number. It must be in your name.",
+    "recapitulatif": "Check your details before sending: {{piece}} no. {{numero}}, {{prenoms}} {{nom}}, withdrawals to +237 {{telephone}}.",
+    "retour": "Back",
+    "continuer": "Continue",
+    "envoyer": "Send my verification",
+    "envoiEnCours": "Sending...",
+    "erreurs": {
+      "numeroPiece": "Enter your document number.",
+      "dateExpiration": "Enter your document's expiry date.",
+      "pieceExpiree": "Your document has expired: please use a valid one.",
+      "nom": "Enter your last name.",
+      "prenoms": "Enter your first names.",
+      "dateNaissance": "Enter your date of birth.",
+      "ageMinimum": "You must be at least 18 to create a fundraiser.",
+      "photo": "Add this photo.",
+      "format": "Format not accepted: choose a JPG, PNG or WebP image.",
+      "taille": "This photo is larger than 5 MB."
+    }
+  },
+  "enAttente": "Your identity is being verified (usually within 24 hours). You can already create your fundraiser: it will be published as soon as your identity is approved.",
+  "chargement": "We couldn't check your identity status. {{detail}}",
+  "reessayer": "Try again",
+  "page": {
+    "titre": "Identity verification",
+    "sousTitre": "It's required to create a fundraiser and receive withdrawals.",
+    "enAttenteTitre": "Your verification is being reviewed",
+    "enAttenteTexte": "Our team reviews it, usually within 24 hours. You'll get a notification and an email as soon as it's done.",
+    "valideeTitre": "Identity verified",
+    "valideeTexte": "Your withdrawals are only paid to this number.",
+    "piece": "Document",
+    "soumiseLe": "Sent on",
+    "valideeLe": "Verified on",
+    "numeroRetrait": "Withdrawal number",
+    "changerNumero": "To change your withdrawal number, contact the SoliFund team: a new verification will be required.",
+    "continuer": "Continue",
+    "retourTableau": "Back to dashboard"
+  },
+  "carte": {
+    "titre": "Identity verification",
+    "NON_SOUMISE": "Verify your identity to create a fundraiser and receive your withdrawals.",
+    "REFUSEE": "Your verification was declined. You can submit a new one.",
+    "EN_ATTENTE": "Your verification is being reviewed (usually within 24 hours).",
+    "VALIDEE": "Your identity is verified. Your withdrawals are paid to {{numero}}.",
+    "verifier": "Verify my identity",
+    "voir": "View my verification"
+  },
+  "requise": {
+    "creation": "Before you create your first fundraiser, verify your identity. It takes about 3 minutes; you'll then come back here.",
+    "creationRefusee": "Your identity verification was declined. Reason: {{motif}} Submit a new one to create a fundraiser.",
+    "creationRefuseeSansMotif": "Your identity verification was declined. Submit a new one to create a fundraiser.",
+    "retrait": "To request a withdrawal, verify your identity first. Funds will be paid to the verified Mobile Money number.",
+    "retraitEnAttente": "Your identity verification is being reviewed (usually within 24 hours). You'll be able to request a withdrawal once it's approved.",
+    "retraitRefusee": "Your identity verification was declined. Submit a new one to request a withdrawal.",
+    "verseSur": "Paid to",
+    "chargement": "We couldn't check your identity status. {{detail}}"
+  },
+  "pastille": "Identity to verify"
 }

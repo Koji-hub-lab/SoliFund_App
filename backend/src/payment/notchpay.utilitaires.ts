@@ -35,6 +35,7 @@ const STATUTS_ECHOUES = [
   'expired',
   'rejected',
   'abandoned',
+  'reversed', // versement annulé après coup : la somme est revenue
 ];
 // Connus comme « en cours » : pending, processing, sent, incomplete.
 
@@ -61,6 +62,9 @@ const ERREURS_MOBILE_MONEY = {
   PROVIDER_ERROR: { peutReessayer: true },
   CANCELLED_BY_USER: { peutReessayer: true },
   DUPLICATE_TRANSACTION: { peutReessayer: false },
+  // Raison renvoyée par AangaraaPay pour un paiement refusé par MTN Mobile Money (solde, plafond
+  // du bénéficiaire ou paiement marchand non autorisé : MTN ne précise pas lequel).
+  LOW_BALANCE_OR_PAYEE_LIMIT_REACHED_OR_NOT_ALLOWED: { peutReessayer: true },
 } as const;
 
 export type CodeErreurMobileMoney = keyof typeof ERREURS_MOBILE_MONEY;
@@ -87,6 +91,56 @@ export function erreurMobileMoney(code?: string | null): ErreurMobileMoney {
     };
   }
   return { code: null, message: m('paiement.ECHEC'), peutReessayer: true };
+}
+
+// Messages d'erreur de Notch Pay reconnus, quand la réponse ne donne pas de code métier.
+// Réel (docs/paiement/exemples/paiement-echoue-34.json) : « Invalid CM Mobile Money » en 422 au
+// traitement, pour un numéro refusé par le canal choisi.
+const CODES_PAR_MESSAGE: [RegExp, CodeErreurMobileMoney][] = [
+  // En premier : ce code contient « LIMIT » et « BALANCE », qui ne doivent pas l'emporter.
+  [
+    /LOW_BALANCE_OR_PAYEE_LIMIT_REACHED_OR_NOT_ALLOWED/i,
+    'LOW_BALANCE_OR_PAYEE_LIMIT_REACHED_OR_NOT_ALLOWED',
+  ],
+  [
+    /invalid\s+\w*\s*mobile\s*money|invalid\s+(phone|number|msisdn)/i,
+    'INVALID_PHONE',
+  ],
+  [/not\s+registered|unregistered|non\s+enregistr/i, 'UNREGISTERED_PHONE'],
+  [
+    /insufficient\s+(funds|balance)|balance\s+too\s+low/i,
+    'INSUFFICIENT_BALANCE',
+  ],
+  [/limit\s+exceeded|exceeds?\s+(the\s+)?limit/i, 'TRANSACTION_LIMIT_EXCEEDED'],
+  [
+    /cancell?ed\s+by\s+(the\s+)?(user|customer)|rejected\s+by\s+(the\s+)?(user|customer)/i,
+    'CANCELLED_BY_USER',
+  ],
+  [/timed?\s*out|timeout/i, 'TIMEOUT'],
+  // Raisons en français des opérateurs (AangaraaPay, details.reason : « Solde insuffisant »...).
+  [/solde\s+insuffisant|fonds\s+insuffisants/i, 'INSUFFICIENT_BALANCE'],
+  [
+    /annul[ée]+\s+par\s+(le\s+)?(client|l'utilisateur|utilisateur)/i,
+    'CANCELLED_BY_USER',
+  ],
+  [
+    /num[ée]ro\s+(de\s+t[ée]l[ée]phone\s+)?(invalide|inexistant)/i,
+    'INVALID_PHONE',
+  ],
+  [
+    /plafond|limite\s+(de\s+transaction\s+)?d[ée]pass[ée]e/i,
+    'TRANSACTION_LIMIT_EXCEEDED',
+  ],
+  [/d[ée]lai\s+(de\s+confirmation\s+)?d[ée]pass[ée]|expir[ée]/i, 'TIMEOUT'],
+  [/erreur\s+(de\s+l'|chez\s+l')?op[ée]rateur/i, 'PROVIDER_ERROR'],
+];
+
+// Code Mobile Money déduit d'un message d'erreur de Notch Pay, ou undefined s'il n'est pas reconnu.
+export function codeErreurDepuisMessage(
+  message?: string | null,
+): CodeErreurMobileMoney | undefined {
+  if (!message) return undefined;
+  return CODES_PAR_MESSAGE.find(([motif]) => motif.test(message))?.[1];
 }
 
 // Référence SoliFund d'un paiement ou d'un versement, unique et envoyée à Notch Pay :

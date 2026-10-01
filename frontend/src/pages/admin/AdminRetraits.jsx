@@ -12,9 +12,9 @@ import { formaterTaux } from '../../utils/commission';
 import { BadgeStatut, statutsRetrait } from '../../utils/statuts';
 import { SqueletteListe } from '../../components/ui/Squelette';
 
-const FILTRES = ['EN_ATTENTE', 'TRAITE', 'REJETE', 'TOUS'];
+const FILTRES = ['EN_ATTENTE', 'APPROUVE', 'ECHOUE', 'TRAITE', 'REJETE', 'TOUS'];
 // Libellé du montant net selon le statut du retrait.
-const CLES_NET = { EN_ATTENTE: 'retraits.aVerser', TRAITE: 'retraits.verse' };
+const CLES_NET = { EN_ATTENTE: 'retraits.aVerser', APPROUVE: 'retraits.aVerser', ECHOUE: 'retraits.aVerser', TRAITE: 'retraits.verse' };
 
 export default function AdminRetraits() {
   const { t } = useTranslation('admin');
@@ -23,8 +23,16 @@ export default function AdminRetraits() {
   const [filtre, setFiltre] = useState('EN_ATTENTE');
   const [recherche, setRecherche] = useState('');
   const [erreur, setErreur] = useState('');
-  // Action à confirmer : { type: 'traiter' | 'rejeter', retrait }.
+  // Action à confirmer : { type: 'verser' | 'rejeter', retrait }. « verser » couvre « Approuver et
+  // verser » (retrait en attente) et « Relancer le versement » (versement échoué).
   const [aConfirmer, setAConfirmer] = useState(null);
+  // Mode manuel de secours : la somme a été versée hors plateforme, rien n'est envoyé au fournisseur de paiement.
+  const [horsPlateforme, setHorsPlateforme] = useState(false);
+
+  function demander(type, retrait) {
+    setHorsPlateforme(false);
+    setAConfirmer({ type, retrait });
+  }
 
   function charger() {
     setChargement(true);
@@ -41,8 +49,15 @@ export default function AdminRetraits() {
 
   async function confirmer(motif) {
     const { type, retrait } = aConfirmer;
-    if (type === 'traiter') await api.post(`/retraits/${retrait.id_retrait}/traiter`);
-    else await api.post(`/retraits/${retrait.id_retrait}/rejeter`, { motif_rejet: motif || undefined });
+    try {
+      if (type === 'rejeter') await api.post(`/retraits/${retrait.id_retrait}/rejeter`, { motif_rejet: motif || undefined });
+      else if (horsPlateforme) await api.post(`/retraits/${retrait.id_retrait}/traiter`, { hors_plateforme: true });
+      else await api.post(`/retraits/${retrait.id_retrait}/verser`);
+    } catch (err) {
+      // Un versement refusé change quand même le statut du retrait (échoué) : la liste est rechargée.
+      charger();
+      throw err;
+    }
     setAConfirmer(null);
     await charger();
   }
@@ -106,13 +121,24 @@ export default function AdminRetraits() {
                   </p>
                   <p className="text-sm text-muted-foreground">{formaterDateHeure(r.date_creation)}</p>
                   {r.motif_rejet && <p className="mt-1 text-sm text-destructive">{t('retraits.motifRejet', { motif: r.motif_rejet })}</p>}
+                  {r.statut === 'ECHOUE' && (
+                    <p className="mt-1 text-sm text-destructive">{t('retraits.echec', { raison: r.message_erreur || r.code_erreur || t('retraits.echecInconnu') })}</p>
+                  )}
+                  {r.statut === 'APPROUVE' && <p className="mt-1 text-sm text-[#45524F]">{t('retraits.enCours')}</p>}
+                  {r.hors_plateforme && <p className="mt-1 text-sm text-[#45524F]">{t('retraits.verseHorsPlateforme')}</p>}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <Button size="sm" variant="outline" to={`/cagnottes/${r.id_cagnotte}`}>{t('commun:actions.voir')}</Button>
                   {r.statut === 'EN_ATTENTE' && (
                     <>
-                      <Button size="sm" onClick={() => setAConfirmer({ type: 'traiter', retrait: r })}>{t('retraits.marquer')}</Button>
-                      <Button size="sm" variant="danger" onClick={() => setAConfirmer({ type: 'rejeter', retrait: r })}>{t('retraits.rejeter')}</Button>
+                      <Button size="sm" onClick={() => demander('verser', r)}>{t('retraits.approuver')}</Button>
+                      <Button size="sm" variant="danger" onClick={() => demander('rejeter', r)}>{t('retraits.rejeter')}</Button>
+                    </>
+                  )}
+                  {r.statut === 'ECHOUE' && (
+                    <>
+                      <Button size="sm" onClick={() => demander('verser', r)}>{t('retraits.relancer')}</Button>
+                      <Button size="sm" variant="danger" onClick={() => demander('rejeter', r)}>{t('retraits.rejeter')}</Button>
                     </>
                   )}
                 </div>
@@ -124,22 +150,48 @@ export default function AdminRetraits() {
 
       <Confirmation
         ouvert={!!aConfirmer}
-        titre={aConfirmer?.type === 'traiter' ? t('retraits.traiterTitre') : t('retraits.rejeterTitre')}
+        titre={
+          aConfirmer?.type === 'rejeter'
+            ? t('retraits.rejeterTitre')
+            : aConfirmer?.retrait.statut === 'ECHOUE'
+              ? t('retraits.relancerTitre')
+              : t('retraits.approuverTitre')
+        }
         message={
-          aConfirmer?.type === 'traiter'
-            ? t('retraits.traiterMessage', {
+          aConfirmer?.type === 'rejeter'
+            ? t('retraits.rejeterMessage', { brut })
+            : t(horsPlateforme ? 'retraits.horsPlateformeMessage' : 'retraits.approuverMessage', {
                 net,
                 numero: aConfirmer?.retrait.numero_beneficiaire,
                 operateur: nomOperateur(aConfirmer?.retrait.methode_retrait),
               })
-            : t('retraits.rejeterMessage', { brut })
         }
-        libelleConfirmer={aConfirmer?.type === 'traiter' ? t('retraits.marquer') : t('retraits.rejeterLibelle')}
-        variante={aConfirmer?.type === 'traiter' ? 'default' : 'danger'}
+        libelleConfirmer={
+          aConfirmer?.type === 'rejeter'
+            ? t('retraits.rejeterLibelle')
+            : horsPlateforme
+              ? t('retraits.marquer')
+              : aConfirmer?.retrait.statut === 'ECHOUE'
+                ? t('retraits.relancer')
+                : t('retraits.approuver')
+        }
+        variante={aConfirmer?.type === 'rejeter' ? 'danger' : 'default'}
         motif={aConfirmer?.type === 'rejeter' ? { libelle: t('retraits.motif'), obligatoire: false, placeholder: t('retraits.motifPlaceholder') } : undefined}
         onConfirmer={confirmer}
         onAnnuler={() => setAConfirmer(null)}
-      />
+      >
+        {aConfirmer?.type === 'verser' && (
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 text-[15px] leading-[1.6] text-foreground">
+            <input
+              type="checkbox"
+              checked={horsPlateforme}
+              onChange={(e) => setHorsPlateforme(e.target.checked)}
+              className="mt-1 size-5 shrink-0 cursor-pointer p-0 accent-primary"
+            />
+            {t('retraits.horsPlateforme')}
+          </label>
+        )}
+      </Confirmation>
     </AdminLayout>
   );
 }

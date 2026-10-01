@@ -18,10 +18,13 @@ export type CodeNotification =
   | 'IDENTITE_REFUSEE' // motif
   | 'RETRAIT_TRAITE' // brut, net, commission, devise, numero
   | 'RETRAIT_REJETE' // brut, devise, motif (vide si aucun)
+  | 'RETRAIT_ECHOUE' // brut, devise
   // Alertes de modération destinées aux administrateurs (voir AlertesAdminService)
   | 'IDENTITE_A_VERIFIER' // prenoms, nom
   | 'CAGNOTTE_EN_VERIFICATION' // titre, raisons (codes)
-  | 'SUSPENSION_AUTOMATIQUE'; // titre, nombre
+  | 'SUSPENSION_AUTOMATIQUE' // titre, nombre
+  | 'VERSEMENT_INCERTAIN' // retrait, montant, fournisseur
+  | 'VERSEMENT_INTROUVABLE'; // retrait, montant, fournisseur
 
 export type ParametresNotification = Record<string, string | number | string[]>;
 

@@ -4,6 +4,7 @@ import { LayoutDashboard, Wallet, PlusCircle, Bell, UserCircle, ShieldCheck, Com
 import EspaceLayout from '../layout/EspaceLayout';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
+import { useVerificationIdentite } from '../../utils/identite';
 
 // Espace organisateur : barre latérale commune (EspaceLayout) avec les liens de l'organisateur.
 export default function DashboardLayout({ children }) {
@@ -11,6 +12,9 @@ export default function DashboardLayout({ children }) {
   const [nbNonLues, setNbNonLues] = useState(0);
   const [erreurNotifications, setErreurNotifications] = useState('');
   const { t } = useTranslation('tableau-de-bord');
+  // Point Ambre sur « Mon profil » tant que l'identité n'est pas vérifiée.
+  const { verification } = useVerificationIdentite();
+  const identiteAVerifier = verification && verification.statut !== 'VALIDEE';
 
   useEffect(() => {
     api.get('/notifications')
@@ -23,7 +27,13 @@ export default function DashboardLayout({ children }) {
     { label: t('nav.mesCagnottes'), href: '/mes-cagnottes', icon: Wallet },
     { label: t('nav.creer'), href: '/creer-cagnotte', icon: PlusCircle },
     { label: t('nav.notifications'), href: '/notifications', icon: Bell, compteur: nbNonLues },
-    { label: t('nav.profil'), href: '/compte', icon: UserCircle },
+    {
+      label: t('nav.profil'),
+      href: '/compte',
+      icon: UserCircle,
+      pastille: identiteAVerifier ? t('identite:pastille') : undefined,
+      actifSi: (chemin) => chemin === '/compte' || chemin === '/verification-identite',
+    },
   ];
   if (utilisateur?.roles?.includes('ROLE_ADMIN')) {
     liens.push({ label: t('nav.administration'), href: '/admin/tableau-de-bord', icon: ShieldCheck, actifSi: (chemin) => chemin.startsWith('/admin') });

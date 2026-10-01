@@ -10,9 +10,13 @@ Plateforme de cagnottes solidaires pour le Cameroun : un organisateur crée une 
 | `frontend/` | Site React 19 + Vite + Tailwind 4 (charte graphique : `frontend/DESIGN.md`) |
 | `docs/` | Audit (`AUDIT.md`) et ancien schéma SQL conservé pour mémoire |
 
-> Paiements Mobile Money : prestataire Notch Pay (client de l'API dans `backend/src/payment/`,
-> documentation dans `docs/paiement/`). Les dons ne sont pas encore branchés sur ce client : en
-> attendant, la création d'un don répond « indisponible » (503).
+> Paiements Mobile Money : deux fournisseurs, Notch Pay et AangaraaPay, derrière une interface
+> commune (`backend/src/payment/`, documentation dans `docs/paiement/`). Le fournisseur des nouveaux
+> paiements et versements est choisi par `PAIEMENT_FOURNISSEUR`. Un don est créé « en attente »,
+> payé sur le téléphone du donateur, puis validé quand le fournisseur confirme le paiement
+> (vérification par la page, webhook, et réconciliation automatique toutes les 5 minutes). Un
+> retrait approuvé par un administrateur est versé sur le numéro vérifié de l'organisateur ; un mode
+> manuel (« versement effectué hors plateforme ») reste disponible en secours.
 
 ## Prérequis
 
@@ -57,13 +61,17 @@ L'API vérifie ces variables au démarrage et refuse de démarrer si une variabl
 | `FRONTEND_URL` | oui | Adresse du site : origine autorisée (CORS) et redirection des liens de partage |
 | `PUBLIC_API_URL` | non | Adresse publique de l'API, pour les liens de partage et les aperçus WhatsApp / Facebook (par défaut `http://localhost:<PORT>`) |
 | `COMMISSION_TAUX_POURCENT` | non | Commission SoliFund sur les retraits, en % (3 par défaut). Le taux est figé dans chaque retrait à la demande |
+| `FRAIS_MTN_ENCAISSEMENT_POURCENT`, `FRAIS_MTN_VERSEMENT_POURCENT`, `FRAIS_ORANGE_ENCAISSEMENT_POURCENT`, `FRAIS_ORANGE_VERSEMENT_POURCENT` | non | Frais de transaction payés par le donateur en plus de son don, en % (tarifs d'AangaraaPay par défaut : 1,7 / 1,3 / 1,5 / 2,1). Frais = don × (encaissement de l'opérateur du donateur + versement de l'opérateur de retrait vérifié de l'organisateur, ou le plus élevé s'il n'est pas connu), arrondis au supérieur ; seul le don va à la cagnotte |
+| `DON_MONTANT_MINIMUM` | non | Montant minimum d'un don, en XAF (100 par défaut) ; s'applique au don, pas au total avec les frais |
 | `SEUIL_OBJECTIF_VERIFICATION`, `SEUIL_SIGNALEMENTS` | non | Modération : objectif (XAF) au-dessus duquel une cagnotte est vérifiée avant publication (1 000 000 par défaut), et nombre de signalements qui suspend une cagnotte (3 par défaut) |
 | `STOCKAGE_PRIVE_DIR` | non | Dossier des pièces d'identité des organisateurs (par défaut `backend/stockage-prive`, jamais servi publiquement) ; en production, un volume persistant et sauvegardé |
 | `BREVO_SENDER_NOM` | non | Nom de l'expéditeur des emails |
 | `PORT` | non | Port HTTP (3000 par défaut) |
 | `NODE_ENV` | non | `development`, `production` ou `test` ; en production, la documentation `/docs` est désactivée |
-| `NOTCHPAY_PUBLIC_KEY`, `NOTCHPAY_PRIVATE_KEY` | oui | Clés Notch Pay (clé publique : toutes les requêtes ; clé privée : versements et solde). Clés de test en développement : un avertissement est écrit au démarrage si une clé « live » est utilisée hors production, et inversement |
-| `NOTCHPAY_WEBHOOK_HASH` | en production | Hash de signature des webhooks Notch Pay |
+| `PAIEMENT_FOURNISSEUR` | non | Fournisseur des nouveaux paiements et versements : `notchpay` (par défaut) ou `aangaraa` |
+| `AANGARAA_APP_KEY`, `AANGARAA_WEBHOOK_JETON` | si `aangaraa` | Clé du service AangaraaPay et jeton secret du webhook (32 caractères au moins), jamais écrits dans les logs ; `AANGARAA_API_URL` facultative. Le webhook `POST /paiements/webhook/aangaraa/<jeton>` est construit avec `PUBLIC_API_URL`, alors obligatoire et joignable depuis Internet |
+| `NOTCHPAY_PUBLIC_KEY`, `NOTCHPAY_PRIVATE_KEY` | si `notchpay` | Clés Notch Pay (clé publique : toutes les requêtes ; clé privée : versements et solde). Clés de test en développement : un avertissement est écrit au démarrage si une clé « live » est utilisée hors production, et inversement |
+| `NOTCHPAY_WEBHOOK_HASH` | en production | Hash de signature des webhooks Notch Pay (`POST /paiements/webhook/notchpay`) ; sans lui, tous les webhooks sont refusés (403) |
 | `NOTCHPAY_API_URL` | non | URL de l'API Notch Pay (par défaut `https://api.notchpay.co`) |
 | `DATABASE_URL_TEST` | non | Base des tests e2e (par défaut : la base de `DATABASE_URL` suffixée par `_test`) |
 

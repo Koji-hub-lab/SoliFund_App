@@ -111,8 +111,13 @@ export class FiltreErreurs extends BaseExceptionFilter {
       return renvoyer(traduite);
     }
 
+    // Le jeton secret du webhook AangaraaPay est dans l'adresse : il n'est jamais écrit.
+    const adresse = requete?.url.replace(
+      /(\/paiements\/webhook\/aangaraa\/)[^/?#]+/,
+      '$1[jeton masqué]',
+    );
     this.logger.error(
-      `Erreur non gérée${requete ? ` sur ${requete.method} ${requete.url}` : ''}`,
+      `Erreur non gérée${requete ? ` sur ${requete.method} ${adresse}` : ''}`,
       exception instanceof Error ? exception.stack : String(exception),
     );
     return renvoyer(

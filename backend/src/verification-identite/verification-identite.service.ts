@@ -22,6 +22,10 @@ import { ListerVerificationsDto } from './dto/lister-verifications.dto';
 import { SoumettreVerificationDto } from './dto/soumettre-verification.dto';
 import { derniereVerification } from './identite';
 import { m } from '../i18n/messages';
+import {
+  OPERATEURS_MOBILE_MONEY,
+  numeroIncoherent,
+} from '../config/operateurs-mobile-money';
 
 const DOSSIER = 'identites';
 const AGE_MINIMUM = 18;
@@ -81,6 +85,19 @@ export class VerificationIdentiteService {
     fichiers: FichiersIdentite,
   ) {
     const aujourdhui = jourADouala();
+
+    // Le numéro de retrait doit appartenir à l'opérateur choisi (src/config/operateurs-mobile-money.ts).
+    const autreOperateur = numeroIncoherent(
+      dto.telephone_retrait,
+      dto.methode_retrait,
+    );
+    if (autreOperateur) {
+      throw new BadRequestException(
+        m('paiement.numeroAutreOperateur', {
+          operateur: OPERATEURS_MOBILE_MONEY[autreOperateur].nom,
+        }),
+      );
+    }
 
     // Majorité : la personne doit avoir 18 ans révolus aujourd'hui (dates AAAA-MM-JJ comparables).
     const [annee, mois, jour] = aujourdhui.split('-');

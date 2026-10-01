@@ -2,10 +2,10 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
-import ChoixOperateur, { nomOperateur } from '../cagnotte/ChoixOperateur';
+import { nomOperateur } from '../cagnotte/ChoixOperateur';
 import api from '../../api/axios';
 import { formaterDate, formaterMontant } from '../../utils/format';
-import { messageNumeroInvalide, normaliserNumero } from '../../utils/telephone';
+import { lienVerification, useVerificationIdentite } from '../../utils/identite';
 import { champPilule, erreurTexte, titreSection } from '../cagnotte/classes';
 import { BadgeStatut, statutsRetrait } from '../../utils/statuts';
 import { calculerCommission, formaterTaux, useTauxCommission } from '../../utils/commission';
@@ -15,10 +15,15 @@ const libelle = 'mb-2 block text-sm font-bold text-foreground';
 export default function RetraitsGestion({ cagnotte, retraits, executer, charger, enCours, erreurs }) {
   const navigate = useNavigate();
   const [montant, setMontant] = useState('');
-  const [methode, setMethode] = useState('MTN_MOBILE_MONEY');
-  const [numero, setNumero] = useState('');
   const [erreursChamps, setErreursChamps] = useState({});
   const { t } = useTranslation('tableau-de-bord');
+  const { t: tIdentite } = useTranslation('identite');
+
+  // Le retrait est toujours versé sur le numéro de la vérification d'identité validée : sans elle,
+  // un message renvoie vers la page de vérification, qui ramène ici après l'envoi.
+  const { verification } = useVerificationIdentite();
+  const identiteValidee = verification?.statut === 'VALIDEE';
+  const retourRetraits = `/mes-cagnottes/${cagnotte.id_cagnotte}?onglet=retraits`;
 
   // Commission calculée en direct sous le montant (même calcul que le backend).
   const taux = useTauxCommission();
@@ -32,11 +37,9 @@ export default function RetraitsGestion({ cagnotte, retraits, executer, charger,
 
   function demanderRetrait(e) {
     e.preventDefault();
-    const numeroNormalise = normaliserNumero(numero);
     const nouvellesErreurs = {};
     if (!(Number(montant) >= 100)) nouvellesErreurs.montant = t('retraits.montantMinimum', { montant: formaterMontant(100) });
     else if (Number(montant) > disponible) nouvellesErreurs.montant = t('retraits.montantDepasse', { disponible: formaterMontant(disponible) });
-    if (!numeroNormalise) nouvellesErreurs.numero = messageNumeroInvalide();
     setErreursChamps(nouvellesErreurs);
     if (Object.keys(nouvellesErreurs).length > 0) return;
 
@@ -44,11 +47,8 @@ export default function RetraitsGestion({ cagnotte, retraits, executer, charger,
       await api.post('/retraits', {
         id_cagnotte: cagnotte.id_cagnotte,
         montant: Number(montant),
-        methode_retrait: methode,
-        numero_beneficiaire: numeroNormalise,
       });
       setMontant('');
-      setNumero('');
       charger();
     });
   }
@@ -74,6 +74,21 @@ export default function RetraitsGestion({ cagnotte, retraits, executer, charger,
 
         <hr className="my-6" />
 
+        {verification && !identiteValidee ? (
+          <div className="flex flex-col gap-4">
+            <h2 className="font-display text-[22px] font-bold leading-tight text-foreground">{t('retraits.demander')}</h2>
+            <p className="rounded-[18px] bg-accent-soft px-4 py-3 text-sm leading-[1.6] text-[#7A5312]">
+              {verification.statut === 'EN_ATTENTE'
+                ? tIdentite('requise.retraitEnAttente')
+                : verification.statut === 'REFUSEE'
+                  ? tIdentite('requise.retraitRefusee')
+                  : tIdentite('requise.retrait')}
+            </p>
+            <Button to={lienVerification(retourRetraits)} variant={verification.statut === 'EN_ATTENTE' ? 'outline' : 'default'} className="w-full">
+              {verification.statut === 'EN_ATTENTE' ? tIdentite('carte.voir') : tIdentite('carte.verifier')}
+            </Button>
+          </div>
+        ) : (
         <form onSubmit={demanderRetrait} noValidate className="flex flex-col gap-5">
           <h2 className="font-display text-[22px] font-bold leading-tight text-foreground">{t('retraits.demander')}</h2>
           <div>
@@ -98,21 +113,15 @@ export default function RetraitsGestion({ cagnotte, retraits, executer, charger,
               </div>
             )}
           </div>
-          <ChoixOperateur libelle={t('retraits.recevoirSur')} valeur={methode} onChanger={setMethode} />
-          <div>
-            <label htmlFor="retrait-numero" className={libelle}>{t('retraits.numero')}</label>
-            <input
-              id="retrait-numero"
-              type="tel"
-              inputMode="tel"
-              placeholder="6XX XX XX XX"
-              value={numero}
-              onChange={(e) => setNumero(e.target.value)}
-              aria-invalid={!!erreursChamps.numero}
-              className={champPilule}
-            />
-            {erreursChamps.numero && <p className={`mt-1.5 ${erreurTexte}`}>{erreursChamps.numero}</p>}
-          </div>
+          {/* Numéro vérifié, en lecture seule : le retrait est toujours versé sur celui-ci. */}
+          {identiteValidee && (
+            <div>
+              <p className={libelle}>{tIdentite('requise.verseSur')}</p>
+              <p className="rounded-[18px] bg-background px-4 py-3 text-base font-bold text-foreground">
+                {nomOperateur(verification.methode_retrait)} · +237 {verification.telephone_retrait}
+              </p>
+            </div>
+          )}
           <div>
             <Button type="submit" disabled={enCours.retrait} className="w-full">
               {enCours.retrait ? t('commun:actions.envoiEnCours') : t('retraits.bouton')}
@@ -123,6 +132,7 @@ export default function RetraitsGestion({ cagnotte, retraits, executer, charger,
             </p>
           </div>
         </form>
+        )}
       </section>
 
       <div className="flex flex-col gap-6">

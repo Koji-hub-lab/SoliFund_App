@@ -271,6 +271,18 @@
     "SUSPENSION_AUTOMATIQUE": {
       "titre": "Automatic suspension",
       "message": "The fundraiser “{{titre}}” was automatically suspended after {{nombre}} reports."
+    },
+    "RETRAIT_ECHOUE": {
+      "titre": "Payout failed",
+      "message": "The payout for your withdrawal of {{brut}} didn't go through. Our team will retry it; there's nothing you need to do."
+    },
+    "VERSEMENT_INCERTAIN": {
+      "titre": "Payout to check",
+      "message": "{{fournisseur}} didn't respond to the payout for withdrawal no. {{retrait}} ({{montant}}): it may have gone through. Check it in their dashboard before doing anything else."
+    },
+    "VERSEMENT_INTROUVABLE": {
+      "titre": "Payout not found",
+      "message": "{{fournisseur}} can't find the payout for withdrawal no. {{retrait}} ({{montant}}). No automatic action: please check it in their dashboard."
     }
   }
 }

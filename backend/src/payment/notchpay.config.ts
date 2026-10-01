@@ -2,23 +2,45 @@ import { ConfigService } from '@nestjs/config';
 
 export const URL_API_NOTCHPAY_PAR_DEFAUT = 'https://api.notchpay.co';
 
+// Format des numéros envoyés à Notch Pay (NOTCHPAY_FORMAT_TELEPHONE) :
+// « sans_plus » → 237677123456 (défaut : les exemples de docs/paiement/notchpay-openapi.yaml,
+// écrits +237600000000 sans guillemets, sont lus par YAML comme le nombre 237600000000) ;
+// « avec_plus » → +237677123456 (forme des exemples JSON des guides de Notch Pay).
+export const FORMATS_TELEPHONE = ['sans_plus', 'avec_plus'] as const;
+export type FormatTelephone = (typeof FORMATS_TELEPHONE)[number];
+
 export interface ConfigurationNotchPay {
   urlApi: string;
   clePublique: string;
   // Envoyée dans X-Grant, uniquement pour les versements et le solde.
   clePrivee: string;
+  formatTelephone: FormatTelephone;
 }
 
 export function lireConfigurationNotchPay(
   config: ConfigService,
 ): ConfigurationNotchPay {
+  const format = config.get<string>('NOTCHPAY_FORMAT_TELEPHONE');
   return {
     urlApi: (
       config.get<string>('NOTCHPAY_API_URL') || URL_API_NOTCHPAY_PAR_DEFAUT
     ).replace(/\/+$/, ''),
-    clePublique: config.getOrThrow<string>('NOTCHPAY_PUBLIC_KEY'),
-    clePrivee: config.getOrThrow<string>('NOTCHPAY_PRIVATE_KEY'),
+    // Vides si Notch Pay n'est pas le fournisseur actif (voir validerEnvironnement).
+    clePublique: config.get<string>('NOTCHPAY_PUBLIC_KEY') ?? '',
+    clePrivee: config.get<string>('NOTCHPAY_PRIVATE_KEY') ?? '',
+    formatTelephone: format === 'avec_plus' ? 'avec_plus' : 'sans_plus',
   };
+}
+
+// Numéro au format attendu par Notch Pay, à partir de la forme normalisée +2376XXXXXXXX
+// (normaliserNumero). Appliqué à tous les numéros envoyés : customer.phone, data.phone,
+// beneficiary_data.phone.
+export function formaterTelephone(
+  numero: string,
+  format: FormatTelephone,
+): string {
+  const chiffres = numero.replace(/^\+/, '');
+  return format === 'avec_plus' ? `+${chiffres}` : chiffres;
 }
 
 // Les clés du mode test contiennent « test » dans leur préfixe (pk_test_..., sk_test_...,

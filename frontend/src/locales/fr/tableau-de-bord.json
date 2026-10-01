@@ -271,6 +271,18 @@
     "SUSPENSION_AUTOMATIQUE": {
       "titre": "Suspension automatique",
       "message": "La cagnotte « {{titre}} » a été suspendue automatiquement après {{nombre}} signalements."
+    },
+    "RETRAIT_ECHOUE": {
+      "titre": "Versement échoué",
+      "message": "Le versement de votre retrait de {{brut}} n'a pas abouti. Notre équipe va le relancer ; vous n'avez rien à faire."
+    },
+    "VERSEMENT_INCERTAIN": {
+      "titre": "Versement à vérifier",
+      "message": "{{fournisseur}} n'a pas répondu au versement du retrait n° {{retrait}} ({{montant}}) : il est peut-être parti. Vérifiez-le dans son tableau de bord avant toute action."
+    },
+    "VERSEMENT_INTROUVABLE": {
+      "titre": "Versement introuvable",
+      "message": "{{fournisseur}} ne trouve pas le versement du retrait n° {{retrait}} ({{montant}}). Aucune action automatique : vérifiez-le dans son tableau de bord."
     }
   }
 }

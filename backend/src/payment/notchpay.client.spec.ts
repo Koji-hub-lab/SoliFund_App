@@ -4,15 +4,15 @@ import { createServer, IncomingMessage, Server } from 'http';
 import { AddressInfo } from 'net';
 import { NotchPayClient, type EchangeNotchPay } from './notchpay.client';
 import {
-  ErreurAuthentificationNotchPay,
-  ErreurConflitNotchPay,
-  ErreurIntrouvableNotchPay,
-  ErreurLimiteNotchPay,
-  ErreurNotchPay,
-  ErreurReponseNotchPay,
-  ErreurReseauNotchPay,
-  ErreurValidationNotchPay,
-} from './notchpay.erreurs';
+  ErreurAuthentificationPaiement,
+  ErreurConflitPaiement,
+  ErreurIntrouvablePaiement,
+  ErreurLimitePaiement,
+  ErreurPaiement,
+  ErreurReponsePaiement,
+  ErreurReseauPaiement,
+  ErreurValidationPaiement,
+} from './paiement.erreurs';
 
 const CLE_PUBLIQUE = 'pk_test_cle-publique';
 const CLE_PRIVEE = 'sk_test_cle-privee';
@@ -48,12 +48,18 @@ describe('NotchPayClient (HTTP simulé)', () => {
     },
   });
 
-  function creerClient(url: string, environnement = 'test', hash?: string) {
+  function creerClient(
+    url: string,
+    environnement = 'test',
+    hash?: string,
+    formatTelephone?: string,
+  ) {
     const valeurs: Record<string, string | undefined> = {
       NOTCHPAY_API_URL: url,
       NOTCHPAY_PUBLIC_KEY: CLE_PUBLIQUE,
       NOTCHPAY_PRIVATE_KEY: CLE_PRIVEE,
       NOTCHPAY_WEBHOOK_HASH: hash,
+      NOTCHPAY_FORMAT_TELEPHONE: formatTelephone,
       NODE_ENV: environnement,
     };
     const nouveau = new NotchPayClient({
@@ -139,7 +145,7 @@ describe('NotchPayClient (HTTP simulé)', () => {
       });
     });
 
-    it('traite un paiement : PUT /payments/{reference} avec le canal et le numéro', async () => {
+    it('traite un paiement : PUT /payments/{reference} avec le canal et le numéro (sans « + » par défaut)', async () => {
       reponses.push({ statut: 202, corps: paiement('processing') });
       const resultat = await client.traiterPaiement(
         'trx.abc123',
@@ -149,10 +155,68 @@ describe('NotchPayClient (HTTP simulé)', () => {
       expect(recues[0]).toMatchObject({
         methode: 'PUT',
         url: '/payments/trx.abc123',
-        corps: { channel: 'cm.mtn', data: { phone: '+237670000000' } },
+        corps: { channel: 'cm.mtn', data: { phone: '237670000000' } },
       });
       expect(recues[0].entetes['x-grant']).toBeUndefined();
       expect(resultat.statut).toBe('processing');
+    });
+
+    it('applique NOTCHPAY_FORMAT_TELEPHONE à tous les numéros envoyés', async () => {
+      const { port } = serveur.address() as AddressInfo;
+      const url = `http://127.0.0.1:${port}`;
+      const versement = {
+        code: 201,
+        transfer: { reference: 'trf.1', status: 'sent', amount: 100 },
+      };
+      const envoyerTout = async (format?: string) => {
+        recues = [];
+        const c = creerClient(url, 'test', undefined, format);
+        reponses.push(
+          { statut: 201, corps: paiement('pending') },
+          { statut: 202, corps: paiement('processing') },
+          { statut: 201, corps: versement },
+        );
+        await c.initialiserPaiement({
+          montant: 100,
+          reference: 'SLF-DON-2',
+          description: 'Test',
+          client: { nom: 'Awa', telephone: '+237670000000' },
+        });
+        await c.traiterPaiement('trx.abc123', 'cm.mtn', '+237670000000');
+        await c.initierVersement({
+          montant: 100,
+          reference: 'SLF-RETRAIT-2',
+          description: 'Test',
+          canal: 'cm.orange',
+          beneficiaire: { nom: 'Paul', telephone: '+237690000000' },
+        });
+        const corps = recues.map((r) => r.corps) as {
+          customer?: { phone: string };
+          data?: { phone: string };
+          beneficiary_data?: { phone: string };
+        }[];
+        return [
+          corps[0].customer?.phone,
+          corps[1].data?.phone,
+          corps[2].beneficiary_data?.phone,
+        ];
+      };
+
+      for (const format of [undefined, 'sans_plus', 'inconnu']) {
+        expect(await envoyerTout(format)).toEqual([
+          '237670000000',
+          '237670000000',
+          '237690000000',
+        ]);
+      }
+      expect(await envoyerTout('avec_plus')).toEqual([
+        '+237670000000',
+        '+237670000000',
+        '+237690000000',
+      ]);
+      // Jamais de « phone » au premier niveau : la spécification n'en veut qu'un parmi
+      // email, phone et customer.
+      expect(recues[0].corps).not.toHaveProperty('phone');
     });
 
     it('consulte et annule un paiement', async () => {
@@ -190,7 +254,7 @@ describe('NotchPayClient (HTTP simulé)', () => {
         reference: 'SLF-RETRAIT-1',
         description: 'Retrait de la cagnotte 12',
         canal: 'cm.orange',
-        beneficiaire: '+237690000000',
+        beneficiaire: { nom: 'Paul Mbarga', telephone: '+237690000000' },
       });
       expect(recues[0]).toMatchObject({
         methode: 'POST',
@@ -201,7 +265,11 @@ describe('NotchPayClient (HTTP simulé)', () => {
           reference: 'SLF-RETRAIT-1',
           description: 'Retrait de la cagnotte 12',
           channel: 'cm.orange',
-          recipient: '+237690000000',
+          beneficiary_data: {
+            name: 'Paul Mbarga',
+            phone: '237690000000',
+            country: 'CM',
+          },
         },
       });
       expect(recues[0].entetes.authorization).toBe(CLE_PUBLIQUE);
@@ -279,7 +347,7 @@ describe('NotchPayClient (HTTP simulé)', () => {
     it('lève une erreur claire si le paiement est absent de la réponse', async () => {
       reponses.push({ statut: 200, corps: { code: 200, message: 'OK' } });
       await expect(client.consulterPaiement('trx.abc123')).rejects.toThrow(
-        ErreurReponseNotchPay,
+        ErreurReponsePaiement,
       );
     });
   });
@@ -291,21 +359,21 @@ describe('NotchPayClient (HTTP simulé)', () => {
         () => {
           throw new Error('une erreur était attendue');
         },
-        (e: unknown) => e as ErreurNotchPay,
+        (e: unknown) => e as ErreurPaiement,
       );
     };
 
     it.each([
-      [401, ErreurAuthentificationNotchPay, 'Invalid API key'],
-      [403, ErreurAuthentificationNotchPay, 'Missing grant key'],
-      [404, ErreurIntrouvableNotchPay, 'Payment not found'],
+      [401, ErreurAuthentificationPaiement, 'Invalid API key'],
+      [403, ErreurAuthentificationPaiement, 'Missing grant key'],
+      [404, ErreurIntrouvablePaiement, 'Payment not found'],
       [
         409,
-        ErreurConflitNotchPay,
+        ErreurConflitPaiement,
         'A payment with this reference already exists',
       ],
-      [400, ErreurValidationNotchPay, 'Invalid request parameters'],
-      [429, ErreurLimiteNotchPay, 'Rate limit exceeded'],
+      [400, ErreurValidationPaiement, 'Invalid request parameters'],
+      [429, ErreurLimitePaiement, 'Rate limit exceeded'],
     ])(
       '%i → exception typée, avec le code et le message de Notch Pay, sans nouvel essai',
       async (statut, classe, message) => {
@@ -315,7 +383,7 @@ describe('NotchPayClient (HTTP simulé)', () => {
           message,
         });
         expect(erreur).toBeInstanceOf(classe);
-        expect(erreur).toBeInstanceOf(ErreurNotchPay);
+        expect(erreur).toBeInstanceOf(ErreurPaiement);
         expect(erreur.message).toBe(message);
         expect(erreur.code).toBe(String(statut));
         expect(erreur.statutHttp).toBe(statut);
@@ -330,7 +398,7 @@ describe('NotchPayClient (HTTP simulé)', () => {
         message: 'Validation failed',
         errors: { amount: ['Amount must be at least 100'] },
       });
-      expect(erreur).toBeInstanceOf(ErreurValidationNotchPay);
+      expect(erreur).toBeInstanceOf(ErreurValidationPaiement);
       expect(erreur.erreursChamps).toEqual({
         amount: ['Amount must be at least 100'],
       });
@@ -378,7 +446,7 @@ describe('NotchPayClient (HTTP simulé)', () => {
       await expect(
         client.consulterPaiement('trx.abc123'),
       ).rejects.toMatchObject({
-        name: 'ErreurServeurNotchPay',
+        name: 'ErreurServeurPaiement',
         message: 'An unexpected error occurred',
         statutHttp: 500,
       });
@@ -404,15 +472,40 @@ describe('NotchPayClient (HTTP simulé)', () => {
       expect(instants[2] - instants[1]).toBeGreaterThanOrEqual(110);
     });
 
-    it('lève ErreurReseauNotchPay quand le serveur est injoignable', async () => {
+    it('lève ErreurReseauPaiement quand le serveur est injoignable', async () => {
       const injoignable = creerClient('http://127.0.0.1:9');
       injoignable.delaisNouvelEssaiMs = [1, 1];
       const echanges: EchangeNotchPay[] = [];
       injoignable.surEchange = (e) => echanges.push(e);
       await expect(injoignable.consulterPaiement('trx.abc123')).rejects.toThrow(
-        ErreurReseauNotchPay,
+        ErreurReseauPaiement,
       );
       expect(echanges).toHaveLength(3);
+    });
+  });
+
+  describe('versements', () => {
+    it('ne réessaie jamais un versement, même après un 5xx ou une erreur réseau', async () => {
+      const versement = {
+        montant: 1000,
+        reference: 'SLF-RETRAIT-3',
+        description: 'Test',
+        canal: 'cm.mtn',
+        beneficiaire: { nom: 'Test', telephone: '+237670000000' },
+      };
+      reponses.push({ statut: 503, corps: { message: 'Unavailable' } });
+      await expect(client.initierVersement(versement)).rejects.toMatchObject({
+        name: 'ErreurServeurPaiement',
+      });
+      expect(recues).toHaveLength(1);
+
+      reponses.length = 0;
+      recues = [];
+      reponses.push('couper');
+      await expect(client.initierVersement(versement)).rejects.toMatchObject({
+        name: 'ErreurReseauPaiement',
+      });
+      expect(recues).toHaveLength(1);
     });
   });
 
@@ -431,9 +524,9 @@ describe('NotchPayClient (HTTP simulé)', () => {
           reference: 'SLF-RETRAIT-2',
           description: 'Test',
           canal: 'cm.mtn',
-          beneficiaire: '+237670000000',
+          beneficiaire: { nom: 'Test', telephone: '+237670000000' },
         })
-        .catch((e: unknown) => e as ErreurNotchPay);
+        .catch((e: unknown) => e as ErreurPaiement);
 
       const ecrit = JSON.stringify([
         avertissements.mock.calls,

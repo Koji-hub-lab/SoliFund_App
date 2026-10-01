@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { DonsService } from './dons.service';
 
@@ -17,35 +16,13 @@ const LOT = 50;
 @Injectable()
 export class ReconciliationDonsService {
   private readonly logger = new Logger(ReconciliationDonsService.name);
-  private enCours = false;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly donsService: DonsService,
   ) {}
 
-  @Cron('*/5 * * * *', { name: 'reconciliation-dons' })
-  async tache() {
-    // Un passage à la fois : le précédent peut durer si Notch Pay répond lentement.
-    if (this.enCours) return;
-    this.enCours = true;
-    try {
-      const resultat = await this.reconcilier();
-      if (resultat.consultes > 0) {
-        this.logger.log(
-          `Réconciliation : ${resultat.consultes} don(s) consulté(s), ${resultat.valides} validé(s), ${resultat.echoues} échoué(s), ${resultat.abandonnes} abandonné(s) après 30 minutes.`,
-        );
-      }
-    } catch (e) {
-      this.logger.error(
-        'Échec de la réconciliation des dons',
-        e instanceof Error ? e.stack : String(e),
-      );
-    } finally {
-      this.enCours = false;
-    }
-  }
-
+  // Appelée par la tâche planifiée (TachesService, toutes les 5 minutes).
   async reconcilier(maintenant = new Date()) {
     const dons = await this.prisma.don.findMany({
       where: {

@@ -7,6 +7,7 @@ import ChampMotDePasse from '../components/auth/ChampMotDePasse';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { formaterMontant } from '../utils/format';
+import CarteVerification from '../components/identite/CarteVerification';
 
 const MDP_VIDE = { actuel: '', nouveau: '', confirmation: '' };
 
@@ -126,6 +127,9 @@ export default function Compte() {
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">{t('profil.sousTitre')}</p>
         </div>
+
+        {/* Vérification d'identité : en haut, c'est l'étape qui débloque la création et les retraits. */}
+        <CarteVerification />
 
         {/* Carte identité + chiffres */}
         <section className="flex flex-col items-center gap-5 rounded-[28px] border border-border bg-card p-6 sm:flex-row sm:p-7">

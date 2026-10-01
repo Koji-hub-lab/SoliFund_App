@@ -114,7 +114,8 @@ describe('Retraits (e2e)', () => {
     const traiter = () =>
       request(app.getHttpServer())
         .post(`/retraits/${id}/traiter`)
-        .set(entete(admin.jeton));
+        .set(entete(admin.jeton))
+        .send({ hors_plateforme: true }); // mode manuel (versement hors plateforme)
     const reponses = await Promise.all([traiter(), traiter()]);
     expect(reponses.map((r) => r.status).sort()).toEqual([201, 400]);
 

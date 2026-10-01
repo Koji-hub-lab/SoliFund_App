@@ -213,6 +213,13 @@ export const fr = {
     'Vous avez annulé le paiement sur votre téléphone. Vous pouvez réessayer quand vous le souhaitez.',
   'paiement.DUPLICATE_TRANSACTION':
     'Un paiement identique est déjà en cours. Vérifiez votre téléphone avant de réessayer.',
+  'paiement.LOW_BALANCE_OR_PAYEE_LIMIT_REACHED_OR_NOT_ALLOWED':
+    'Le paiement a été refusé par MTN Mobile Money. Vérifiez que votre solde est suffisant et que votre compte est autorisé à payer chez un marchand, puis réessayez ou utilisez un autre numéro.',
+  'paiement.numeroAutreOperateur': 'Ce numéro est un numéro {operateur}.',
+  'paiement.SERVICE_INDISPONIBLE':
+    "Le service de paiement ne répond pas pour le moment. Aucun montant n'a été prélevé. Réessayez dans quelques minutes.",
+  'paiement.SERVICE_INCERTAIN':
+    "Le service de paiement ne répond pas pour le moment. Si une demande de paiement s'affiche sur votre téléphone, ne la validez pas. Réessayez dans quelques minutes.",
   'paiement.ECHEC':
     "Le paiement n'a pas abouti. Aucun montant n'a été débité. Veuillez réessayer.",
 
@@ -225,6 +232,26 @@ export const fr = {
     'Impossible de demander un retrait sur une cagnotte suspendue ou annulée.',
   'retraits.disponibleInsuffisant':
     'Montant disponible insuffisant ({disponible} {devise}).',
+  'retraits.soldeInsuffisantOperateur':
+    'Le solde {operateur} du compte {fournisseur} est insuffisant : {net|nombre} XAF à verser. Soldes disponibles : MTN {mtn|nombre} XAF, Orange {orange|nombre} XAF. Rechargez le solde {operateur}, puis réessayez.',
+  'retraits.precedentEnCours':
+    'Le versement précédent est toujours en cours chez {fournisseur} : attendez son résultat avant de relancer.',
+  'retraits.precedentReussi':
+    "Le versement précédent a finalement abouti chez {fournisseur} : le retrait est marqué comme versé, rien n'a été renvoyé.",
+  'retraits.precedentNonConfirme':
+    "{fournisseur} ne confirme pas l'échec du versement précédent : rien n'a été renvoyé. Vérifiez-le dans son tableau de bord.",
+  'retraits.versementEnCours':
+    'Un versement est déjà en cours pour ce retrait. Attendez son résultat.',
+  'retraits.soldeInsuffisant':
+    'Le solde du compte {fournisseur} est insuffisant : {disponible|nombre} XAF disponibles pour {net|nombre} XAF à verser. Rechargez le compte {fournisseur}, puis réessayez.',
+  'retraits.notchPayIndisponible':
+    "{fournisseur} ne répond pas : le solde n'a pas pu être vérifié et aucun versement n'a été lancé. Réessayez dans quelques minutes.",
+  'retraits.versementRefuse':
+    "{fournisseur} a refusé le versement : {detail} Rien n'a été versé ; vous pouvez relancer le versement ou rejeter le retrait.",
+  'retraits.versementIncertain':
+    "{fournisseur} n'a pas répondu : le versement est peut-être parti. Vérifiez-le dans le tableau de bord {fournisseur} avant toute autre action sur ce retrait.",
+  'retraits.horsPlateformeRequis':
+    'Confirmez que le versement a été effectué hors plateforme.',
   'retraits.introuvable': 'Retrait introuvable.',
   'retraits.dejaTraite': 'Ce retrait a déjà été traité.',
 
@@ -300,6 +327,12 @@ export const fr = {
   'alertes.SUSPENSION_AUTOMATIQUE.titre': 'Suspension automatique',
   'alertes.SUSPENSION_AUTOMATIQUE.message':
     'La cagnotte « {titre} » a été suspendue automatiquement après {nombre} signalements.',
+  'alertes.VERSEMENT_INCERTAIN.titre': 'Versement à vérifier',
+  'alertes.VERSEMENT_INCERTAIN.message':
+    "{fournisseur} n'a pas répondu au versement du retrait n° {retrait} ({montant|nombre} XAF) : il est peut-être parti. Vérifiez-le dans son tableau de bord avant toute action.",
+  'alertes.VERSEMENT_INTROUVABLE.titre': 'Versement introuvable',
+  'alertes.VERSEMENT_INTROUVABLE.message':
+    '{fournisseur} ne trouve pas le versement du retrait n° {retrait} ({montant|nombre} XAF). Aucune action automatique : vérifiez-le dans son tableau de bord.',
   'raisons.OBJECTIF_ELEVE': 'objectif élevé',
   'raisons.ANTECEDENT_ORGANISATEUR':
     'organisateur ayant une cagnotte suspendue ou refusée',

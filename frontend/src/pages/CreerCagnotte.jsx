@@ -9,6 +9,8 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { SymboleNjangi } from '../components/Logo';
 import { formaterTaux, useTauxCommission } from '../utils/commission';
+import { SqueletteFormulaire } from '../components/ui/Squelette';
+import { identiteSoumise, lienVerification, oublierVerification, useVerificationIdentite } from '../utils/identite';
 
 // t : fonction de traduction de la zone « tableau-de-bord ».
 function validerForm(form, t) {
@@ -40,6 +42,12 @@ export default function CreerCagnotte() {
   const { t } = useTranslation('tableau-de-bord');
   const navigate = useNavigate();
   const { utilisateur, connecter } = useAuth();
+  const { t: tIdentite } = useTranslation('identite');
+
+  // Vérification d'identité : sans soumission, ou après un refus, un message renvoie vers la page
+  // de vérification (le backend refuse sinon la création), qui ramène ici après l'envoi.
+  const { verification: identite, erreur: erreurIdentite, recharger: chargerIdentite } = useVerificationIdentite();
+  const identiteASoumettre = identite && !identiteSoumise(identite);
 
   // Compte non vérifié : saisie du code reçu par email avant de pouvoir créer une cagnotte.
   const [codeVerif, setCodeVerif] = useState('');
@@ -125,6 +133,11 @@ export default function CreerCagnotte() {
     } catch (err) {
       setErreurServeur(err.messageAffichable);
       setEnvoiEnCours(false);
+      // Refus du backend faute de vérification d'identité : le formulaire de vérification revient.
+      if (err.response?.status === 403) {
+        oublierVerification();
+        chargerIdentite();
+      }
     }
   }
 
@@ -189,7 +202,32 @@ export default function CreerCagnotte() {
               </button>
             </form>
           </div>
+        ) : erreurIdentite ? (
+          <div className="mt-8 rounded-[32px] border border-border bg-card p-6 sm:p-8">
+            <p className="text-sm text-destructive">{tIdentite('chargement', { detail: erreurIdentite })}</p>
+            <Button variant="outline" onClick={chargerIdentite} className="mt-5">{tIdentite('reessayer')}</Button>
+          </div>
+        ) : !identite ? (
+          <div className="mt-8"><SqueletteFormulaire champs={4} /></div>
+        ) : identiteASoumettre ? (
+          <div className="mt-8 rounded-[32px] border border-border bg-card p-6 sm:p-8">
+            <h2 className="font-display text-[26px] font-bold leading-tight text-foreground">{tIdentite('formulaire.titre')}</h2>
+            <p className="mt-3 text-base leading-[1.6] text-[#45524F]">
+              {identite.statut === 'REFUSEE'
+                ? identite.motif_refus
+                  ? tIdentite('requise.creationRefusee', { motif: identite.motif_refus })
+                  : tIdentite('requise.creationRefuseeSansMotif')
+                : tIdentite('requise.creation')}
+            </p>
+            <Button size="lg" to={lienVerification('/creer-cagnotte')} className="mt-6">
+              {tIdentite('carte.verifier')}
+            </Button>
+          </div>
         ) : (
+        <>
+        {identite.statut === 'EN_ATTENTE' && (
+          <p className="mt-8 rounded-[20px] bg-primary-soft px-5 py-4 text-base leading-[1.6] text-foreground">{tIdentite('enAttente')}</p>
+        )}
         <form onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-6 rounded-[32px] border border-border bg-card p-6 sm:p-8">
           <div>
             <p className="mb-2 block text-sm font-bold text-foreground">{t('creation.photo')}</p>
@@ -245,6 +283,7 @@ export default function CreerCagnotte() {
             {envoiEnCours ? t('creation.creationEnCours') : t('creation.creer')}
           </Button>
         </form>
+        </>
         )}
       </div>
     </DashboardLayout>

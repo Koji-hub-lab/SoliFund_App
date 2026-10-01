@@ -43,7 +43,7 @@ const VALIDE = {
   date_naissance: '1990-05-10',
   numero_piece: '123456789',
   date_expiration: dans(365),
-  telephone_retrait: '+237 6 99 11 22 33',
+  telephone_retrait: '+237 6 77 11 22 33',
   methode_retrait: 'MTN_MOBILE_MONEY',
 };
 
@@ -143,6 +143,24 @@ describe('Vérification d’identité (e2e)', () => {
     expect(
       (await soumettre(u.jeton, { telephone_retrait: '222334455' })).status,
     ).toBe(400);
+    // Numéro de retrait d'un autre opérateur que celui choisi.
+    const orangeSurMtn = await soumettre(u.jeton, {
+      telephone_retrait: '699112233',
+      methode_retrait: 'MTN_MOBILE_MONEY',
+    });
+    expect(orangeSurMtn.status).toBe(400);
+    expect(message(orangeSurMtn)).toContain('Ce numéro est un numéro Orange.');
+    // 655 à 659 : Orange, même si 650 à 654 sont MTN.
+    const orange655 = await soumettre(u.jeton, {
+      telephone_retrait: '655112233',
+      methode_retrait: 'MTN_MOBILE_MONEY',
+    });
+    expect(message(orange655)).toContain('Ce numéro est un numéro Orange.');
+    const mtn = await soumettre(u.jeton, {
+      telephone_retrait: '681112233',
+      methode_retrait: 'ORANGE_MONEY',
+    });
+    expect(message(mtn)).toContain('Ce numéro est un numéro MTN.');
     expect(
       await prisma.verificationIdentite.count({
         where: { id_utilisateur: u.id_utilisateur },
@@ -184,7 +202,7 @@ describe('Vérification d’identité (e2e)', () => {
     expect(reponse.status).toBe(201);
     expect(reponse.body).toMatchObject({
       statut: 'EN_ATTENTE',
-      telephone_retrait: '699112233',
+      telephone_retrait: '677112233',
       methode_retrait: 'MTN_MOBILE_MONEY',
     });
     expect(JSON.stringify(reponse.body)).not.toContain('fichier');

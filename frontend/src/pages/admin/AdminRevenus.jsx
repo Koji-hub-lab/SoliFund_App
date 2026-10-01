@@ -46,7 +46,7 @@ export default function AdminRevenus() {
         <EnTeteAdmin titre={t('revenus.titre')} sousTitre={t('revenus.sousTitre')} />
 
         {erreur && <p className="text-sm text-destructive">{erreur}</p>}
-        {!resume && !erreur && <SqueletteChiffres nombre={2} />}
+        {!resume && !erreur && <SqueletteChiffres nombre={4} />}
 
         {resume && (
           <>
@@ -57,20 +57,28 @@ export default function AdminRevenus() {
                 valeur={formaterMontant(resume.total_mois_en_cours)}
                 valeurEnLagune
               />
+              <CarteChiffre libelle={t('revenus.totalFrais')} valeur={formaterMontant(resume.total_frais ?? 0)} />
+              <CarteChiffre
+                libelle={t('revenus.moisFrais', { mois: libelleMois(resume.mois_en_cours) })}
+                valeur={formaterMontant(resume.frais_mois_en_cours ?? 0)}
+              />
             </div>
+            <p className="-mt-6 text-sm text-muted-foreground">{t('revenus.notesFrais')}</p>
 
             <section>
               <h2 className="font-display text-[26px] font-bold leading-tight text-foreground">{t('revenus.parMois')}</h2>
               <div className="mt-5 overflow-x-auto rounded-[28px] border border-border bg-card px-6 py-2 sm:px-7">
                 {resume.par_mois.length === 0 ? (
-                  <p className="py-10 text-center text-base text-muted-foreground">{t('revenus.aucune')}</p>
+                  <p className="py-10 text-center text-base text-muted-foreground">{t('revenus.aucunMois')}</p>
                 ) : (
-                  <table className="w-full min-w-[420px] border-collapse text-left">
+                  <table className="w-full min-w-[560px] border-collapse text-left">
                     <thead>
                       <tr className="text-sm text-muted-foreground">
                         <th scope="col" className="py-4 font-medium">{t('revenus.colMois')}</th>
                         <th scope="col" className="py-4 text-right font-medium">{t('revenus.colRetraits')}</th>
                         <th scope="col" className="py-4 text-right font-medium">{t('revenus.colCommissions')}</th>
+                        <th scope="col" className="py-4 text-right font-medium">{t('revenus.colDons')}</th>
+                        <th scope="col" className="py-4 text-right font-medium">{t('revenus.colFrais')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -79,6 +87,8 @@ export default function AdminRevenus() {
                           <th scope="row" className="py-4 font-bold capitalize text-foreground">{libelleMois(m.mois)}</th>
                           <td className="py-4 text-right text-[#45524F]">{m.nombre}</td>
                           <td className="py-4 text-right font-bold text-primary">{formaterMontant(m.total)}</td>
+                          <td className="py-4 text-right text-[#45524F]">{m.nombre_dons ?? 0}</td>
+                          <td className="py-4 text-right font-bold text-foreground">{formaterMontant(m.frais ?? 0)}</td>
                         </tr>
                       ))}
                     </tbody>

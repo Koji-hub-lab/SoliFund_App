@@ -10,5 +10,97 @@
     "OBJECTIF_ELEVE": "Objectif élevé",
     "ANTECEDENT_ORGANISATEUR": "Organisateur ayant une cagnotte suspendue ou refusée",
     "REVISION_APRES_REFUS": "Modifiée après un refus"
-  }
+  },
+  "formulaire": {
+    "titre": "Vérifiez votre identité",
+    "intro": "Avant de créer votre première cagnotte, nous vérifions votre identité pour protéger les donateurs. Cela prend environ 3 minutes. Vos documents ne sont visibles que par l'équipe SoliFund.",
+    "refusee": "Votre précédente vérification a été refusée. Motif : {{motif}} Vous pouvez soumettre une nouvelle demande.",
+    "refuseeSansMotif": "Votre précédente vérification a été refusée. Vous pouvez soumettre une nouvelle demande.",
+    "etape": "Étape {{numero}} sur {{total}}",
+    "etapes": {
+      "piece": "Votre pièce d'identité",
+      "identite": "Vos informations",
+      "photos": "Photos de la pièce et selfie",
+      "retrait": "Numéro de retrait"
+    },
+    "typePiece": "Type de pièce",
+    "types": {
+      "CNI": "Carte nationale d'identité",
+      "RECEPISSE_CNI": "Récépissé de CNI",
+      "PASSEPORT": "Passeport"
+    },
+    "numeroPiece": "Numéro de la pièce",
+    "dateExpiration": "Date d'expiration",
+    "dateExpirationFacultative": "Date d'expiration (facultative)",
+    "nom": "Nom",
+    "prenoms": "Prénoms",
+    "dateNaissance": "Date de naissance",
+    "aideIdentite": "Saisissez ces informations exactement comme sur votre pièce.",
+    "recto": "Recto de la pièce",
+    "verso": "Verso de la pièce",
+    "pagePasseport": "Page avec votre photo",
+    "selfie": "Selfie en tenant votre pièce",
+    "aideSelfie": "Votre visage et la pièce doivent être bien visibles.",
+    "ajouterPhoto": "Ajouter une photo",
+    "changerPhoto": "Cliquez sur la photo pour la changer.",
+    "formats": "JPG, PNG ou WebP, 5 Mo maximum",
+    "operateurRetrait": "Opérateur de retrait",
+    "telephoneRetrait": "Numéro Mobile Money de retrait",
+    "aideRetrait": "Les fonds de vos cagnottes seront versés uniquement sur ce numéro. Il doit être à votre nom.",
+    "recapitulatif": "Vérifiez vos informations avant l'envoi : {{piece}} n° {{numero}}, {{prenoms}} {{nom}}, retraits sur le +237 {{telephone}}.",
+    "retour": "Retour",
+    "continuer": "Continuer",
+    "envoyer": "Envoyer ma vérification",
+    "envoiEnCours": "Envoi en cours...",
+    "erreurs": {
+      "numeroPiece": "Saisissez le numéro de votre pièce.",
+      "dateExpiration": "Saisissez la date d'expiration de votre pièce.",
+      "pieceExpiree": "Votre pièce est expirée : utilisez une pièce en cours de validité.",
+      "nom": "Saisissez votre nom.",
+      "prenoms": "Saisissez vos prénoms.",
+      "dateNaissance": "Saisissez votre date de naissance.",
+      "ageMinimum": "Vous devez avoir au moins 18 ans pour créer une cagnotte.",
+      "photo": "Ajoutez cette photo.",
+      "format": "Format non accepté : choisissez une image JPG, PNG ou WebP.",
+      "taille": "Cette photo dépasse 5 Mo."
+    }
+  },
+  "enAttente": "Votre identité est en cours de vérification (en général sous 24 h). Vous pouvez déjà créer votre cagnotte : elle sera publiée dès que votre identité sera validée.",
+  "chargement": "Impossible de vérifier l'état de votre identité. {{detail}}",
+  "reessayer": "Réessayer",
+  "page": {
+    "titre": "Vérification d'identité",
+    "sousTitre": "Elle est nécessaire pour créer une cagnotte et recevoir des retraits.",
+    "enAttenteTitre": "Votre vérification est en cours d'examen",
+    "enAttenteTexte": "Notre équipe l'examine, en général sous 24 h. Une notification et un email vous préviendront dès qu'elle sera traitée.",
+    "valideeTitre": "Identité vérifiée",
+    "valideeTexte": "Vos retraits sont versés uniquement sur ce numéro.",
+    "piece": "Pièce",
+    "soumiseLe": "Envoyée le",
+    "valideeLe": "Vérifiée le",
+    "numeroRetrait": "Numéro de retrait",
+    "changerNumero": "Pour changer de numéro de retrait, contactez l'équipe SoliFund : une nouvelle vérification sera nécessaire.",
+    "continuer": "Continuer",
+    "retourTableau": "Retour au tableau de bord"
+  },
+  "carte": {
+    "titre": "Vérification d'identité",
+    "NON_SOUMISE": "Vérifiez votre identité pour créer une cagnotte et recevoir vos retraits.",
+    "REFUSEE": "Votre vérification a été refusée. Vous pouvez en soumettre une nouvelle.",
+    "EN_ATTENTE": "Votre vérification est en cours d'examen (en général sous 24 h).",
+    "VALIDEE": "Votre identité est vérifiée. Vos retraits sont versés sur le {{numero}}.",
+    "verifier": "Vérifier mon identité",
+    "voir": "Voir ma vérification"
+  },
+  "requise": {
+    "creation": "Avant de créer votre première cagnotte, vérifiez votre identité. Cela prend environ 3 minutes ; vous reviendrez ensuite ici.",
+    "creationRefusee": "Votre vérification d'identité a été refusée. Motif : {{motif}} Soumettez-en une nouvelle pour créer une cagnotte.",
+    "creationRefuseeSansMotif": "Votre vérification d'identité a été refusée. Soumettez-en une nouvelle pour créer une cagnotte.",
+    "retrait": "Pour demander un retrait, vérifiez d'abord votre identité. Les fonds seront versés sur le numéro Mobile Money vérifié.",
+    "retraitEnAttente": "Votre vérification d'identité est en cours d'examen (en général sous 24 h). Vous pourrez demander un retrait dès qu'elle sera validée.",
+    "retraitRefusee": "Votre vérification d'identité a été refusée. Soumettez-en une nouvelle pour demander un retrait.",
+    "verseSur": "Versé sur",
+    "chargement": "Impossible de vérifier l'état de votre identité. {{detail}}"
+  },
+  "pastille": "Identité à vérifier"
 }

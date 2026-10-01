@@ -6,7 +6,11 @@ import sharp from 'sharp';
 import { detecterTypeImage } from './signature-image';
 import { m } from '../i18n/messages';
 
-const DOSSIER_UPLOADS = join(process.cwd(), 'uploads');
+// Dossier des photos des cagnottes, servi publiquement sous /uploads (main.ts). UPLOADS_DIR permet
+// de le déplacer (volume persistant en production) ; par défaut backend/uploads.
+export function dossierUploads(): string {
+  return process.env.UPLOADS_DIR || join(process.cwd(), 'uploads');
+}
 const PREFIXE_PUBLIC = '/uploads';
 
 // Largeurs générées : page de la cagnotte, et cartes / miniatures.
@@ -64,7 +68,7 @@ export class ImagesService {
     }
 
     const nom = randomUUID();
-    const dossier = join(DOSSIER_UPLOADS, sousDossier);
+    const dossier = join(dossierUploads(), sousDossier);
     await mkdir(dossier, { recursive: true });
     await Promise.all([
       writeFile(join(dossier, `${nom}.webp`), image),
@@ -98,7 +102,7 @@ export class ImagesService {
     if (nomFichier !== cheminPublic.slice(prefixe.length)) return; // refuse tout sous-chemin ou « .. »
 
     try {
-      await unlink(join(DOSSIER_UPLOADS, sousDossier, nomFichier));
+      await unlink(join(dossierUploads(), sousDossier, nomFichier));
     } catch (e) {
       const erreur = e as NodeJS.ErrnoException;
       if (erreur.code !== 'ENOENT') {

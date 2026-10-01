@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Wallet, Users, LayoutDashboard, PiggyBank, ArrowLeftRight, Tags, Flag, Coins } from 'lucide-react';
+import { Wallet, Users, LayoutDashboard, PiggyBank, ArrowLeftRight, Tags, Flag, Coins, IdCard } from 'lucide-react';
 import EspaceLayout from '../layout/EspaceLayout';
 
 // Espace administrateur : même barre latérale que l'organisateur, avec l'étiquette « Administration ».
@@ -8,6 +8,7 @@ export default function AdminLayout({ children }) {
   const liens = [
     { label: t('nav.tableauDeBord'), href: '/admin/tableau-de-bord', icon: LayoutDashboard },
     { label: t('nav.cagnottes'), href: '/admin/cagnottes', icon: PiggyBank },
+    { label: t('nav.verifications'), href: '/admin/verifications', icon: IdCard },
     { label: t('nav.signalements'), href: '/admin/signalements', icon: Flag },
     { label: t('nav.retraits'), href: '/admin/retraits', icon: Wallet },
     { label: t('nav.revenus'), href: '/admin/revenus', icon: Coins },
