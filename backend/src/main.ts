@@ -1,4 +1,4 @@
-/*import { NestFactory } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -17,6 +17,7 @@ async function bootstrap() {
     rawBody: true,
   });
   const config = app.get(ConfigService);
+   app.set('trust proxy', 1);
   const docsActives = config.get<string>('NODE_ENV') !== 'production';
 
   // La page Swagger UI ne fonctionne pas avec la CSP stricte de helmet : on l'assouplit
@@ -80,31 +81,4 @@ bootstrap().catch((erreur: unknown) => {
     'Bootstrap',
   );
   process.exit(1);
-});*/
-
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
-import { join } from 'path';
-import { AppModule } from './app.module';
-
-async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  app.set('trust proxy', 1);
-
-  app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
-  await app.listen(process.env.PORT || 3000);
-}
-bootstrap();
+});
